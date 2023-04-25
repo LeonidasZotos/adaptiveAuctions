@@ -1,3 +1,4 @@
+from src.car import Car
 
 class CarQueue:
     def __init__(self, max_capacity):
