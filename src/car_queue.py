@@ -17,15 +17,15 @@ class CarQueue:
 
     def get_first_car(self):
         self.cars.pop(0)
-        
+
     def has_capacity(self):
         if self.queue_length() < self.capacity:
             return True
-        
+
     def collect_bids(self):
-        # for each car in the queue, call submit_bid() and add the bid to a list
-        bids = []
+        bids = {}
+        # A dictionary is used so that we know which car submitted which bid.
         for car in self.cars:
-            bids.append(car.submit_bid())
+            car_id, bid = car.submit_bid()
+            bid[car_id] = bid
         return bids
-        

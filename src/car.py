@@ -9,7 +9,7 @@ class Car:
         # Set an initial balance
         self.balance = 100
         # Rush factor is random between 0 and 1
-        self.rush_factor = random.random() 
+        self.rush_factor = random.random()
         self.submitted_bid = 0
 
     def __str__(self):
@@ -19,9 +19,12 @@ class Car:
         # For now, randomly submit a bid.
         self.submitted_bid = random.randint(1, 20)
         # If there is not enough balance, bid entire balance.
-        if self.submit_bid > self.balance:
+        if self.submitted_bid > self.balance:
             self.submitted_bid = self.balance
-        return random.randint(1, 100)
+
+        # Return a tuple of the car ID and the bid.
+        # Car ID is included so that the intersection can keep track of which car submitted which bid.
+        return self.id, self.submitted_bid
 
     def pay_bid(self, price):
         # Price is not necessarily the same as the bid (e.g. 2nd price auction)
