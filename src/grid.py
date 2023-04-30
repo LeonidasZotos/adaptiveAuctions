@@ -15,7 +15,7 @@ class Grid:
         for i in range(self.grid_size):
             grid.append([])
             for j in range(self.grid_size):
-                # The id is the x and y coordinates of the intersection
+                # The ID is the x and y coordinates of the intersection
                 intersection_id = str(j) + str(i)
                 grid[i].append(Intersection(
                     intersection_id, self.queue_capacity))
