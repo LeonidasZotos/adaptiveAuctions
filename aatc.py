@@ -31,6 +31,20 @@ if __name__ == '__main__':
     )
 
     simulate_parser.add_argument(
+        "--congestion_rate",
+        default=0.5,
+        type=float,
+        help="Rate of congestion (Percentage of occupied spots, 0-1). Defaults to 0.5."
+    )
+
+    simulate_parser.add_argument(
+        "--credit_balance",
+        default=30,
+        type=float,
+        help="Initial & Renewal credit balance for each car. Defaults to 30."
+    )
+
+    simulate_parser.add_argument(
         "--results_folder",
         default="results",
         type=str,

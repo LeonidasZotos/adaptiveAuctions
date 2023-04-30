@@ -34,3 +34,7 @@ class Car:
         # Price is not necessarily the same as the bid (e.g. 2nd price auction)
         self.balance -= price
         print("Car {} paid {} to exit intersection".format(self.id, price))
+        
+    def set_balance(self, balance):
+        # Set the balance of the car to the given balance
+        self.balance = balance
