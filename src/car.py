@@ -2,7 +2,11 @@ import random
 
 
 class Car:
+    # A class variable to keep track of all cars.
+    all_cars = []
+
     def __init__(self, id):
+        Car.all_cars.append(self)
         self.id = id
         # Randomly pick a direction, from N, S, E, W
         self.direction = random.choice(['N', 'S', 'E', 'W'])
