@@ -4,7 +4,7 @@ from src.car import Car
 class CarQueue:
     # A class variable to keep track of all car queues.
     all_car_queues = []
-    
+
     def __init__(self, max_capacity):
         CarQueue.all_car_queues.append(self)
         self.cars = []
@@ -17,7 +17,7 @@ class CarQueue:
         car_ids = []
         for car in self.cars:
             car_ids.append(car.id)
-        
+
         return f'CarQueue contains cars with IDs: {car_ids}'
 
     def queue_length(self):
@@ -26,7 +26,7 @@ class CarQueue:
     def add_car(self, car):
         if self.has_capacity():
             self.cars.append(car)
-        else: 
+        else:
             print("CarQueue is full, cannot add car")
             return -1
 
