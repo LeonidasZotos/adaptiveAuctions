@@ -29,7 +29,8 @@ def spawn_cars(args):
         if queue.has_capacity():
             number_of_spawns -= 1
             # number_of_spawns can be used as a unique ID
-            queue.add_car(Car(id=number_of_spawns, car_queue_id=queue.id))
+            queue.add_car(
+                Car(id=number_of_spawns, car_queue_id=queue.id, grid_size=args.grid_size))
             print("This car queue has id: ", queue.id)
 
 
