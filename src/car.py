@@ -16,7 +16,7 @@ class Car:
         self.rush_factor = random.random()
         self.submitted_bid = 0
         self.waiting_time = 0
-        # location_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
+        # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = car_queue_id
 
     def __str__(self):
@@ -49,7 +49,7 @@ class Car:
         x = random.randint(0, grid_size - 1)
         y = random.randint(0, grid_size - 1)
         self.final_destination = str(x) + str(y)
-        print("The final destination of car {} is {}".format(
+        print("The final destination of car {} is intersection with id: {}".format(
             self.id, self.final_destination))
 
     def is_at_destination(self):
@@ -63,5 +63,38 @@ class Car:
 
     def retrieve_intersection_exit(self):
         # Returns a queue ID: <intersectionID><Queue Position>
+        destination_queue = ""
+        current_x = int(self.car_queue_id[0])
+        current_y = int(self.car_queue_id[1])
+        destination_x = int(self.final_destination[0])
+        destination_y = int(self.final_destination[1])
 
-        pass
+        # First, check in which direction(s) the car needs to move
+        need_to_move_x = destination_x - current_x  # 0 if no need to move
+        need_to_move_y = destination_y - current_y  # 0 if no need to move
+
+        if need_to_move_x and need_to_move_y:
+            # If it needs to move in both directions, randomly pick one of the two
+            direction = random.choice(["x", "y"])
+        elif need_to_move_x:
+            # If it needs to move in only one direction, pick that direction
+            direction = "x"
+        elif need_to_move_y:
+            direction = "y"
+
+        # Now that the direction is known, pick the appropriate queue.
+        # For this, it doesn't matter from which queue the car is coming from (e.g. if it is going North, it will end up in a south queue).
+        if direction == "x":
+            if need_to_move_x > 0:
+                destination_queue = str(current_x + 1) + str(current_y) + "E"
+            else:
+                destination_queue = str(current_x - 1) + str(current_y) + "W"
+        elif direction == "y":
+            if need_to_move_y > 0:
+                destination_queue = str(current_x) + str(current_y + 1) + "N"
+            else:
+                destination_queue = str(current_x) + str(current_y - 1) + "S"
+
+        print("For car {}, the destination queue is {}, with final destination {} and current location {}".format(
+            self.id, destination_queue, self.final_destination, self.car_queue_id))
+        return destination_queue

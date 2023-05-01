@@ -5,7 +5,7 @@ class Intersection:
     def __init__(self, id, queue_capacity):
         self.id = id
         self.carQueues = []
-        # Create dictionary of car queues for the 4 positions (e.g. N queue is on the North side, going E/S/W),
+        # Create dictionary of car queues for the 4 positions (e.g. N queue is on the North side),
         self.carQueues = {  # N, S, E, W
             'N': CarQueue(queue_capacity, str(id + 'N')),
             'E': CarQueue(queue_capacity, str(id + 'E')),

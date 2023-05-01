@@ -49,10 +49,10 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--grid_size",
         default=3,
-        choices=range(1, 101),
+        choices=range(1, 10),
         metavar="[0-100]",
         type=int,
-        help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 100."
+        help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 10."
     )
     simulate_parser.add_argument(
         "--queue_capacity",
