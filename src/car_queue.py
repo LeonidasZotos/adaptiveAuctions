@@ -31,8 +31,10 @@ class CarQueue:
             print("Car Queue is full, cannot add car")
             return -1
 
-    def get_first_car(self):
-        self.cars.pop(0)
+    def get_first_car_and_destination(self):
+        car = self.cars.pop(0)
+        destination = car.retrieve_destination()
+        return car, destination
 
     def has_capacity(self):
         if self.queue_length() < self.capacity:
@@ -75,9 +77,12 @@ class CarQueue:
         # Second, the waiting time must be reset, as the cars received priority
         for car in self.cars:
             car.waiting_time = 0
-            
+
         # Third, the bids must be reset, so that the next auction can be run.
         self.reset_bids()
+
+        # Lastly, the car that won the auction must be removed from the queue
+        winning_car = self.get_first_car_and_destination()
 
     def lose_auction(self):
         # This is executed by the car queues that lost the auction.

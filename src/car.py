@@ -5,7 +5,7 @@ class Car:
     # A class variable to keep track of all cars.
     all_cars = []
 
-    def __init__(self, id):
+    def __init__(self, id, intersection_id, queue_id):
         Car.all_cars.append(self)
         self.id = id
         # Randomly pick a direction, from N, S, E, W
@@ -16,6 +16,8 @@ class Car:
         self.rush_factor = random.random()
         self.submitted_bid = 0
         self.waiting_time = 0
+        self.current_intersection_id = intersection_id
+        self.current_queue_id = queue_id
 
     def __str__(self):
         return f'Car(id={self.id}), heading {self.direction}'
@@ -34,7 +36,7 @@ class Car:
     def pay_bid(self, price):
         # Price is not necessarily the same as the bid (e.g. 2nd price auction)
         self.balance -= price
-        if self.balance < 0: # This should never happen, we the bid is limited by the balance
+        if self.balance < 0:  # This should never happen, we the bid is limited by the balance
             print("ERROR: Car {} has negative balance".format(self.id))
         print("Car {} paid {} to exit intersection".format(self.id, price))
 

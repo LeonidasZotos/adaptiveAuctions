@@ -28,7 +28,6 @@ def spawn_cars(args):
         # If the queue has capacity, spawn a car
         if queue.has_capacity():
             number_of_spawns -= 1
-            print(number_of_spawns)
             # number_of_spawns can be used as a unique ID
             queue.add_car(Car(id=number_of_spawns))
 
@@ -41,7 +40,8 @@ def give_credit(args):
         for car in Car.all_cars:
             car.set_balance(args.credit_balance)
         print(len(Car.all_cars), " cars have been given credit.")
-        
+
+
 def run(args):
 
     if not os.path.exists(args.results_folder):
