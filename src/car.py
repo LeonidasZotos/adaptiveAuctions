@@ -5,7 +5,7 @@ class Car:
     # A class variable to keep track of all cars.
     all_cars = []
 
-    def __init__(self, id, intersection_id, queue_id):
+    def __init__(self, id, car_queue_id):
         Car.all_cars.append(self)
         self.id = id
         # Randomly pick a direction, from N, S, E, W
@@ -16,8 +16,8 @@ class Car:
         self.rush_factor = random.random()
         self.submitted_bid = 0
         self.waiting_time = 0
-        self.current_intersection_id = intersection_id
-        self.current_queue_id = queue_id
+        # location_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
+        self.car_queue_id = car_queue_id
 
     def __str__(self):
         return f'Car(id={self.id}), heading {self.direction}'
@@ -43,3 +43,7 @@ class Car:
     def set_balance(self, balance):
         # Set the balance of the car to the given balance. Used for the wage distribution.
         self.balance = balance
+
+    def retrieve_intersection_exit(self):
+
+        pass

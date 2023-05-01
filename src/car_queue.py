@@ -5,8 +5,9 @@ class CarQueue:
     # A class variable to keep track of all car queues.
     all_car_queues = []
 
-    def __init__(self, max_capacity):
+    def __init__(self, max_capacity, id):
         CarQueue.all_car_queues.append(self)
+        self.id = id
         self.cars = []
         self.capacity = max_capacity
         self.num_of_cars = len(self.cars)
@@ -19,7 +20,7 @@ class CarQueue:
         for car in self.cars:
             car_ids.append(car.id)
 
-        return f'Car Queue contains cars with IDs: {car_ids}'
+        return f'Car Queue (ID: {self.id}) contains cars with IDs: {car_ids}'
 
     def queue_length(self):
         return len(self.cars)
@@ -33,7 +34,7 @@ class CarQueue:
 
     def get_first_car_and_destination(self):
         car = self.cars.pop(0)
-        destination = car.retrieve_destination()
+        destination = car.retrieve_intersection_exit()
         return car, destination
 
     def has_capacity(self):
