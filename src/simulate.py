@@ -13,8 +13,6 @@ def setup_simulation(args):
     for car_queue in CarQueue.all_car_queues:
         print(car_queue)
 
-    return
-
 
 def spawn_cars(args):
     # This should only be exectuted at the start of the simulation
@@ -34,28 +32,20 @@ def spawn_cars(args):
             # number_of_spawns can be used as a unique ID
             queue.add_car(Car(id=number_of_spawns))
 
-    return
-
 
 def give_credit(args):
     # This should only be exectuted once every x iterations
     if Car.all_cars == []:
         print("No Cars in Simulation.")
-        return
-
-    for car in Car.all_cars:
-        car.set_balance(args.credit_balance)
-    print(len(Car.all_cars), " cars have been given credit.")
-    return
-
-
+    else:
+        for car in Car.all_cars:
+            car.set_balance(args.credit_balance)
+        print(len(Car.all_cars), " cars have been given credit.")
+        
 def run(args):
 
     if not os.path.exists(args.results_folder):
         os.makedirs(args.results_folder)
 
     setup_simulation(args)
-
     print("Simulation Completed")
-
-    return

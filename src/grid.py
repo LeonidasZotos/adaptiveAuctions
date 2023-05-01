@@ -27,5 +27,3 @@ class Grid:
             for j in range(self.grid_size):
                 print(self.map[i][j], end=" ")
             print()
-
-        pass

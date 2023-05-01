@@ -36,6 +36,8 @@ class CarQueue:
     def has_capacity(self):
         if self.queue_length() < self.capacity:
             return True
+        else:
+            return False
 
     def collect_bids(self):
         bids = {}
