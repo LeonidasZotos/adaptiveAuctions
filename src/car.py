@@ -11,7 +11,7 @@ class Car:
         # Randomly pick a direction, from N, S, E, W
         self.direction = random.choice(['N', 'S', 'E', 'W'])
         # Set an initial balance
-        self.balance = 100
+        self.balance = 0
         # Rush factor is random between 0 and 1
         self.rush_factor = random.random()
         self.submitted_bid = 0

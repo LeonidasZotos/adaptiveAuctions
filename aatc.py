@@ -7,12 +7,12 @@ from src import simulate, clean
 # Utility Functions
 
 
-def float_range(mini, maxi):
+def float_range(minimum, maximum):
     """Return function handle of an argument type function for 
-       ArgumentParser checking a float range: mini <= arg <= maxi
+       ArgumentParser checking a float range: minimum <= arg <= maximum
        Source: https://stackoverflow.com/a/64259328
-         mini - minimum acceptable argument
-         maxi - maximum acceptable argument
+         minimum - minimum acceptable argument
+         maximum - maximum acceptable argument
         """
 
     # Define the function with default arguments
@@ -23,9 +23,9 @@ def float_range(mini, maxi):
             f = float(arg)
         except ValueError:
             raise argparse.ArgumentTypeError("Must be a floating point number")
-        if f < mini or f > maxi:
+        if f < minimum or f > maximum:
             raise argparse.ArgumentTypeError(
-                "Must be in range [" + str(mini) + " .. " + str(maxi)+"]")
+                "Must be in range [" + str(minimum) + "-" + str(maximum)+"]")
         return f
 
     # Return function handle to checking function
@@ -49,14 +49,16 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--grid_size",
         default=3,
-        choices=range(1, 100),
+        choices=range(1, 101),
+        metavar="[0-100]",
         type=int,
         help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 100."
     )
     simulate_parser.add_argument(
         "--queue_capacity",
         default=4,
-        choices=range(1, 100),
+        choices=range(1, 101),
+        metavar="[0-100]",
         type=int,
         help="Capacity of each car queue. Defaults to 4. Must be an integer between 1 and 100."
     )
