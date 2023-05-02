@@ -2,6 +2,7 @@ from src.intersection import Intersection
 
 
 class Grid:
+    epoch_movements = [] # TODO: Keeps track of movements per epoch, given from the individual intersections after each auction
     def __init__(self, grid_size, queue_capacity):
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity

@@ -43,6 +43,12 @@ class CarQueue:
             return True
         else:
             return False
+        
+    def is_empty(self):
+        if self.queue_length() > 0:
+            return False
+        else:
+            return True
 
     def collect_bids(self):
         bids = {}
