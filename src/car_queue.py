@@ -33,8 +33,9 @@ class CarQueue:
             return -1
 
     def get_first_car_and_destination(self):
-        car = self.cars.pop(0)
-        destination = car.retrieve_intersection_exit()
+        # For now, the car is not removed. We first need to check if the new queue has capacity.
+        car = self.cars[0]
+        destination = car.update_destination_queue()
         return car, destination
 
     def has_capacity(self):
@@ -54,6 +55,7 @@ class CarQueue:
     def win_auction(self, winning_bid):
         # This is executed by the car queue that won the auction. The winning bid is given by the mechanism, and can be the 2nd bid for example.
         # The waiting time is also reset for the cars in this queue.
+        # TODO: Only commit actions if the new queue has capacity!!!
 
         # First, the bid must be paid
         total_amount_paid = 0  # TODO: Remove this if it works DEBUG ONLY!!!
@@ -83,7 +85,9 @@ class CarQueue:
         self.reset_bids()
 
         # Lastly, the car that won the auction must be removed from the queue
-        winning_car = self.get_first_car_and_destination()
+        winning_car, destination = self.get_first_car_and_destination()
+        print("Winning car with iD {} and destination {} got priority".format(
+            winning_car.id, destination))
 
     def lose_auction(self):
         # This is executed by the car queues that lost the auction.

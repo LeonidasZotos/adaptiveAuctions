@@ -18,6 +18,7 @@ class Car:
         self.waiting_time = 0
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = car_queue_id
+        self.destination_queue = self.update_destination_queue()
 
     def __str__(self):
         return f'Car(id={self.id}), with destination: {self.final_destination}'
@@ -61,7 +62,7 @@ class Car:
         else:
             return False
 
-    def retrieve_intersection_exit(self):
+    def update_destination_queue(self):
         # Returns a queue ID: <intersectionID><Queue Position>
         destination_queue = ""
         current_x = int(self.car_queue_id[0])
@@ -97,4 +98,5 @@ class Car:
 
         print("For car {}, the destination queue is {}, with final destination {} and current location {}".format(
             self.id, destination_queue, self.final_destination, self.car_queue_id))
-        return destination_queue
+        
+        self.destination_queue = destination_queue
