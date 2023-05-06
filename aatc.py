@@ -78,6 +78,24 @@ if __name__ == '__main__':
     )
 
     simulate_parser.add_argument(
+        "--num_epochs",
+        default=5,
+        choices=range(1, 5001),
+        metavar="[1-5000]",
+        type=int,
+        help="Number of epochs to run. Defaults to 5. Must be an integer between 1 and 5000."
+    )
+
+    simulate_parser.add_argument(
+        "--wage_time",
+        default=2,
+        choices=range(1, 5001),
+        metavar="[1-5000]",
+        type=int,
+        help="Number of epochs between wage distributions. Defaults to 2. Must be an integer between 1 and 5000."
+    )
+
+    simulate_parser.add_argument(
         "--results_folder",
         default="results",
         type=str,

@@ -9,13 +9,15 @@ class Car:
         Car.all_cars.append(self)
         self.id = id
         # Randomly pick a destination intersection
-        self.final_destination = self.set_final_destination(grid_size)
+        self.final_destination = ""
+        self.set_final_destination(grid_size)
+        print("the final destination is: ", self.final_destination)
         # Set an initial balance
         self.balance = 0
         # Rush factor is random between 0 and 1
         self.rush_factor = random.random()
         self.submitted_bid = 0
-        self.waiting_time = 0
+        self.time_inactive = 0
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = car_queue_id
         self.destination_queue = self.update_destination_queue()
@@ -32,7 +34,7 @@ class Car:
 
         # Return a tuple of the car ID and the bid.
         # Car ID is included so that the intersection can keep track of which car submitted which bid.
-        return self.id, self.submitted_bid, self.waiting_time
+        return self.id, self.submitted_bid, self.time_inactive
 
     def pay_bid(self, price):
         # Price is not necessarily the same as the bid (e.g. 2nd price auction)
@@ -45,13 +47,14 @@ class Car:
         # Set the balance of the car to the given balance. Used for the wage distribution.
         self.balance = balance
 
+    def update_car_queue_id(self, new_car_queue_id):
+        self.car_queue_id = new_car_queue_id
+
     def set_final_destination(self, grid_size):
         # Randomly pick a destination intersection
         x = random.randint(0, grid_size - 1)
         y = random.randint(0, grid_size - 1)
         self.final_destination = str(x) + str(y)
-        print("The final destination of car {} is intersection with id: {}".format(
-            self.id, self.final_destination))
 
     def is_at_destination(self):
         # Evaluated whether the car is at its final destination.
@@ -74,6 +77,8 @@ class Car:
         need_to_move_x = destination_x - current_x  # 0 if no need to move
         need_to_move_y = destination_y - current_y  # 0 if no need to move
 
+        direction = ""
+
         if need_to_move_x and need_to_move_y:
             # If it needs to move in both directions, randomly pick one of the two
             direction = random.choice(["x", "y"])
@@ -84,7 +89,7 @@ class Car:
             direction = "y"
 
         # Now that the direction is known, pick the appropriate queue.
-        # For this, it doesn't matter from which queue the car is coming from (e.g. if it is going North, it will end up in a south queue).
+        # For this, it doesn't matter from which queue the car is coming from (e.g. if it is going North, it will end up in a South queue).
         if direction == "x":
             if need_to_move_x > 0:
                 destination_queue = str(current_x + 1) + str(current_y) + "E"
@@ -98,5 +103,10 @@ class Car:
 
         print("For car {}, the destination queue is {}, with final destination {} and current location {}".format(
             self.id, destination_queue, self.final_destination, self.car_queue_id))
-        
+
         self.destination_queue = destination_queue
+        return self.destination_queue
+
+
+def ready_for_new_epoch(self):
+    self.submitted_bid = 0

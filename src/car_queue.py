@@ -38,12 +38,16 @@ class CarQueue:
         destination = car.update_destination_queue()
         return car, destination
 
+    def remove_first_car(self):
+        # Return the first car from the queue
+        return self.cars.pop(0)
+
     def has_capacity(self):
         if self.queue_length() < self.capacity:
             return True
         else:
             return False
-        
+
     def is_empty(self):
         if self.queue_length() > 0:
             return False
@@ -54,17 +58,19 @@ class CarQueue:
         bids = {}
         # A dictionary is used so that we know which car submitted which bid, as well as the waiting time.
         for car in self.cars:
-            car_id, bid, waiting_time = car.submit_bid()
-            bid[car_id] = (bid, waiting_time)
+            car_id, bid, time_inactive = car.submit_bid()
+            bid[car_id] = (bid, time_inactive)
         return bids
 
     def win_auction(self, winning_bid):
-        # This is executed by the car queue that won the auction. The winning bid is given by the mechanism, and can be the 2nd bid for example.
-        # The waiting time is also reset for the cars in this queue.
-        # TODO: Only commit actions if the new queue has capacity!!!
+        # If a queue wins an auction:
+        # 1. The winning bid is paid by the cars in the queue.
+        # 2. The inactivity time is reset for the cars in the queue.
+        # 3. The inactivity time is reset for the queue itself.
+        # - NOTE: The actual winning car is moved by the grid itself.
 
         # First, the bid must be paid
-        total_amount_paid = 0  # TODO: Remove this if it works DEBUG ONLY!!!
+        total_amount_paid = 0  # NOTE: Remove this if it works DEBUG ONLY!!!
         queue_car_ids = []  # This holds the IDs of all cars in the queue
         queue_bids = []  # This holds the bids of all cars in the queue, in the same order as the IDs
         total_submitted_bid = 0  # This is the sum of the bids of all cars in the queue
@@ -83,26 +89,18 @@ class CarQueue:
         print("In total, the cars in the queue paid {} to exit the intersection. The total amount to be paid was: {}".format(
             total_amount_paid, winning_bid))
 
-        # Second, the waiting time must be reset, as the cars received priority
+        # Second, the inactivity time must be reset for all cars in the queue.
         for car in self.cars:
-            car.waiting_time = 0
+            car.time_inactive = 0
 
-        # Third, the bids must be reset, so that the next auction can be run.
-        self.reset_bids()
-
-        # Lastly, the car that won the auction must be removed from the queue
-        winning_car, destination = self.get_first_car_and_destination()
-        print("Winning car with iD {} and destination {} got priority".format(
-            winning_car.id, destination))
-
-    def lose_auction(self):
-        # This is executed by the car queues that lost the auction.
-        # First, the waiting time must be increased for all cars in the queue.
-        for car in self.cars:
-            car.waiting_time += 1
-        # Second, the bids must be reset, so that the next auction can be run.
-        self.reset_bids()
+        # Third, the inactivity time must be reset for the queue itself.
+        self.time_inactive = 0
 
     def reset_bids(self):
         # Reset the bids for the car queue, so that the next auction can be run.
         self.bids = self.bids.clear()
+
+    def ready_for_new_epoch(self):
+        self.reset_bids()
+        self.num_of_cars = self.queue_length()
+        self.time_inactive += 1
