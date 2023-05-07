@@ -9,18 +9,17 @@ class Car:
         Car.all_cars.append(self)
         self.id = id
         # Randomly pick a destination intersection
+        # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
+        self.car_queue_id = car_queue_id
         self.final_destination = ""
         self.set_final_destination(grid_size)
-        print("the final destination is: ", self.final_destination)
+        self.destination_queue = self.update_destination_queue()
         # Set an initial balance
         self.balance = 0
         # Rush factor is random between 0 and 1
         self.rush_factor = random.random()
         self.submitted_bid = 0
         self.time_inactive = 0
-        # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
-        self.car_queue_id = car_queue_id
-        self.destination_queue = self.update_destination_queue()
 
     def __str__(self):
         return f'Car(id={self.id}), with destination: {self.final_destination}'
@@ -55,6 +54,9 @@ class Car:
         x = random.randint(0, grid_size - 1)
         y = random.randint(0, grid_size - 1)
         self.final_destination = str(x) + str(y)
+        if self.car_queue_id[:-1] == self.final_destination:
+            # If the car is already at its final destination, pick a new one.
+            self.set_final_destination(grid_size)
 
     def is_at_destination(self):
         # Evaluated whether the car is at its final destination.
@@ -101,10 +103,8 @@ class Car:
             else:
                 destination_queue = str(current_x) + str(current_y - 1) + "S"
 
-        print("For car {}, the destination queue is {}, with final destination {} and current location {}".format(
-            self.id, destination_queue, self.final_destination, self.car_queue_id))
-
         self.destination_queue = destination_queue
+
         return self.destination_queue
 
 

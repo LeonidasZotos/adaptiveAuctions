@@ -24,14 +24,16 @@ class Intersection:
         # returns the movement from car queue x to car queue y that needs to be executed
         # TODO: implement auction mechanism
         # For now, we pick a random queue to be the winner
+        collected_bids = {}
+        for queue in self.carQueues.values():
+            collected_bids[queue.id] = queue.collect_bids()
+        # Currently we don't use it, but the bids need to be set for later
+
         winning_queue = random.choice([queue for queue in self.carQueues.values(
         ) if not queue.is_empty()])  # Must have cars in queue
-        _, destination = winning_queue.get_first_car_and_destination()
-
-        print("winning queue id is ", winning_queue.id,
-              "with destination: ", destination)
-        print("The type of winning queue id is:", type(winning_queue.id),
-              "with destination type: ", type(destination))
+        destination = winning_queue.get_destination()
+        total_fee = 10  # Placeholder for now
+        winning_queue.set_auction_fee(total_fee)
         # We return the originating car queue and the destination car queue. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
         return winning_queue.id, destination

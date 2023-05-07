@@ -9,8 +9,6 @@ from src.car import Car
 def setup_simulation(args):
     grid = Grid(args.grid_size, args.queue_capacity)
     spawn_cars(args)
-    give_credit(args)
-
     return grid
 
 
@@ -31,18 +29,17 @@ def spawn_cars(args):
             # number_of_spawns can be used as a unique ID
             queue.add_car(
                 Car(id=number_of_spawns, car_queue_id=queue.id, grid_size=args.grid_size))
-            print("This car queue has id: ", queue.id)
 
 
 def run_epochs(args, grid):
     for i in range(args.num_epochs):
-        print("Epoch: ", i)
+        print("Epoch:", i)
         if i % args.wage_time == 0:
-            print("Giving credit in epoch ", i)
+            print("Giving credit in epoch:", i)
             give_credit(args)
         else:
-            print("Not giving credit in epoch ", i)
-        print("Running epoch ", i)
+            print("Not giving credit in epoch:", i)
+        print("Running epoch:", i)
         run_single_epoch(grid)
 
 
@@ -76,7 +73,7 @@ def run(args):
         os.makedirs(args.results_folder)
 
     setup_simulation(args)
-    
+
     run_epochs(args, setup_simulation(args))
 
     print("Simulation Completed")

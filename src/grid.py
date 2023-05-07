@@ -1,5 +1,6 @@
 from src.intersection import Intersection
 from src.car_queue import CarQueue
+import random
 
 
 class Grid:
@@ -36,7 +37,7 @@ class Grid:
         self.calculate_movements()
         self.filter_unfeasible_movements()
         self.execute_movements()
-        
+
     def calculate_movements(self):
         # Request the winning movement from each intersection.
         # Each movement is the originating car queue id and the destination car queue id.
@@ -46,22 +47,43 @@ class Grid:
 
     def filter_unfeasible_movements(self):
         # Remove movements that are not possible (Because the destination queue is full)
-        # Print all the movements of this epoch:
-        print("Movements in this epoch: ", self.epoch_movements)
-        
-        for movement in self.epoch_movements:
-            _, destination_queue_id = movement
-            if not self.get_car_queue(destination_queue_id).has_capacity():
-                self.epoch_movements.remove(movement)
+        queues_and_their_capacities = {}
+        for _, destination_queue_id in self.epoch_movements:
+            queues_and_their_capacities[destination_queue_id] = self.get_car_queue(
+                destination_queue_id).get_num_of_free_spots()
+
+        queues_and_their_demand = {}
+        for _, destination_queue_id in self.epoch_movements:
+            if destination_queue_id not in queues_and_their_demand.keys():
+                queues_and_their_demand[destination_queue_id] = 1
+            elif destination_queue_id in queues_and_their_demand.keys():
+                queues_and_their_demand[destination_queue_id] += 1
+
+        # Delete random movements, so that there is one movement per queue
+        for queue_id, demand in queues_and_their_demand.items():
+            # If there is more demand than capacity, remove random movements until demand is met
+            if demand > queues_and_their_capacities[queue_id]:
+                # List of all movements that go to this queue
+                movements_to_this_queue = [
+                    movement for movement in self.epoch_movements if movement[1] == queue_id]
+                # Remove random movements destined to this queue until demand is met
+                while demand > queues_and_their_capacities[queue_id]:
+                    # Pick a random movement to remove
+                    movement_to_remove = random.choice(movements_to_this_queue)
+                    self.epoch_movements.remove(
+                        movement_to_remove)
+                    # Update the demand
+                    demand -= 1
+                    # Update the list of movements to this queue
+                    movements_to_this_queue = [
+                        movement for movement in self.epoch_movements if movement[1] == queue_id]
 
     def get_car_queue(self, car_queue_id):
         # Returns the car queue object given a car queue id
-        print("Looking for queue with id: ", car_queue_id)
         for queue in CarQueue.all_car_queues:
             if queue.id == car_queue_id:
-                print("Queue found!!!!!!")
                 return queue
-        print("Queue ID not found, with id: ", car_queue_id)
+        print("ERROR: Queue ID not found, with id: ", car_queue_id)
 
     def execute_movements(self):
         # Execute the movements that are possible
