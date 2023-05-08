@@ -1,7 +1,7 @@
-"""Runner Program for the Adaptive Auctions for Traffic Coordination Project. 
-"""
+"""Runner Program for the Adaptive Auctions for Traffic Coordination Project."""
 
 import argparse
+
 from src import simulate, clean
 
 # Utility Functions
@@ -11,8 +11,11 @@ def float_range(minimum, maximum):
     """Return function handle of an argument type function for 
        ArgumentParser checking a float range: minimum <= arg <= maximum
        Source: https://stackoverflow.com/a/64259328
-         minimum - minimum acceptable argument
-         maximum - maximum acceptable argument
+        Args:
+            minimum - minimum acceptable argument
+            maximum - maximum acceptable argument
+        Returns:
+            function handle to checking function
         """
 
     # Define the function with default arguments
@@ -39,7 +42,7 @@ if __name__ == '__main__':
         description="Welcome to the 'Adaptive Auctions for Traffic Coordination' program."
     )
 
-    # The 2 subparsers are: simulate, test
+    # The 2 subparsers are: simulate, clean
     subparsers = parser.add_subparsers(
         help='commands', title="commands", dest="command")
 
