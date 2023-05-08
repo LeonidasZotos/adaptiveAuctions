@@ -48,9 +48,9 @@ if __name__ == '__main__':
         'simulate', help='Run a full Simulation')
     simulate_parser.add_argument(
         "--grid_size",
-        default=3,
-        choices=range(1, 10),
-        metavar="[0-100]",
+        default=4,
+        choices=range(2, 10),
+        metavar="[2-100]",
         type=int,
         help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 10."
     )
@@ -78,7 +78,7 @@ if __name__ == '__main__':
     )
 
     simulate_parser.add_argument(
-        "--num_epochs",
+        "--num_of_epochs",
         default=5,
         choices=range(1, 5001),
         metavar="[1-5000]",

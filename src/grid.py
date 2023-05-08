@@ -1,5 +1,6 @@
 from src.intersection import Intersection
 from src.car_queue import CarQueue
+from src.car import Car
 import random
 
 
@@ -8,7 +9,7 @@ class Grid:
     def __init__(self, grid_size, queue_capacity):
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity
-        self.map = self.create_grid()
+        self.intersections = self.create_grid()
         # Keep track of the movements that need to be executed in this epoch
         self.epoch_movements = []
 
@@ -27,11 +28,24 @@ class Grid:
         return grid
 
     def print_grid(self):
-        print("Printing Grid:")
+        print("======Start of Grid======")
         for i in range(self.grid_size):
             for j in range(self.grid_size):
-                print(self.map[i][j], end=" ")
+                print(self.intersections[i][j], end="\n")
+                for queue in self.intersections[i][j].carQueues:
+                    print(queue, end=" ")
+                    print()
+                    for car in queue.cars:
+                        print(car, end=" ")
+                        print()
             print()
+        print("=======End of Grid=======")
+
+    def print_cars(self):
+        print("======Start of Cars======")
+        for car in Car.all_cars:
+            print(car)
+        print("=======End of Cars=======")
 
     def move_cars(self):
         self.calculate_movements()
@@ -42,8 +56,10 @@ class Grid:
         # Request the winning movement from each intersection.
         # Each movement is the originating car queue id and the destination car queue id.
         for intersection in Intersection.all_intersections:
-            origin, destination = intersection.hold_auction()
-            self.epoch_movements.append((origin, destination))
+            # Only hold an auction if there are cars in the intersection
+            if not intersection.is_empty():
+                origin, destination = intersection.hold_auction()
+                self.epoch_movements.append((origin, destination))
 
     def filter_unfeasible_movements(self):
         # Remove movements that are not possible (Because the destination queue is full)
@@ -92,15 +108,48 @@ class Grid:
             oringin_queue_id, destination_queue_id = movement
             self.get_car_queue(oringin_queue_id).win_auction()
 
-        # Then, all cars must be moved. This has to be done after the payment, because otherwise if a winning car moves to another winning queue, they might pay twice
+        # Then, all cars must be moved. This has to be done after the payment, because otherwise
+        # if a winning car moves to another winning queue, they might pay twice
+
         for movement in self.epoch_movements:
             oringin_queue_id, destination_queue_id = movement
             origin_queue = self.get_car_queue(oringin_queue_id)
             destination_queue = self.get_car_queue(destination_queue_id)
+
             car_to_move = origin_queue.remove_first_car()
             destination_queue.add_car(car_to_move)
             # Let the car know of its new queue
             car_to_move.update_car_queue_id(destination_queue_id)
+
+    def spawn_cars(self, congestion_rate):
+        # This should only be exectuted at the start of the simulation
+        # Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
+        total_spots = self.grid_size * self.grid_size * 4 * self.queue_capacity
+        number_of_spawns = int(total_spots * congestion_rate)
+
+        # As long as there are still spots to spawn cars, spawn cars
+        while number_of_spawns > 0:
+            # Randomly pick a car queue
+            queue = CarQueue.all_car_queues[random.randint(
+                0, len(CarQueue.all_car_queues) - 1)]
+            # If the queue has capacity, spawn a car
+            if queue.has_capacity():
+                number_of_spawns -= 1
+                # number_of_spawns can be used as a unique ID
+                queue.add_car(
+                    Car(id=number_of_spawns, car_queue_id=queue.id, grid_size=self.grid_size))
+
+    def respawn_cars(self, grid_size):
+        for car in Car.all_cars:
+            if car.is_at_destination():
+                # If the car is at its destination, remove it from the queue and spawn it somewhere else
+                self.get_car_queue(car.car_queue_id).remove_car(car)
+                # Pick a random queue that has capacity
+                random_queue = random.choice(
+                    [queue for queue in CarQueue.all_car_queues if queue.has_capacity()])
+                # Reset the car (new destination, new queue, new balance)
+                car.reset_car(random_queue.id, grid_size)
+                random_queue.add_car(car)
 
     def ready_for_new_epoch(self):
         self.epoch_movements = []

@@ -16,13 +16,14 @@ class Car:
         self.destination_queue = self.update_destination_queue()
         # Set an initial balance
         self.balance = 0
-        # Rush factor is random between 0 and 1
-        self.rush_factor = random.random()
+        # Rush factor is random between 0 and 1, rounded to 1 decimal
+        self.rush_factor = round(random.random(), 1)
+
         self.submitted_bid = 0
         self.time_inactive = 0
 
     def __str__(self):
-        return f'Car(id={self.id}), with destination: {self.final_destination}'
+        return f'Car(id={self.id}), destination: {self.final_destination}, balance: {self.balance}, rush factor: {self.rush_factor}'
 
     def submit_bid(self):
         # For now, randomly submit a bid. TODO: Incorporate rush factor
@@ -40,7 +41,6 @@ class Car:
         self.balance -= price
         if self.balance < 0:  # This should never happen, we the bid is limited by the balance
             print("ERROR: Car {} has negative balance".format(self.id))
-        print("Car {} paid {} to exit intersection".format(self.id, price))
 
     def set_balance(self, balance):
         # Set the balance of the car to the given balance. Used for the wage distribution.
@@ -107,6 +107,15 @@ class Car:
 
         return self.destination_queue
 
+    def reset_car(self, car_queue_id, grid_size):
+        self.car_queue_id = car_queue_id
+        self.final_destination = ""
+        self.set_final_destination(grid_size)
+        self.destination_queue = self.update_destination_queue()
+        # New Rush factor is random between 0 and 1
+        self.rush_factor = round(random.random(), 1)
+        self.submitted_bid = 0
+        self.time_inactive = 0
 
-def ready_for_new_epoch(self):
-    self.submitted_bid = 0
+    def ready_for_new_epoch(self):
+        self.submitted_bid = 0
