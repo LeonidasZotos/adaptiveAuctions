@@ -86,5 +86,3 @@ def run(args):
 
     # Run the epochs on the grid
     run_epochs(args, grid)
-
-    print("Simulation Completed")

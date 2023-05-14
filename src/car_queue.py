@@ -131,17 +131,24 @@ class CarQueue:
             print("ERROR: Car {} is not in queue {}".format(car.id, self.id))
 
 ### Auction Functions ###
-    def collect_bids(self):
+    def collect_bids(self, only_collect_first=True):
         """ Makes a collection of bids from all cars in the queue (not the payment, but the initial bid)
+        Args:
+            only_collect_first (bool): If True, only the first car in the queue will submit a bid.
         Returns:
             dict: A dictionary of bids submitted by the cars in the queue.
                 The key is the car ID, and the value is the submitted bid of the car
         """
-        self.bids = {}
         # A dictionary is used so that we know which car submitted which bid
-        for car in self.cars:
-            car_id, bid = car.submit_bid()
+        self.bids = {}
+        if only_collect_first:
+            car_id, bid = self.cars[0].submit_bid()
             self.bids[car_id] = bid
+        else:
+            for car in self.cars:
+                car_id, bid = car.submit_bid()
+                self.bids[car_id] = bid
+
         return self.bids
 
     def win_auction(self):
