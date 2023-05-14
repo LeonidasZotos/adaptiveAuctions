@@ -30,7 +30,7 @@ def run_epochs(args, grid):
         args (argparse.Namespace): Arguments parsed from the command line
         grid (Grid): The grid object that contains all intersections and car queues
     """
-    for i in tqdm(range(args.num_of_epochs)):
+    for i in range(args.num_of_epochs):
         # Every wage_time epochs, give credit to all cars
         if i % args.wage_time == 0:
             give_credit(args)

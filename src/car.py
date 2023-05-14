@@ -52,7 +52,7 @@ class Car:
         self.rush_factor = round(random.random(), 1)
         # The bid that the car submitted in the last auction.
         self.submitted_bid = 0
-        
+
     def __str__(self):
         return f'Car(id={self.id}), destination: {self.final_destination}, balance: {self.balance}, rush factor: {self.rush_factor}'
 
@@ -173,9 +173,11 @@ class Car:
         # If there is not enough balance, bid entire balance.
         if self.submitted_bid > self.balance:
             self.submitted_bid = self.balance
-            
+        if self.submitted_bid < 0:
+            print("ERROR: Car {} tried to submit a negative bid {}".format(self.id, self.submitted_bid))
+            self.submitted_bid = 0
         # Return the car's id and the bid
-        return self.id, round(self.submitted_bid, 1)
+        return self.id, int(self.submitted_bid)
 
     def pay_bid(self, price):
         """ Pay the given price. Used when the car wins an auction. The price should never be higher than the balance. 
@@ -183,7 +185,12 @@ class Car:
             Args:
                 price (float): The price that the car has to pay (i.e. amount to deduct from balance). 
         """
-        self.balance -= price
+        if price > self.balance:
+            print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {})".format(self.id, price, self.balance))
+            self.balance = 0
+        else:
+            self.balance -= price
+
         if self.balance < 0:  # This should never happen, as the bid is limited by the balance.
             print("ERROR: Car {} has negative balance".format(self.id))
 

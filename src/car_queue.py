@@ -96,7 +96,7 @@ class CarQueue:
         Args:
             fee (int): The total fee that the cars in the queue have to pay
         """
-        self.total_fee = int(fee)
+        self.total_fee = fee
 
 ### Queue Manipulation Functions ###
     def add_car(self, car):
@@ -153,7 +153,6 @@ class CarQueue:
         # 2. The inactivity time is reset for the queue.
 
         # First, the bid must be paid
-        total_amount_paid = 0  # NOTE: Remove this if it works DEBUG ONLY!!!
         queue_car_ids = []  # This holds the IDs of all cars in the queue
         queue_bids = []  # This holds the bids of all cars in the queue, in the same order as the IDs
         total_submitted_bid = 0  # This is the sum of the bids of all cars in the queue
@@ -170,10 +169,9 @@ class CarQueue:
             # Default case is that the car pays nothing (This is explicit to avoid division by zero)
             individual_price = 0
             if total_submitted_bid > 0:
-                individual_price = int(self.total_fee * queue_bids[i] / total_submitted_bid)
-            self.cars[i].pay_bid(individual_price)
-            total_amount_paid += individual_price
+                individual_price = self.total_fee * queue_bids[i] / total_submitted_bid
 
+            self.cars[i].pay_bid(individual_price)
         # Finally, the inactivity time must be reset for the queue itself.
         self.time_inactive = 0
 
@@ -182,7 +180,7 @@ class CarQueue:
         if self.bids != None:
             self.bids = self.bids.clear()
 
-### Epoch Functions ###
+    ### Epoch Functions ###
     def ready_for_new_epoch(self):
         """Prepares the queue for the next epoch. This involved: 
             1) Resetting the bids,

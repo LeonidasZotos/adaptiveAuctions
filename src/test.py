@@ -21,8 +21,8 @@ def run(args):
             for congestion_rate in congestion_rates:
                 for credit_balance in credit_balances:
                     for wage_time in wage_times:
-                        print("Running with parameters: grid_size=", grid_size, ", queue_capacity=", queue_capacity,
-                              ", congestion_rate=", congestion_rate, ", credit_balance=", credit_balance, ", wage_time=", wage_time)
+                        print("Running with parameters: --grid_size ", grid_size, " --queue_capacity ", queue_capacity,
+                              " --congestion_rate ", congestion_rate, " --credit_balance ", credit_balance, " --wage_time ", wage_time)
                         command = "src/test-script.sh " + str(grid_size) + " " + str(queue_capacity) + " " + str(
                             congestion_rate) + " " + str(credit_balance) + " " + str(wage_time)
                         subprocess.run(command, shell=True)

@@ -59,7 +59,7 @@ class Intersection:
                 return queue
         print("ERROR: Queue ID not found, with id: ", car_queue_id)
 
-    def hold_auction(self, second_price=True):
+    def hold_auction(self, second_price=False):
         """Holds an auction between the car queues in this intersection.
         Args:
             second_price (bool): Whether to use the second price auction mechanism, instead of first-price. Defaults to False.
@@ -93,7 +93,7 @@ class Intersection:
                 collected_bids[queue.id] = queue.collect_bids()
                 queue_waiting_times[queue.id] = queue.get_time_inactive()
                 queue_lengths[queue.id] = queue.get_num_of_cars()
-        
+
         # If there is only 1 entry:
         if len(collected_bids) == 1:
             # We return the only queue, and its destination, and give no charge.
@@ -103,14 +103,11 @@ class Intersection:
             destination = winning_queue.get_destination_of_first_car()
             winning_queue.set_auction_fee(total_fee)
             return winning_queue.id, destination
-        
+
         # Summed_bids holds the sum of all bids for each queue
         summed_bids = {}
-        for key in collected_bids.keys():  # One modified/final bid per queue
-            summed_bids[key] = 0
-            # We add all bids for this queue, without any modifications for now
-            for bid in collected_bids[key].values():
-                summed_bids[key] += bid
+        for key in collected_bids.keys():
+            summed_bids[key] = sum(collected_bids[key].values())
 
         # First calculate the initial modifications of all queues, before normalising them.
         # We need to calculate them all first, as we need the min/max value for normalisation.
@@ -122,7 +119,7 @@ class Intersection:
 
         # Then normalise the modifications based on the min/max values of all modifications, and the given modification_boost_limit
         final_bids = {}
-        for key in summed_bids.keys():  # One modified/final bid per queue
+        for key in summed_bids.keys():
             normalised_modification = renormalize(
                 initial_modifications[key], initial_modifications.values(), modification_boost_limit)
             final_bids[key] = summed_bids[key] * normalised_modification
@@ -135,7 +132,7 @@ class Intersection:
         if not second_price:
             # Fist price auction
             # Modifications do not count for the final fee.
-            total_fee = max(summed_bids.values())
+            total_fee = summed_bids[winning_queue.id]
 
         if second_price:
             summed_bids_ordered = sorted(summed_bids.values(), reverse=True)
@@ -143,6 +140,11 @@ class Intersection:
 
         destination = winning_queue.get_destination_of_first_car()
         winning_queue.set_auction_fee(total_fee)
+        if (total_fee > sum(winning_queue.bids.values())):
+            print("For winning queue, ", winning_queue.id, " the total fee is: ",
+                  total_fee, "while they submitted bids: ", sum(winning_queue.bids.values()))
+            print("The specific bids are: ", winning_queue.bids)
+
         # We return the originating car queue and the destination car queue. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
         return winning_queue.id, destination
