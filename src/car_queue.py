@@ -169,7 +169,8 @@ class CarQueue:
             # Default case is that the car pays nothing (This is explicit to avoid division by zero)
             individual_price = 0
             if total_submitted_bid > 0:
-                individual_price = self.total_fee * queue_bids[i] / total_submitted_bid
+                individual_price = self.total_fee * \
+                    queue_bids[i] / total_submitted_bid
 
             self.cars[i].pay_bid(individual_price)
         # Finally, the inactivity time must be reset for the queue itself.
