@@ -13,7 +13,6 @@ class Car:
         balance (float): The balance of the car. This is the amount of credit the car has left.
         rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
         submitted_bid (float): The bid that the car submitted in the last auction.
-        time_inactive (int): The number of epochs that have passed since the last time the car won an auction.
     Functions:
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
@@ -53,9 +52,7 @@ class Car:
         self.rush_factor = round(random.random(), 1)
         # The bid that the car submitted in the last auction.
         self.submitted_bid = 0
-        # Number of epochs that have passed since the last time the car won an auction.
-        self.time_inactive = 0
-
+        
     def __str__(self):
         return f'Car(id={self.id}), destination: {self.final_destination}, balance: {self.balance}, rush factor: {self.rush_factor}'
 
@@ -152,7 +149,7 @@ class Car:
 
     def reset_car(self, car_queue_id, grid_size):
         """ Reset the car to a new state. E.g. Used when the car is (re)spawned.
-            This function resets the car's final destination, next destination queue, rush factor, submitted bid and time inactive.
+            This function resets the car's final destination, next destination queue, rush factor and submitted bid.
             The balance is not affected.
             Args:
                 car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
@@ -163,7 +160,6 @@ class Car:
         self.next_destination_queue = self.update_next_destination_queue()
         self.rush_factor = round(random.random(), 1)
         self.submitted_bid = 0
-        self.time_inactive = 0
 
 ### Auction functions ###
     def submit_bid(self):
@@ -171,15 +167,15 @@ class Car:
         Returns:
             self.id (str): The ID of the car, e.g. 1. This is included so that the intersection can keep track of which car submitted which bid.
             self.submitted_bid (float): The bid that the car submits in the auction.
-            self.time_inactive (int): The number of epochs that have passed since the last time the car won an auction. This is included for potential bonuses
         """
         # For now, randomly submit a bid. TODO: Incorporate rush factor
-        self.submitted_bid = random.randint(1, 20)
+        self.submitted_bid = random.randint(0, 20)
         # If there is not enough balance, bid entire balance.
         if self.submitted_bid > self.balance:
             self.submitted_bid = self.balance
-        # Return the car's id, the bid and the time inactive
-        return self.id, self.submitted_bid, self.time_inactive
+            
+        # Return the car's id and the bid
+        return self.id, round(self.submitted_bid, 1)
 
     def pay_bid(self, price):
         """ Pay the given price. Used when the car wins an auction. The price should never be higher than the balance. 

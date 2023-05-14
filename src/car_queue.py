@@ -13,11 +13,12 @@ class CarQueue:
         num_of_cars (int): The number of cars that are currently in the queue
         time_inactive (int): The number of epochs that have passed since the last car left the queue
         bids (dict): A dictionary of bids submitted by the cars in the queue. The key is the car ID,
-            the value is a list of the bid and the time inactive of the car.
+            the value is the bid of the car
         total_fee (int): The total fee that the cars in the queue have to pay, in case they win an auction
     Functions:
         is_empty: Checks whether the queue is empty
         get_num_of_cars: Returns the number of cars in the queue
+        get_time_inactive: Returns the time that has passed since the last car left the queue
         has_capacity: Checks whether the queue has capacity for more cars
         get_num_of_free_spots: Returns the number of free spots in the queue
         get_destination_of_first_car: Returns the destination of the first car in the queue
@@ -69,6 +70,10 @@ class CarQueue:
         """Returns the number of cars in the queue"""
         return len(self.cars)
 
+    def get_time_inactive(self):
+        """Returns the time that has passed since the last car left the queue"""
+        return self.time_inactive
+
     def has_capacity(self):
         """Returns whether the queue has capacity for more cars"""
         return self.get_num_of_cars() < self.capacity
@@ -91,7 +96,7 @@ class CarQueue:
         Args:
             fee (int): The total fee that the cars in the queue have to pay
         """
-        self.total_fee = fee
+        self.total_fee = int(fee)
 
 ### Queue Manipulation Functions ###
     def add_car(self, car):
@@ -130,23 +135,23 @@ class CarQueue:
         """ Makes a collection of bids from all cars in the queue (not the payment, but the initial bid)
         Returns:
             dict: A dictionary of bids submitted by the cars in the queue.
-                The key is the car ID, and the value is a list of the bid and the time inactive of the car.
+                The key is the car ID, and the value is the submitted bid of the car
         """
         self.bids = {}
-        # A dictionary is used so that we know which car submitted which bid, as well as the waiting time.
+        # A dictionary is used so that we know which car submitted which bid
         for car in self.cars:
-            car_id, bid, time_inactive = car.submit_bid()
-            self.bids[car_id] = [bid, time_inactive]
+            car_id, bid = car.submit_bid()
+            self.bids[car_id] = bid
         return self.bids
 
     def win_auction(self):
         """This is executed when the car queue has won the auction and the movement was succesful.
-        Makes the cars in the queue pay their individual fees, and resets the inactivity time for the cars and the queue itself.
+        Makes the cars in the queue pay their individual fees, and resets the inactivity time of the queue
         """
         # If a queue wins an auction:
         # 1. The winning bid is paid by the cars in the queue.
-        # 2. The inactivity time is reset for the cars in the queue.
-        # 3. The inactivity time is reset for the queue itself.
+        # 2. The inactivity time is reset for the queue.
+
         # First, the bid must be paid
         total_amount_paid = 0  # NOTE: Remove this if it works DEBUG ONLY!!!
         queue_car_ids = []  # This holds the IDs of all cars in the queue
@@ -156,8 +161,8 @@ class CarQueue:
         # First, separate the bids and the car IDs into two lists, from the bids that were previously collected.
         for bid in self.bids.items():
             queue_car_ids.append(bid[0])
-            queue_bids.append(bid[1][0])
-            total_submitted_bid += bid[1][0]
+            queue_bids.append(bid[1])
+            total_submitted_bid += bid[1]
 
         # Second, pay the bids for all cars in the queue. The payment is proportional to the individual bid.
         for i in range(len(queue_car_ids)):
@@ -165,14 +170,9 @@ class CarQueue:
             # Default case is that the car pays nothing (This is explicit to avoid division by zero)
             individual_price = 0
             if total_submitted_bid > 0:
-                individual_price = self.total_fee * \
-                    queue_bids[i] / total_submitted_bid
+                individual_price = int(self.total_fee * queue_bids[i] / total_submitted_bid)
             self.cars[i].pay_bid(individual_price)
             total_amount_paid += individual_price
-
-        # Third, the inactivity time must be reset for all cars in the queue.
-        for car in self.cars:
-            car.time_inactive = 0
 
         # Finally, the inactivity time must be reset for the queue itself.
         self.time_inactive = 0

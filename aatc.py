@@ -2,7 +2,7 @@
 
 import argparse
 
-from src import simulate, clean
+from src import simulate, test, clean
 
 # Utility Functions
 
@@ -42,7 +42,7 @@ if __name__ == '__main__':
         description="Welcome to the 'Adaptive Auctions for Traffic Coordination' program."
     )
 
-    # The 2 subparsers are: simulate, clean
+    # The 3 subparsers are: simulate, test & clean
     subparsers = parser.add_subparsers(
         help='commands', title="commands", dest="command")
 
@@ -69,8 +69,8 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--congestion_rate",
         default=0.5,
-        type=float_range(0, 1),
-        help="Rate of congestion (Percentage of occupied spots, 0-1). Defaults to 0.5. Must be a float between 0 and 1."
+        type=float_range(0.1, 1),
+        help="Rate of congestion (Percentage of occupied spots, 0.1-1). Defaults to 0.5. Must be a float between 0.1 and 1."
     )
 
     simulate_parser.add_argument(
@@ -82,7 +82,7 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--num_of_epochs",
-        default=5,
+        default=100,
         choices=range(1, 5001),
         metavar="[1-5000]",
         type=int,
@@ -105,6 +105,10 @@ if __name__ == '__main__':
         help="Path to the Results Folder. Defaults to 'results'."
     )
 
+    # Test command
+    test_parser = subparsers.add_parser(
+        'test', help='Test the program with different parameters')
+
     # Clean command
     clean_parser = subparsers.add_parser(
         'clean', help='Clean files from previous runs.')
@@ -115,3 +119,5 @@ if __name__ == '__main__':
         simulate.run(args)
     if args.command == 'clean':
         clean.run(args)
+    if args.command == 'test':
+        test.run(args)

@@ -13,6 +13,7 @@ class Intersection:
         carQueues (list): A list of CarQueue objects that are part of the intersection
     Functions:
         is_empty: Checks whether all car queues are empty in this intersection
+        get_car_queue_from_intersection: Returns the car queue object given a car queue id. Car queue has to be in this intersection.
         hold_auction: Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
         ready_for_new_epoch: Prepares the intersection for the next epoch.
@@ -46,23 +47,101 @@ class Intersection:
                 return False
         return True
 
-    def hold_auction(self):
+    def get_car_queue_from_intersection(self, car_queue_id):
+        """Returns the car queue object given a car queue id. Car queue has to be in this intersection.
+        Args:
+            car_queue_id (str): The ID of the car queue (e.g. 11N)
+        Returns:
+            CarQueue: The car queue object with the given ID
+        """
+        for queue in self.carQueues:
+            if queue.id == car_queue_id:
+                return queue
+        print("ERROR: Queue ID not found, with id: ", car_queue_id)
+
+    def hold_auction(self, second_price=True):
         """Holds an auction between the car queues in this intersection.
+        Args:
+            second_price (bool): Whether to use the second price auction mechanism, instead of first-price. Defaults to False.
         Returns:
             tuple: The ID of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
         """
-        # TODO: implement auction mechanism
-        # For now, we pick a random queue to be the winner
+        def renormalize(n, range1, range2):
+            """ Normalise a value n from range1 to range2. Nested function as it is only used to normalise the bid modifier boost
+            Args:
+                n (float): The value to be normalised
+                range1 (list): The range of the value n
+                range2 (list): The range to normalise to
+            Returns:
+                float: The normalised value
+            """
+            delta1 = max(range1) - min(range1)
+            if delta1 == 0:
+                delta1 = 0.0001  # Avoid division by zero
+            delta2 = max(range2) - min(range2)
+            return (delta2 * (n - min(range1)) / delta1) + min(range2)
+
         collected_bids = {}
+        queue_waiting_times = {}
+        queue_lengths = {}
+        queue_delay_boost = 0.5
+        queue_length_boost = 0.5
+        # The min and max value of the final boost (e.g. 2 implies a boost of 2x, i.e. bid is doubled)
+        modification_boost_limit = [1, 2]
         for queue in self.carQueues:
             if not queue.is_empty():  # Only collect bids from non-empty queues
                 collected_bids[queue.id] = queue.collect_bids()
-        # Currently we don't use it, but the bids need to be set for later
+                queue_waiting_times[queue.id] = queue.get_time_inactive()
+                queue_lengths[queue.id] = queue.get_num_of_cars()
+        
+        # If there is only 1 entry:
+        if len(collected_bids) == 1:
+            # We return the only queue, and its destination, and give no charge.
+            winning_queue = self.get_car_queue_from_intersection(
+                list(collected_bids.keys())[0])
+            total_fee = 0
+            destination = winning_queue.get_destination_of_first_car()
+            winning_queue.set_auction_fee(total_fee)
+            return winning_queue.id, destination
+        
+        # Summed_bids holds the sum of all bids for each queue
+        summed_bids = {}
+        for key in collected_bids.keys():  # One modified/final bid per queue
+            summed_bids[key] = 0
+            # We add all bids for this queue, without any modifications for now
+            for bid in collected_bids[key].values():
+                summed_bids[key] += bid
 
-        winning_queue = random.choice(
-            [queue for queue in self.carQueues if not queue.is_empty()])  # Must have cars in queue
+        # First calculate the initial modifications of all queues, before normalising them.
+        # We need to calculate them all first, as we need the min/max value for normalisation.
+        initial_modifications = {}
+        for key in summed_bids.keys():  # One modified/final bid per queue
+            initial_modification = queue_waiting_times[key] * \
+                queue_delay_boost + queue_lengths[key] * queue_length_boost
+            initial_modifications[key] = initial_modification
+
+        # Then normalise the modifications based on the min/max values of all modifications, and the given modification_boost_limit
+        final_bids = {}
+        for key in summed_bids.keys():  # One modified/final bid per queue
+            normalised_modification = renormalize(
+                initial_modifications[key], initial_modifications.values(), modification_boost_limit)
+            final_bids[key] = summed_bids[key] * normalised_modification
+
+        # Winning queue is the queue with the highest bid, regardless of 1st/2nd price.
+        winning_queue = self.get_car_queue_from_intersection(
+            max(final_bids, key=final_bids.get))
+
+        total_fee = 0
+        if not second_price:
+            # Fist price auction
+            # Modifications do not count for the final fee.
+            total_fee = max(summed_bids.values())
+
+        if second_price:
+            summed_bids_ordered = sorted(summed_bids.values(), reverse=True)
+            total_fee = summed_bids_ordered[1]  # The 2nd highest bid
+
         destination = winning_queue.get_destination_of_first_car()
-        total_fee = 2  # Placeholder for now
         winning_queue.set_auction_fee(total_fee)
         # We return the originating car queue and the destination car queue. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.

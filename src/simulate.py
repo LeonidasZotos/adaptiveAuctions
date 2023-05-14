@@ -1,6 +1,7 @@
 """"This file contains the main simulation loop. It is responsible for the general simulation (e.g. setup, running & recording metrics)"""
 
 import os
+from tqdm import tqdm
 
 from src.grid import Grid
 from src.intersection import Intersection
@@ -29,11 +30,9 @@ def run_epochs(args, grid):
         args (argparse.Namespace): Arguments parsed from the command line
         grid (Grid): The grid object that contains all intersections and car queues
     """
-    for i in range(args.num_of_epochs):
-        print("Epoch:", i)
+    for i in tqdm(range(args.num_of_epochs)):
         # Every wage_time epochs, give credit to all cars
         if i % args.wage_time == 0:
-            print("Giving credit in epoch:", i)
             give_credit(args)
         # Now that the credit has been given, run the epoch
         run_single_epoch(grid)
@@ -66,7 +65,7 @@ def give_credit(args):
         args (argparse.Namespace): Arguments parsed from the command line
     """
     if Car.all_cars == []:
-        print("No Cars in Simulation.")
+        print("ERROR: No Cars in Simulation.")
     else:
         for car in Car.all_cars:
             car.set_balance(args.credit_balance)
