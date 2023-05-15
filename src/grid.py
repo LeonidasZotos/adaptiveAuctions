@@ -6,6 +6,7 @@ import random
 from src.intersection import Intersection
 from src.car_queue import CarQueue
 from src.car import Car
+from src.auction_modifier import AuctionModifier
 
 
 class Grid:
@@ -29,24 +30,37 @@ class Grid:
         ready_for_new_epoch(): Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
-    def __init__(self, grid_size, queue_capacity):
+    def __init__(self, grid_size, queue_capacity, unique_auctions, auction_modifier_type):
         """ Initialize the Grid object
         Args:
             grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
             queue_capacity (int): The maximum number of cars that can be in a car queue
+            unique_auctions (bool): Whether each intersection uses its own unique auction modifier, or whether 
+                all intersections use the same modifier
+            auction_modifier_type (str): The type of the auction modifier(s) (e.g. 'Random', 'Adaptive', 'Static')
         """
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity
 
         self.intersections = []
+        if not unique_auctions:
+            auction_modifier = AuctionModifier(auction_modifier_type, "same")
         # Create the grid of intersections
         for i in range(self.grid_size):
             self.intersections.append([])
             for j in range(self.grid_size):
                 # The ID is the x and y coordinates of the intersection
                 intersection_id = str(j) + str(i)
-                self.intersections[i].append(Intersection(
-                    intersection_id, self.queue_capacity))
+                if unique_auctions:
+                    # Each intersection has its own unique auction modifier
+                    intersection_auction_modifier = AuctionModifier(
+                        auction_modifier_type, intersection_id)
+                    self.intersections[i].append(Intersection(
+                        intersection_id, self.queue_capacity, intersection_auction_modifier))
+                else:
+                    # All intersections use the same auction modifier, created before the loop
+                    self.intersections[i].append(Intersection(
+                        intersection_id, self.queue_capacity, auction_modifier))
 
         # Keep track of the movements that need to be executed in this epoch
         self.epoch_movements = []

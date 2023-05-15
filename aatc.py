@@ -105,6 +105,19 @@ if __name__ == '__main__':
         help="Path to the Results Folder. Defaults to 'results'."
     )
 
+    simulate_parser.add_argument(
+        "--auction_modifier_type",
+        default="random",
+        choices=["random", "static", "spsa"],
+        type=str,
+        help="Type of auction modifier. Defaults to 'random'. Must be one of 'random', 'static' or 'spsa'."
+    )
+
+    simulate_parser.add_argument(
+        '--unique_auctions', action=argparse.BooleanOptionalAction,
+        help="""If present, each intersection will use different auction modifiers, and by extension,
+            potentially different parameters. Otherwise, all intersections will use the same auction modifiers.""")
+
     # Test command
     test_parser = subparsers.add_parser(
         'test', help='Test the program with different parameters')

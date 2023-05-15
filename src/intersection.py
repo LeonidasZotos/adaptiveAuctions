@@ -1,6 +1,7 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
 from src.car_queue import CarQueue
+from src.auction_modifier import AuctionModifier
 
 
 class Intersection:
@@ -19,14 +20,16 @@ class Intersection:
     # A class variable to keep track of all intersections.
     all_intersections = []
 
-    def __init__(self, id, queue_capacity):
+    def __init__(self, id, queue_capacity, auction_modifier):
         """Initialize the Intersection object
         Args:
             id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
             queue_capacity (int): The maximum number of cars that can be in a car queue
+            auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
         """
         Intersection.all_intersections.append(self)
         self.id = id
+        self.auction_modifier = auction_modifier
         self.carQueues = [CarQueue(queue_capacity, str(id + 'N')),
                           CarQueue(queue_capacity, str(id + 'E')),
                           CarQueue(queue_capacity, str(id + 'S')),
@@ -82,10 +85,10 @@ class Intersection:
         collected_bids = {}
         queue_waiting_times = {}
         queue_lengths = {}
-        queue_delay_boost = 0.5
-        queue_length_boost = 0.5
-        # The min and max value of the final boost (e.g. 2 implies a boost of 2x, i.e. bid is doubled)
-        modification_boost_limit = [1, 2]
+        # modification_boost_limit contains the min and max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e. bid is doubled)
+        queue_delay_boost, queue_length_boost, modification_boost_limit = self.auction_modifier.generate_auction_parameters()
+        print("Modification boost limit: ", modification_boost_limit)
+
         for queue in self.carQueues:
             if not queue.is_empty():  # Only collect bids from non-empty queues
                 collected_bids[queue.id] = queue.collect_bids()

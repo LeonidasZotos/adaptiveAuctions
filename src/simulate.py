@@ -16,8 +16,7 @@ def setup_simulation(args):
     Returns:
         Grid: The grid object that contains all intersections and car queues
     """
-
-    grid = Grid(args.grid_size, args.queue_capacity)
+    grid = Grid(args.grid_size, args.queue_capacity, args.unique_auctions, args.auction_modifier_type)
     # Spawn cars in generated grid with given congestion rate
     grid.spawn_cars(args.congestion_rate)
 
@@ -30,7 +29,7 @@ def run_epochs(args, grid):
         args (argparse.Namespace): Arguments parsed from the command line
         grid (Grid): The grid object that contains all intersections and car queues
     """
-    for i in range(args.num_of_epochs):
+    for i in tqdm(range(args.num_of_epochs)):
         # Every wage_time epochs, give credit to all cars
         if i % args.wage_time == 0:
             give_credit(args)
