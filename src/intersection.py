@@ -87,7 +87,6 @@ class Intersection:
         queue_lengths = {}
         # modification_boost_limit contains the min and max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e. bid is doubled)
         queue_delay_boost, queue_length_boost, modification_boost_limit = self.auction_modifier.generate_auction_parameters()
-        print("Modification boost limit: ", modification_boost_limit)
 
         for queue in self.carQueues:
             if not queue.is_empty():  # Only collect bids from non-empty queues
