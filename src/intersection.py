@@ -1,7 +1,5 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
-import random
-
 from src.car_queue import CarQueue
 
 
@@ -140,10 +138,6 @@ class Intersection:
 
         destination = winning_queue.get_destination_of_first_car()
         winning_queue.set_auction_fee(total_fee)
-        if (total_fee > sum(winning_queue.bids.values())):
-            print("For winning queue, ", winning_queue.id, " the total fee is: ",
-                  total_fee, "while they submitted bids: ", sum(winning_queue.bids.values()))
-            print("The specific bids are: ", winning_queue.bids)
 
         # We return the originating car queue and the destination car queue. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
