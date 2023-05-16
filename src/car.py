@@ -141,9 +141,9 @@ class Car:
         # For this, it doesn't matter from which queue the car is coming from (e.g. if it is going North, it will always end up in a South queue).
         if direction == "x":
             if need_to_move_x > 0:
-                destination_queue = str(current_x + 1) + str(current_y) + "E"
+                destination_queue = str(current_x + 1) + str(current_y) + "W"
             else:
-                destination_queue = str(current_x - 1) + str(current_y) + "W"
+                destination_queue = str(current_x - 1) + str(current_y) + "E"
         elif direction == "y":
             if need_to_move_y > 0:
                 destination_queue = str(current_x) + str(current_y + 1) + "N"
