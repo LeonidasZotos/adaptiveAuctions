@@ -11,6 +11,7 @@ class Intersection:
         id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
         carQueues (list): A list of CarQueue objects that are part of the intersection
     Functions:
+        get_intersection_description: Returns a string describing the intersection and everything in it.
         is_empty: Checks whether all car queues are empty in this intersection
         get_car_queue_from_intersection: Returns the car queue object given a car queue id. Car queue has to be in this intersection.
         hold_auction: Holds an auction between the car queues in this intersection. 
@@ -37,6 +38,18 @@ class Intersection:
 
     def __str__(self):
         return f'Intersection(id={self.id})'
+
+    def get_intersection_description(self):
+        """Returns a string describing the intersection and everything in it.
+        Returns:
+            str: A string describing the intersection and everything in it.
+        """
+        description = "Intersection: " + self.id + ":\n"
+        for queue in self.carQueues:
+            description += queue.get_queue_description()
+            description += "\n"
+
+        return description
 
     def is_empty(self):
         """Boolean. Checks whether all car queues are empty in this intersection

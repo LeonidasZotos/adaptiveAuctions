@@ -118,6 +118,10 @@ if __name__ == '__main__':
         help="""If present, each intersection will use different auction modifiers, and by extension,
             potentially different parameters. Otherwise, all intersections will use the same auction modifiers.""")
 
+    simulate_parser.add_argument(
+        '--print_grid', action=argparse.BooleanOptionalAction,
+        help="""If present, the grid will be printed after each epoch.""")
+
     # Test command
     test_parser = subparsers.add_parser(
         'test', help='Test the program with different parameters')

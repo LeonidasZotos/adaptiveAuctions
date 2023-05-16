@@ -2,6 +2,7 @@
 (re)spawning cars etc. It contains all intersections, car queues and cars."""
 
 import random
+from prettytable import PrettyTable
 
 from src.intersection import Intersection
 from src.car_queue import CarQueue
@@ -18,7 +19,7 @@ class Grid:
         intersections (list): A list of lists of intersections. The first list represents the rows, the second list represents the columns.
         epoch_movements (list): A list of movements that need to be executed in this epoch
     Functions:
-        print_grid(): Prints the grid to the console
+        print_grid(epoch): Prints the grid to the console. The epoch is needed to print the epoch number
         print_cars(): Prints all cars to the console
         get_car_queue(car_queue_id): Returns the car queue object given a car queue id
         move_cars(): Moves all cars in the grid based on the epoch_movements
@@ -69,7 +70,7 @@ class Grid:
         return f'Grid of size: {self.grid_size}, with car queue capacity: {self.queue_capacity}'
 
 ### Printing functions ###
-    def print_grid(self):
+    def print_grid_simple(self):
         """Prints the grid to the console
         """
         print("======Start of Grid======")
@@ -84,6 +85,25 @@ class Grid:
                         print()
             print()
         print("=======End of Grid=======")
+
+    def print_grid(self, epoch):
+        """Prints grid in a table format
+        Args:
+            epoch (int): The current epoch
+        """
+        print("Grid in epoch: ", epoch)
+        grid_table = PrettyTable()
+        grid_table.field_names = range(0, self.grid_size)
+        grid_table.header = False
+        grid_table.hrules = True
+
+        for i in range(self.grid_size):
+            row = []
+            for j in range(self.grid_size):
+                row.append(self.intersections[i]
+                           [j].get_intersection_description())
+            grid_table.add_row(row)
+        print(grid_table)
 
     def print_cars(self):
         """Prints all cars to the console"""

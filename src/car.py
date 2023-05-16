@@ -14,6 +14,7 @@ class Car:
         rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
         submitted_bid (float): The bid that the car submitted in the last auction.
     Functions:
+        get_short_description: Returns a short description of the car, containing the ID, final destination, balance and rush factor.
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id: Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
@@ -55,6 +56,13 @@ class Car:
 
     def __str__(self):
         return f'Car(id={self.id}), destination: {self.final_destination}, balance: {self.balance}, rush factor: {self.rush_factor}'
+
+    def get_short_description(self):
+        """Returns a short description of the car, containing the ID, final destination, balance and rush factor.
+        Returns:
+            str: A short description of the car, containing the ID, final destination, balance and rush factor.
+        """
+        return f'C(id={self.id}), d: {self.final_destination}, b: {self.balance}, r: {self.rush_factor}'
 
 ### Helper functions ###
     def is_at_destination(self):

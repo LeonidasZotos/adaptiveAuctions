@@ -16,6 +16,7 @@ class CarQueue:
             the value is the bid of the car
         total_fee (int): The total fee that the cars in the queue have to pay, in case they win an auction
     Functions:
+        get_queue_description: Returns a string describing the queue and everything in it.
         is_empty: Checks whether the queue is empty
         get_num_of_cars: Returns the number of cars in the queue
         get_time_inactive: Returns the time that has passed since the last car left the queue
@@ -55,8 +56,19 @@ class CarQueue:
         car_ids = []
         for car in self.cars:
             car_ids.append(car.id)
-
         return f'Car Queue (ID: {self.id}) contains cars with IDs: {car_ids}'
+
+    def get_queue_description(self):
+        """ Returns a string describing the queue and the cars in it
+        Returns:
+            str: A string describing the queue and the cars in it
+        """
+        queue_description = "Queue " + self.id + \
+            " Inactivity: " + str(self.time_inactive) + "\n"
+        for car in self.cars:
+            queue_description += car.get_short_description() + "\n"
+
+        return queue_description
 
 ### Helper functions ###
     def is_empty(self):
