@@ -1,7 +1,6 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
 from src.car_queue import CarQueue
-from src.auction_modifier import AuctionModifier
 
 
 class Intersection:
