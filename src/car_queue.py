@@ -208,5 +208,7 @@ class CarQueue:
             3) Updating the inactivity time of the queue."""
         self.reset_bids()
         self.num_of_cars = self.get_num_of_cars()
-        self.time_inactive += 1
+        if not self.is_empty():
+            # Inactivity time only increases if there are cars there.
+            self.time_inactive += 1
         self.total_fee = 0

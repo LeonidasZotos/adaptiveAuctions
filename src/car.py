@@ -52,8 +52,10 @@ class Car:
         self.balance = 0
         # Rush factor is random between 0 and 1, rounded to 1 decimal. The higher the rush factor, the higher the urgency.
         self.rush_factor = round(random.random(), 1)
-        # Time spent at intersection
+        # Time spent at the current intersection
         self.time_at_intersection = 0
+        # Time spent in the network for the current trip
+        self.time_in_traffic_network = 0
         # The bid that the car submitted in the last auction.
         self.submitted_bid = 0
 
@@ -65,7 +67,7 @@ class Car:
         Returns:
             str: A short description of the car, containing the ID, final destination, balance and rush factor.
         """
-        return f'C(id={self.id}), d: {self.final_destination}, b: {self.balance}, r: {self.rush_factor}, t: {self.time_at_intersection}'
+        return f'C(id={self.id}), d: {self.final_destination}, b: {self.balance}, r: {self.rush_factor}, t: {self.time_in_traffic_network}'
 
 ### Helper functions ###
     def is_at_destination(self):
@@ -163,7 +165,7 @@ class Car:
     def reset_car(self, car_queue_id, grid_size):
         """ Reset the car to a new state. E.g. Used when the car is (re)spawned.
             This function resets the car's final destination, next destination queue, rush factor, 
-            submitted bid  & time at intersection.
+            submitted bid, time at intersection & time in network/trip duration.
             The balance is not affected.
             Args:
                 car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
@@ -175,6 +177,7 @@ class Car:
         self.rush_factor = round(random.random(), 1)
         self.submitted_bid = 0
         self.time_at_intersection = 0
+        self.time_in_traffic_network = 0
 
 ### Auction functions ###
     def submit_bid(self):
@@ -215,4 +218,5 @@ class Car:
         """ Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
         """
         self.time_at_intersection += 1
+        self.time_in_traffic_network += 1
         self.submitted_bid = 0
