@@ -1,5 +1,7 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
+import random
+
 from src.car_queue import CarQueue
 
 
@@ -134,7 +136,8 @@ class Intersection:
         for key in summed_bids.keys():
             normalised_modification = renormalize(
                 initial_modifications[key], initial_modifications.values(), modification_boost_limit)
-            final_bids[key] = (1 + summed_bids[key]) * normalised_modification
+            final_bids[key] = (1 + random.uniform(0, 0.01) +
+                               summed_bids[key]) * normalised_modification
 
         # Winning queue is the queue with the highest bid, regardless of 1st/2nd price.
         winning_queue = self.get_car_queue_from_intersection(
