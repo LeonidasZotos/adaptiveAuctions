@@ -13,6 +13,7 @@ class Car:
         balance (float): The balance of the car. This is the amount of credit the car has left.
         rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
         submitted_bid (float): The bid that the car submitted in the last auction.
+        time_at_intersection (int): The number of epochs that the car has spent at the intersection.
     Functions:
         get_short_description: Returns a short description of the car, containing the ID, final destination, balance and rush factor.
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
