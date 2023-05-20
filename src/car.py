@@ -19,6 +19,7 @@ class Car:
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id: Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
+        calculate_satisfaction_score: Returns the satisfaction score of the trip, which is simply the time spent in the network multiplied by the rush factor.
         reset_final_destination: Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
             we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
@@ -97,6 +98,11 @@ class Car:
         if self.car_queue_id != new_car_queue_id:
             self.time_at_intersection = 0
         self.car_queue_id = new_car_queue_id
+
+    def calculate_satisfaction_score(self):
+        """This function should only be called at the end fo a trip. Returns the satisfaction score of the trip, 
+        which is simply the time spent in the network multiplied by the rush factor."""
+        return self.time_in_traffic_network * self.rush_factor
 
 ### General state functions ###
     def reset_final_destination(self, grid_size):

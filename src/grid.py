@@ -27,7 +27,8 @@ class Grid:
         filter_unfeasible_movements(): Removes movements that are not possible (because the destination queue is full)
         execute_movements(): Executes the movements that are possible
         spawn_cars(congestion_rate): Spawns cars in the grid with the given congestion rate
-        respawn_cars(grid_size): Respawns cars that have reached their destination somewhere else
+        respawn_cars(grid_size): Respawns cars that have reached their destination somewhere else. 
+            Returns a list of scores, that represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
         ready_for_new_epoch(): Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
@@ -231,7 +232,10 @@ class Grid:
         """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, rush_factor)
         Args:
             grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
+        Returns:
+            satisfaction_scores (list): A list of scores, that represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
         """
+        satisfaction_scores = []
         for car in Car.all_cars:
             if car.is_at_destination():
                 # If the car is at its destination, remove it from the queue and spawn it somewhere else
@@ -239,9 +243,13 @@ class Grid:
                 # Pick a random queue that has capacity
                 random_queue = random.choice(
                     [queue for queue in CarQueue.all_car_queues if queue.has_capacity()])
+                # Append satisfaction score to list
+                satisfaction_scores.append(car.calculate_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)
                 car.reset_car(random_queue.id, grid_size)
+
                 random_queue.add_car(car)
+        return satisfaction_scores
 
 ### Epoch functions ###
     def ready_for_new_epoch(self):

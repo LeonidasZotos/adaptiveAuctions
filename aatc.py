@@ -88,6 +88,15 @@ if __name__ == '__main__':
         type=int,
         help="Number of epochs to run. Defaults to 5. Must be an integer between 1 and 5000."
     )
+    
+    simulate_parser.add_argument(
+        "--num_of_simulations",
+        default=1,
+        choices=range(1, 1001),
+        metavar="[1-1000]",
+        type=int,
+        help="Number of simulations to run. Defaults to 1. Must be an integer between 1 and 1000."
+    )
 
     simulate_parser.add_argument(
         "--wage_time",
