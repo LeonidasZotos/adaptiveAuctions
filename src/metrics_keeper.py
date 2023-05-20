@@ -7,24 +7,30 @@ class MetricsKeeper:
     """
     The MetricsKeeper class is responsible for keeping track of all the evaluation metrics of the simulation, creating graphs etc.
     Attributes:
+        all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
         current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for each car. The key is the epoch, the value is
             a list of all the satisfaction scores for that epoch, if any.
-            # TODO: Add attributes
     Functions:
         add_satisfaction_scores: Adds a satisfaction score to the satisfaction_scores dictionary
-        # TODO: Add functions
+        produce_results: Produces all the evaluation results of all simulations
+        plot_satisfaction_scores: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
+        prep_for_new_simulation: Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
     """
 
     def __init__(self):
         """ Initialize the MetricsKeeper object
         Args:
-            TODO: Add arguments
+            all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
+                that completed their trip in an epoch, for a single simulation
+            current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for the current simulation. The key is the epoch,
+                the value is a list of all the satisfaction scores for that epoch, if any.
         """
         self.all_simulations_results = []
         self.current_sim_satisfaction_scores = {}
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
-        """Adds the satisfaction scores of the cars that completed a trip. Epochs in which no cars completed a trip receive a None value.
+        """Adds the satisfaction scores of the cars that completed a trip. If there was no car that completed 
+            a trip in an epoch, there is no entry for that epoch.
         Args:
             epoch (int): The epoch in which the cars completed their trip
             satisfaction_scores (list): A list of satisfaction scores of the cars that completed their trip
@@ -33,12 +39,15 @@ class MetricsKeeper:
             self.current_sim_satisfaction_scores[epoch] = satisfaction_scores
 
     def produce_results(self, results_folder):
-        """Produces all the results of all simulations"""
-        # Create a graph of all results.
+        """Produces all the evaluation results of all simulations
+        Args:
+            results_folder (str): The folder in which the results will be stored
+        """
+        # Create a graph of all satisfaction scores
         self.plot_satisfaction_scores(results_folder)
 
     def plot_satisfaction_scores(self, results_folder):
-        """Creates a graph of the average satisfaction score per epoch, with error bars
+        """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
             results_folder (str): The folder in which the results will be stored
         """
@@ -81,7 +90,7 @@ class MetricsKeeper:
         plt.clf()
 
     def prep_for_new_simulation(self):
-        """Prepares the metrics keeper for a new simulation"""
+        """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""
         self.all_simulations_results.append(
             self.current_sim_satisfaction_scores)
         self.current_sim_satisfaction_scores = {}
