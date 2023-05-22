@@ -128,6 +128,10 @@ if __name__ == '__main__':
             potentially different parameters. Otherwise, all intersections will use the same auction modifiers.""")
 
     simulate_parser.add_argument(
+        '--individual_bid_learning', action=argparse.BooleanOptionalAction,
+        help="""Each car will learn how to bid individually, instead of sharing experiences.""")
+
+    simulate_parser.add_argument(
         '--print_grid', action=argparse.BooleanOptionalAction,
         help="""If present, the grid will be printed after each epoch.""")
 
