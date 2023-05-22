@@ -12,13 +12,16 @@ class Car:
             This is not the final destination, but the next queue the car is heading to.
         balance (float): The balance of the car. This is the amount of credit the car has left.
         rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
-        submitted_bid (float): The bid that the car submitted in the last auction.
         time_at_intersection (int): The number of epochs that the car has spent at the intersection.
+        distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.
+        submitted_bid (float): The bid that the car submitted in the last auction.
+
     Functions:
         get_short_description: Returns a short description of the car, containing the ID, final destination, balance and rush factor.
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id: Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
+        increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
         calculate_satisfaction_score: Returns the satisfaction score of the trip, which is simply the time spent in the network multiplied by the rush factor.
         reset_final_destination: Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
@@ -57,6 +60,8 @@ class Car:
         self.time_at_intersection = 0
         # Time spent in the network for the current trip
         self.time_in_traffic_network = 0
+        # The distance travelled in the current trip. Same as the number of auctions won.
+        self.distance_travelled_in_trip = 0
         # The bid that the car submitted in the last auction.
         self.submitted_bid = 0
 
@@ -99,10 +104,18 @@ class Car:
             self.time_at_intersection = 0
         self.car_queue_id = new_car_queue_id
 
+    def increase_distance_travelled_in_trip(self):
+        """Increase the distance spent in the current trip by 1"""
+        self.distance_travelled_in_trip += 1
+
     def calculate_satisfaction_score(self):
         """This function should only be called at the end fo a trip. Returns the satisfaction score of the trip, 
-        which is simply the time spent in the network multiplied by the rush factor."""
-        return self.time_in_traffic_network * self.rush_factor
+            Function Explanation: The time spent in the network is divided by the distance travelled in the trip,
+            to get the average time spent per intersection. This is then multiplied by the rush factor.
+            The rush factor is subtracted from the result, so that if the car won every auction, the score is 0.
+            The lower the score, the better.
+        """
+        return ((self.time_in_traffic_network * self.rush_factor)/self.distance_travelled_in_trip) - self.rush_factor
 
 ### General state functions ###
     def reset_final_destination(self, grid_size):
@@ -184,6 +197,7 @@ class Car:
         self.submitted_bid = 0
         self.time_at_intersection = 0
         self.time_in_traffic_network = 0
+        self.distance_travelled_in_trip = 0
 
 ### Auction functions ###
     def submit_bid(self):

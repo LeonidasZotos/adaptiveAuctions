@@ -202,6 +202,7 @@ class Grid:
             destination_queue = self.get_car_queue(destination_queue_id)
 
             car_to_move = origin_queue.remove_first_car()
+            car_to_move.increase_distance_travelled_in_trip()
             destination_queue.add_car(car_to_move)
             # Let the car know of its new queue
             car_to_move.set_car_queue_id(destination_queue_id)

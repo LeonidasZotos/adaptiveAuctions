@@ -57,10 +57,8 @@ class MetricsKeeper:
             for epoch in result_dict:
                 if epoch in all_results_dict:
                     all_results_dict[epoch] += result_dict[epoch]
-                    # print("added: ", result_dict[epoch])
                 else:
                     all_results_dict[epoch] = result_dict[epoch]
-                    # print("added: ", result_dict[epoch])
 
         # Create a list of all epochs in which cars completed their trip
         epochs = []
@@ -84,7 +82,7 @@ class MetricsKeeper:
         plt.errorbar(epochs, average_satisfaction_scores,
                      yerr=standard_deviations, fmt='o')
         plt.xlabel('Epoch')
-        plt.ylabel('Average Satisfaction Score')
+        plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
         plt.title('Average Satisfaction Score per Epoch')
         plt.savefig(results_folder + '/average_satisfaction_score.png')
         plt.clf()
