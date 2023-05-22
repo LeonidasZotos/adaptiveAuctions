@@ -7,9 +7,10 @@ def run(args):
     Args:
         args (argparse.Namespace): Arguments parsed from the command line
     """
-    # Delete all files in the results folder
-    for file in os.listdir("results"):
-        os.remove(os.path.join("results", file))
+    # Delete all files in the results folder, if it exists
+    if os.path.exists("results"):
+        for file in os.listdir("results"):
+            os.remove(os.path.join("results", file))
 
     # Delete python cache folder
     for file in os.listdir("src/__pycache__"):
