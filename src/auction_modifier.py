@@ -5,8 +5,6 @@ import random
 class AuctionModifier:
     """
     This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction. 
-    Plan on creating static and adaptive modifiers.
-    For now, it returns random paramters.
     Attributes:
         intersection_id (str): The id of the intersection for which the modifier is used, or 'all' 
             if the same auction parameters are used everywhere
