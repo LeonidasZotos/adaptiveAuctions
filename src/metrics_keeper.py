@@ -1,6 +1,9 @@
 """A class to keep track of the metrics of the simulation"""
 import matplotlib.pyplot as plt
 import numpy as np
+from math import nan
+
+import src.utils as utils
 
 
 class MetricsKeeper:
@@ -45,6 +48,9 @@ class MetricsKeeper:
         """
         # Create a graph of all satisfaction scores
         self.plot_satisfaction_scores_overall_average(results_folder)
+
+        # Create a graph of all satisfaction scores, per bidding type
+        self.plot_satisfaction_scores_by_bidding_type(results_folder)
 
     def plot_satisfaction_scores_overall_average(self, results_folder):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
@@ -92,6 +98,115 @@ class MetricsKeeper:
         plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
         plt.title('Average Satisfaction Score per Epoch')
         plt.savefig(results_folder + '/average_satisfaction_score.png')
+        plt.clf()
+
+    def plot_satisfaction_scores_by_bidding_type(self, results_folder):
+        """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
+            for each bidding type, represented by a different color.
+            'ohhh 100 lines of code, that's a lot of code (but here we are)'
+        """
+
+        def get_bidding_type_from_id(car_id):
+            """Retrieves the bidding type of a car, given its id"""
+            return utils.get_car(car_id).bidding_type
+
+        static_bidding_results = {}
+        random_bidding_results = {}
+        RL_bidder_results = {}
+        
+        
+        
+        
+        for result_dict in self.all_simulations_results:
+            for epoch in result_dict:
+                for (car_id, score) in result_dict[epoch]:
+                    bidding_type = get_bidding_type_from_id(car_id)
+                    if bidding_type == 'static':
+                        if epoch in static_bidding_results:
+                            static_bidding_results[epoch].append(score)
+                        else:
+                            static_bidding_results[epoch] = [score]
+                    elif bidding_type == 'random':
+                        if epoch in random_bidding_results:
+                            random_bidding_results[epoch].append(score)
+                        else:
+                            random_bidding_results[epoch] = [score]
+                    elif bidding_type == 'RL':
+                        if epoch in RL_bidder_results:
+                            RL_bidder_results[epoch].append(score)
+                        else:
+                            RL_bidder_results[epoch] = [score]
+
+
+
+        
+        # print avereage of each bidding type
+        print("static bidding average: ", sum([sum(static_bidding_results[epoch]) / len(static_bidding_results[epoch]) for epoch in static_bidding_results]) / len(static_bidding_results))
+        print("random bidding average: ", sum([sum(random_bidding_results[epoch]) / len(random_bidding_results[epoch]) for epoch in random_bidding_results]) / len(random_bidding_results))
+        print("RL bidding average: ", sum([sum(RL_bidder_results[epoch]) / len(RL_bidder_results[epoch]) for epoch in RL_bidder_results]) / len(RL_bidder_results))
+        
+        # Create a list of all epochs in which cars completed their trip
+        epochs = []
+        for epoch in static_bidding_results:
+            if static_bidding_results[epoch] != None or random_bidding_results[epoch] != None or RL_bidder_results[epoch] != None:
+                epochs.append(epoch)
+
+        # Create a list of all average satisfaction scores
+        static_bidding_average_satisfaction_scores = []
+        random_bidding_average_satisfaction_scores = []
+        RL_bidder_average_satisfaction_scores = []
+        for epoch in epochs:
+            if epoch in static_bidding_results:
+                static_bidding_average_satisfaction_scores.append(
+                    sum(static_bidding_results[epoch]) / len(static_bidding_results[epoch]))
+            else:
+                static_bidding_average_satisfaction_scores.append(nan)
+            if epoch in random_bidding_results:
+                random_bidding_average_satisfaction_scores.append(
+                    sum(random_bidding_results[epoch]) / len(random_bidding_results[epoch]))
+            else:
+                random_bidding_average_satisfaction_scores.append(nan)
+            if epoch in RL_bidder_results:
+                RL_bidder_average_satisfaction_scores.append(
+                    sum(RL_bidder_results[epoch]) / len(RL_bidder_results[epoch]))
+            else:
+                RL_bidder_average_satisfaction_scores.append(nan)
+
+        # Create a list of all standard deviations of satisfaction scores
+        static_bidding_standard_deviations = []
+        random_bidding_standard_deviations = []
+        RL_bidder_standard_deviations = []
+        for epoch in epochs:
+            if epoch in static_bidding_results:
+                static_bidding_standard_deviations.append(
+                    np.std(static_bidding_results[epoch]))
+            else:
+                static_bidding_standard_deviations.append(nan)
+            if epoch in random_bidding_results:
+                random_bidding_standard_deviations.append(
+                    np.std(random_bidding_results[epoch]))
+            else:
+                random_bidding_standard_deviations.append(nan)
+            if epoch in RL_bidder_results:
+                RL_bidder_standard_deviations.append(
+                    np.std(RL_bidder_results[epoch]))
+            else:
+                RL_bidder_standard_deviations.append(nan)
+
+        # Plot the average satisfaction score per epoch, per bidding type & with error bars
+        plt.errorbar(epochs, static_bidding_average_satisfaction_scores,
+                     yerr=static_bidding_standard_deviations, fmt='o', label='Static bidding')
+        plt.errorbar(epochs, random_bidding_average_satisfaction_scores,
+                     yerr=random_bidding_standard_deviations, fmt='o', label='Random bidding')
+        plt.errorbar(epochs, RL_bidder_average_satisfaction_scores,
+                     yerr=RL_bidder_standard_deviations, fmt='o', label='RL bidding')
+
+        plt.xlabel('Epoch')
+        plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
+        plt.title('Average Satisfaction Score per Epoch')
+        plt.legend()
+        plt.savefig(results_folder +
+                    '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
     def prep_for_new_simulation(self):

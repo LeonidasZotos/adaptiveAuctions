@@ -6,16 +6,18 @@ class BidGenerator:
     """
     This is the BidGenerator class. The role of the generator is to generate bids for the cars, based on the bidding strategy.
     Attributes:
-
+        -
     Functions:
-
+        generate_static_bid(rush_factor, balance): Returns a static bid, multiplied by the rush factor
+        generate_random_bid(balance): Returns a random bid between 0 and the total balance of the car.
+        generate_RL_bid(balance, rush_factor): TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
+        generate_bid(bidding_strategy, balance, rush_factor): Returns a bid, based on the bidding strategy.
+        ready_for_new_epoch(): Prepares the Bid Generator for the next epoch.
     """
     static_bid = 10  # To be adjusted manually.
 
     def __init__(self,):
-        """Initialize the BidGenerator object
-        Args:
-
+        """Initialize the BidGenerator object.
         """
 
     def __str__(self):
@@ -34,7 +36,8 @@ class BidGenerator:
         Args:
             balance (float): The balance of the car.
         """
-        return random.uniform(0, balance)
+        # return random.uniform(0, balance)
+        return 0
 
     def generate_RL_bid(self, balance, rush_factor):
         """TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
