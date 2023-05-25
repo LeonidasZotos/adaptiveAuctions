@@ -121,8 +121,12 @@ class Car:
             to get the average time spent per intersection. This is then multiplied by the rush factor.
             The rush factor is subtracted from the result, so that if the car won every auction, the score is 0.
             The lower the score, the better.
+        Returns:
+            tuple: A tuple containing the ID of the car and the satisfaction score of the trip.
         """
-        return ((self.time_in_traffic_network * self.rush_factor)/self.distance_travelled_in_trip) - self.rush_factor
+        score = ((self.time_in_traffic_network * self.rush_factor) /
+                 self.distance_travelled_in_trip) - self.rush_factor
+        return self.id, score
 
 ### General state functions ###
     def reset_final_destination(self, grid_size):

@@ -11,9 +11,9 @@ class MetricsKeeper:
         current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for each car. The key is the epoch, the value is
             a list of all the satisfaction scores for that epoch, if any.
     Functions:
-        add_satisfaction_scores: Adds a satisfaction score to the satisfaction_scores dictionary
+        add_satisfaction_scores: Adds a satisfaction score (and its car id, as a tuple) to the satisfaction_scores dictionary
         produce_results: Produces all the evaluation results of all simulations
-        plot_satisfaction_scores: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
+        plot_satisfaction_scores_overall_average: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
         prep_for_new_simulation: Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
     """
 
@@ -33,7 +33,7 @@ class MetricsKeeper:
             a trip in an epoch, there is no entry for that epoch.
         Args:
             epoch (int): The epoch in which the cars completed their trip
-            satisfaction_scores (list): A list of satisfaction scores of the cars that completed their trip
+            satisfaction_scores (list): A list of tuples, containing car ids and their satisfaction scores of the completed trip
         """
         if satisfaction_scores != []:
             self.current_sim_satisfaction_scores[epoch] = satisfaction_scores
@@ -44,21 +44,28 @@ class MetricsKeeper:
             results_folder (str): The folder in which the results will be stored
         """
         # Create a graph of all satisfaction scores
-        self.plot_satisfaction_scores(results_folder)
+        self.plot_satisfaction_scores_overall_average(results_folder)
 
-    def plot_satisfaction_scores(self, results_folder):
+    def plot_satisfaction_scores_overall_average(self, results_folder):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
             results_folder (str): The folder in which the results will be stored
         """
+
+        def remove_car_ids_from_dict(dict):
+            """Removes the car ids from the dictionary, so that it only contains the satisfaction scores"""
+            return [score for (id, score) in dict]
+
         all_results_dict = {}
         # First, combine all dictionaries into one dictionary
         for result_dict in self.all_simulations_results:
             for epoch in result_dict:
                 if epoch in all_results_dict:
-                    all_results_dict[epoch] += result_dict[epoch]
+                    all_results_dict[epoch] += remove_car_ids_from_dict(
+                        result_dict[epoch])
                 else:
-                    all_results_dict[epoch] = result_dict[epoch]
+                    all_results_dict[epoch] = remove_car_ids_from_dict(
+                        result_dict[epoch])
 
         # Create a list of all epochs in which cars completed their trip
         epochs = []

@@ -4,6 +4,7 @@
 import random
 from prettytable import PrettyTable
 
+import src.utils as utils
 from src.intersection import Intersection
 from src.car_queue import CarQueue
 from src.car import Car
@@ -22,7 +23,6 @@ class Grid:
     Functions:
         print_grid(epoch): Prints the grid to the console. The epoch is needed to print the epoch number
         print_cars(): Prints all cars to the console
-        get_car_queue(car_queue_id): Returns the car queue object given a car queue id
         move_cars(): Moves all cars in the grid based on the epoch_movements
         calculate_movements(): Calculates the movements that need to be executed in this epoch
         filter_unfeasible_movements(): Removes movements that are not possible (because the destination queue is full)
@@ -114,19 +114,6 @@ class Grid:
             print(car)
         print("=======End of Cars=======")
 
-### Helper functions ###
-    def get_car_queue(self, car_queue_id):
-        """Returns the car queue object given a car queue id
-        Args:
-            car_queue_id (str): The ID of the car queue (e.g. 11N)
-        Returns:
-            CarQueue: The car queue object with the given ID
-        """
-        for queue in CarQueue.all_car_queues:
-            if queue.id == car_queue_id:
-                return queue
-        print("ERROR: Queue ID not found, with id: ", car_queue_id)
-
 ### Movement functions ###
     def move_cars(self):
         """ Moves all cars in the grid based on the epoch_movements
@@ -157,7 +144,7 @@ class Grid:
         # First we need to know the capacity of each destination queue
         queues_and_their_capacities = {}
         for _, destination_queue_id in self.epoch_movements:
-            queues_and_their_capacities[destination_queue_id] = self.get_car_queue(
+            queues_and_their_capacities[destination_queue_id] = utils.get_car_queue(
                 destination_queue_id).get_num_of_free_spots()
 
         # Second, we need to know the demand for each destination queue
@@ -193,14 +180,14 @@ class Grid:
         # First, all winning car queues must pay the bid and update their inactivity (though win_auction())
         for movement in self.epoch_movements:
             oringin_queue_id, destination_queue_id = movement
-            self.get_car_queue(oringin_queue_id).win_auction()
+            utils.get_car_queue(oringin_queue_id).win_auction()
 
         # Then, all cars must be moved. This is done after to avoid having winning cars that end up in winning queues paying the fee twice.
         # NOTE: This might not be a problem as the bids are stored by the car queues themselves???
         for movement in self.epoch_movements:
             oringin_queue_id, destination_queue_id = movement
-            origin_queue = self.get_car_queue(oringin_queue_id)
-            destination_queue = self.get_car_queue(destination_queue_id)
+            origin_queue = utils.get_car_queue(oringin_queue_id)
+            destination_queue = utils.get_car_queue(destination_queue_id)
 
             car_to_move = origin_queue.remove_first_car()
             car_to_move.increase_distance_travelled_in_trip()
@@ -246,7 +233,8 @@ class Grid:
         Args:
             grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
         Returns:
-            satisfaction_scores (list): A list of scores, that represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
+            satisfaction_scores (list): A list of car ids and scores in the form of tuples, that represent
+            how well the trip went (based on time spent & urgency). Metric used for evaluation.
         """
         satisfaction_scores = []
         for car in Car.all_cars:
@@ -254,7 +242,7 @@ class Grid:
                 # The time in traffic_network must increase now, as the car has reached its destination and will not go through the 'ready for new epoch' function
                 car.time_in_traffic_network += 1
                 # If the car is at its destination, remove it from the queue and spawn it somewhere else
-                self.get_car_queue(car.car_queue_id).remove_car(car)
+                utils.get_car_queue(car.car_queue_id).remove_car(car)
                 # Pick a random queue that has capacity
                 random_queue = random.choice(
                     [queue for queue in CarQueue.all_car_queues if queue.has_capacity()])
