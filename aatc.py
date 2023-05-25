@@ -110,7 +110,7 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--results_folder",
-         # include time and date in the folder name
+        # include time and date in the folder name
         default="results/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         type=str,
         help="Path to the Results Folder. Defaults to 'results'."
