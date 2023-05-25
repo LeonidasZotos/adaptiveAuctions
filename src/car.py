@@ -7,6 +7,8 @@ class Car:
     Attributes:
         id (str): The ID of the car, e.g. 1
         car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
+        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
+        bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         final_destination (str): The ID of the final destination intersection (e.g. 22, for intersection (2,2)).
         next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), South car queue). 
             This is not the final destination, but the next queue the car is heading to.
@@ -35,12 +37,14 @@ class Car:
     # A class variable to keep track of all cars.
     all_cars = []
 
-    def __init__(self, id, car_queue_id, grid_size):
+    def __init__(self, id, car_queue_id, grid_size, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
             id (str): The ID of the car, e.g. 1
             car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
             grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used when e.g. the car needs to pick a new final destination.
+            bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'static' or RL.
+            bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
         """
 
         Car.all_cars.append(self)
@@ -48,6 +52,8 @@ class Car:
         # Randomly pick a destination intersection
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = car_queue_id
+        self.bidding_type = bidding_type
+        self.bid_generator = bid_generator
         self.final_destination = ""
         self.reset_final_destination(grid_size)
         # next_destination_queue is the ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), south car queue).
@@ -206,8 +212,8 @@ class Car:
             self.id (str): The ID of the car, e.g. 1. This is included so that the intersection can keep track of which car submitted which bid.
             self.submitted_bid (float): The bid that the car submits in the auction.
         """
-        # For now, randomly submit a bid. TODO: Incorporate rush factor
-        self.submitted_bid = random.randint(0, 20)
+        self.submitted_bid = self.bid_generator.generate_bid(
+            self.bidding_type, self.balance, self.rush_factor)
         # If there is not enough balance, bid entire balance.
         if self.submitted_bid > self.balance:
             self.submitted_bid = self.balance

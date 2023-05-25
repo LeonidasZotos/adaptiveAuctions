@@ -69,8 +69,8 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--congestion_rate",
         default=0.5,
-        type=float_range(0.1, 1),
-        help="Rate of congestion (Percentage of occupied spots, 0.1-1). Defaults to 0.5. Must be a float between 0.1 and 1."
+        type=float_range(0.01, 1),
+        help="Rate of congestion (Percentage of occupied spots, 0.01-1). Defaults to 0.5. Must be a float between 0.1 and 1."
     )
 
     simulate_parser.add_argument(
@@ -123,16 +123,29 @@ if __name__ == '__main__':
     )
 
     simulate_parser.add_argument(
-        '--unique_auctions', action=argparse.BooleanOptionalAction,
+        '--unique_auctions',
+        action=argparse.BooleanOptionalAction,
         help="""If present, each intersection will use different auction modifiers, and by extension,
             potentially different parameters. Otherwise, all intersections will use the same auction modifiers.""")
 
     simulate_parser.add_argument(
-        '--individual_bid_learning', action=argparse.BooleanOptionalAction,
+        '--shared_bid_generator',
+        action=argparse.BooleanOptionalAction,
         help="""Each car will learn how to bid individually, instead of sharing experiences.""")
 
     simulate_parser.add_argument(
-        '--print_grid', action=argparse.BooleanOptionalAction,
+        '--bidders_proportion',
+        nargs=3,
+        default=[2, 1, 1],
+        type=int,
+        help="""Proportion for the types of bidders to use, should be a list of integers.
+        Order: [static, random, RL] (e.g. "75 25" for 75 percent static bidders and 25 percent random).
+        Does not have to add up to something. E.g. "2 1 1" means 2/4 static, 1/4 random, 1/4 RL.
+        """)
+
+    simulate_parser.add_argument(
+        '--print_grid',
+        action=argparse.BooleanOptionalAction,
         help="""If present, the grid will be printed after each epoch.""")
 
     # Test command

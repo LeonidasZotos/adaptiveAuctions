@@ -20,7 +20,8 @@ def setup_simulation(args):
     grid = Grid(args.grid_size, args.queue_capacity,
                 args.unique_auctions, args.auction_modifier_type)
     # Spawn cars in generated grid with given congestion rate
-    grid.spawn_cars(args.congestion_rate)
+    grid.spawn_cars(args.congestion_rate,
+                    args.shared_bid_generator, args.bidders_proportion)
 
     return grid
 

@@ -8,6 +8,7 @@ from src.intersection import Intersection
 from src.car_queue import CarQueue
 from src.car import Car
 from src.auction_modifier import AuctionModifier
+from src.bid_generator import BidGenerator
 
 
 class Grid:
@@ -208,14 +209,19 @@ class Grid:
             car_to_move.set_car_queue_id(destination_queue_id)
 
 ### Car spawning functions ###
-    def spawn_cars(self, congestion_rate):
+    def spawn_cars(self, congestion_rate, shared_bid_generator, bidders_proportion):
         """Spawns cars in the grid with the given congestion rate. This should only be exectuted at the start of the simulation
         Args:
             congestion_rate (float): The congestion rate of the grid (e.g. 0.5 means 50% of the spots are occupied)
+            shared_bid_generator (bool): Whether all cars have the same BidGenerator object or not.
+            bidders_proportion (list): List of distribution of bidders to use (e.g. [50, 50] for 50% static and 50% random)
         """
         # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
         total_spots = self.grid_size * self.grid_size * 4 * self.queue_capacity
         number_of_spawns = int(total_spots * congestion_rate)
+
+        # Create a default BidGenerator object, which will be used if shared_bid_generator is True
+        bidding_generator = BidGenerator()
 
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
@@ -225,9 +231,16 @@ class Grid:
             # If the queue has capacity, spawn a car
             if queue.has_capacity():
                 number_of_spawns -= 1
+                # Create a new BidGenerator object for each car, if shared_bid_generator is False
+                if not shared_bid_generator:
+                    bid_generator = BidGenerator()
+                # The agents have different bidding strategies, based on the proportions given.
+                # "choices" returns a list with one element, so we take the first element
+                bidding_type = random.choices(
+                    ['static', 'random', 'RL'], weights=bidders_proportion)[0]
                 # number_of_spawns can be used as a unique ID
                 queue.add_car(
-                    Car(id=number_of_spawns, car_queue_id=queue.id, grid_size=self.grid_size))
+                    Car(number_of_spawns, queue.id, self.grid_size, bidding_type, bid_generator))
 
     def respawn_cars(self, grid_size):
         """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, rush_factor)
