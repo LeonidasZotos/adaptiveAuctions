@@ -15,6 +15,7 @@ class Car:
         balance (float): The balance of the car. This is the amount of credit the car has left.
         rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
         time_at_intersection (int): The number of epochs that the car has spent at the intersection.
+        time_in_traffic_network (int): The number of epochs that the car has spent in the traffic network.
         distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.
         submitted_bid (float): The bid that the car submitted in the last auction.
 
@@ -120,7 +121,7 @@ class Car:
             to get the average time spent per intersection. This is then multiplied by the rush factor.
             The rush factor is subtracted from the result, so that if the car won every auction, the score is 0.
             The lower the score, the better.
-        """
+        """        
         return ((self.time_in_traffic_network * self.rush_factor)/self.distance_travelled_in_trip) - self.rush_factor
 
 ### General state functions ###

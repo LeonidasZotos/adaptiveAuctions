@@ -219,9 +219,8 @@ class Grid:
         # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
         total_spots = self.grid_size * self.grid_size * 4 * self.queue_capacity
         number_of_spawns = int(total_spots * congestion_rate)
-
         # Create a default BidGenerator object, which will be used if shared_bid_generator is True
-        bidding_generator = BidGenerator()
+        bid_generator = BidGenerator()
 
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
@@ -252,6 +251,8 @@ class Grid:
         satisfaction_scores = []
         for car in Car.all_cars:
             if car.is_at_destination():
+                # The time in traffic_network must increase now, as the car has reached its destination and will not go through the 'ready for new epoch' function
+                car.time_in_traffic_network += 1
                 # If the car is at its destination, remove it from the queue and spawn it somewhere else
                 self.get_car_queue(car.car_queue_id).remove_car(car)
                 # Pick a random queue that has capacity
