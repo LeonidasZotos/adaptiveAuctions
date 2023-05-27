@@ -14,7 +14,7 @@ class BidGenerator:
         generate_bid(bidding_strategy, balance, rush_factor): Returns a bid, based on the bidding strategy.
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch.
     """
-    static_bid = 10  # To be adjusted manually.
+    static_bid = 15  # To be adjusted manually.
 
     def __init__(self,):
         """Initialize the BidGenerator object.
@@ -28,6 +28,8 @@ class BidGenerator:
         Args:
             rush_factor (float): The rush factor of the car.
             balance (float): The balance of the car.
+        Returns:
+            float: A static bid, multiplied by the rush factor
         """
         return self.static_bid * rush_factor
 
@@ -35,8 +37,16 @@ class BidGenerator:
         """Returns a random bid between 0 and the total balance of the car.
         Args:
             balance (float): The balance of the car.
+        Returns:
+            float: A random bid between 0 and the total balance of the car.    
         """
-        # return random.uniform(0, balance)
+        return random.uniform(0, balance)
+
+    def generate_free_rider_bid(self):
+        """Returns a bid of 0 (free-riding).
+        Returns:
+            float: 0
+        """
         return 0
 
     def generate_RL_bid(self, balance, rush_factor):
@@ -58,10 +68,13 @@ class BidGenerator:
             return self.generate_static_bid(rush_factor, balance)
         if bidding_strategy == 'random':
             return self.generate_random_bid(balance)
+        if bidding_strategy == 'free-rider':
+            return self.generate_free_rider_bid()
         if bidding_strategy == 'RL':
             return self.generate_RL_bid(balance, rush_factor)
         else:
-            print("ERROR: Invalid bidding strategy: ", bidding_strategy,  ". Returning random bid.")
+            print("ERROR: Invalid bidding strategy: ",
+                  bidding_strategy,  ". Returning random bid.")
             return self.generate_random_bid(balance)
 
     def ready_for_new_epoch(self):

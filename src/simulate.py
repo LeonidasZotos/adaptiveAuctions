@@ -81,8 +81,16 @@ def give_credit(args):
 
 def reset_all_classes():
     """Reset all classes to their initial state"""
+    for intersection in Intersection.all_intersections:
+        del intersection
     Intersection.all_intersections = []
+
+    for car_queue in CarQueue.all_car_queues:
+        del car_queue
     CarQueue.all_car_queues = []
+
+    for car in Car.all_cars:
+        del car
     Car.all_cars = []
 
 

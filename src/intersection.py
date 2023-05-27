@@ -136,8 +136,10 @@ class Intersection:
         for key in summed_bids.keys():
             normalised_modification = renormalize(
                 initial_modifications[key], initial_modifications.values(), modification_boost_limit)
+
             final_bids[key] = (1 + random.uniform(0, 0.01) +
                                summed_bids[key]) * normalised_modification
+            # print("The bid was ", summed_bids[key], " and the modification was ", normalised_modification, ". The final bid is ", final_bids[key], ".")
 
         # Winning queue is the queue with the highest bid, regardless of 1st/2nd price.
         winning_queue = self.get_car_queue_from_intersection(

@@ -201,7 +201,7 @@ class Grid:
         Args:
             congestion_rate (float): The congestion rate of the grid (e.g. 0.5 means 50% of the spots are occupied)
             shared_bid_generator (bool): Whether all cars have the same BidGenerator object or not.
-            bidders_proportion (list): List of distribution of bidders to use (e.g. [50, 50] for 50% static and 50% random)
+            bidders_proportion (list): List of distribution of bidders to use (e.g. [50, 50, 0, 0] for 50% static and 50% random)
         """
         # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
         total_spots = self.grid_size * self.grid_size * 4 * self.queue_capacity
@@ -223,7 +223,7 @@ class Grid:
                 # The agents have different bidding strategies, based on the proportions given.
                 # "choices" returns a list with one element, so we take the first element
                 bidding_type = random.choices(
-                    ['static', 'random', 'RL'], weights=bidders_proportion)[0]
+                    ['static', 'random', 'free-rider', 'RL'], weights=bidders_proportion)[0]
                 # number_of_spawns can be used as a unique ID
                 queue.add_car(
                     Car(number_of_spawns, queue.id, self.grid_size, bidding_type, bid_generator))
@@ -233,8 +233,8 @@ class Grid:
         Args:
             grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
         Returns:
-            satisfaction_scores (list): A list of car ids and scores in the form of tuples, that represent
-            how well the trip went (based on time spent & urgency). Metric used for evaluation.
+            satisfaction_scores (list): A list of small car copies and scores in the form of tuples, that represent
+                how well the trip went (based on time spent & urgency). Metric used for evaluation.
         """
         satisfaction_scores = []
         for car in Car.all_cars:
@@ -246,7 +246,7 @@ class Grid:
                 # Pick a random queue that has capacity
                 random_queue = random.choice(
                     [queue for queue in CarQueue.all_car_queues if queue.has_capacity()])
-                # Append satisfaction score to list
+                # Append copy of car and satisfaction score to list
                 satisfaction_scores.append(car.calculate_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)
                 car.reset_car(random_queue.id, grid_size)

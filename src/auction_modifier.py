@@ -49,7 +49,7 @@ class AuctionModifier:
         """
         queue_delay_boost = 0.5
         queue_length_boost = 0.5
-        modification_boost_limit = [1, 2]
+        modification_boost_limit = [1, 3]  # min/max multiplier of bid
         return queue_delay_boost, queue_length_boost, modification_boost_limit
 
     def generate_spsa_parameters(self):
@@ -58,9 +58,9 @@ class AuctionModifier:
             tuple: A tuple containing the queue delay boost, queue length boost and modification boost limits
         """
         print("SPSA ALGORITHM IS NOT IMPLEMENTED YET, returning static parameters")
-        queue_delay_boost = 0.5
-        queue_length_boost = 0.5
-        modification_boost_limit = [1, 2]
+        queue_delay_boost = 0.7
+        queue_length_boost = 0.7
+        modification_boost_limit = [1, 3]
         return queue_delay_boost, queue_length_boost, modification_boost_limit
 
     def generate_auction_parameters(self):

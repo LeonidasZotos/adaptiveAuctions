@@ -1,3 +1,8 @@
+"""This module contains the Car and SmallCar classes. The Car class is responsible for keeping track of the car's state, and for submitting bids.
+The SmallCar class is a small version of the Car class, which only contains the essential car info. The latter is used for evaluation purposes,
+so that no full copies are kept.
+"""
+
 import random
 
 
@@ -10,7 +15,7 @@ class Car:
         bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
         bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         final_destination (str): The ID of the final destination intersection (e.g. 22, for intersection (2,2)).
-        next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), South car queue). 
+        next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), South car queue).
             This is not the final destination, but the next queue the car is heading to.
         balance (float): The balance of the car. This is the amount of credit the car has left.
         rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
@@ -25,7 +30,7 @@ class Car:
         set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id: Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
         increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
-        calculate_satisfaction_score: Returns the satisfaction score of the trip, which is simply the time spent in the network multiplied by the rush factor.
+        calculate_satisfaction_score: Calculate the satisfaction score of the car after the completion of a trip
         reset_final_destination: Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
             we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
@@ -98,12 +103,12 @@ class Car:
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
             Args:
-                new_balance (float): The new balance of the car. 
+                new_balance (float): The new balance of the car.
         """
         self.balance = new_balance
 
     def set_car_queue_id(self, new_car_queue_id):
-        """ Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved. 
+        """ Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
             Args:
                 new_car_queue_id (str): The new queue ID of the car.
         """
@@ -116,21 +121,23 @@ class Car:
         self.distance_travelled_in_trip += 1
 
     def calculate_satisfaction_score(self):
-        """This function should only be called at the end fo a trip. Returns the satisfaction score of the trip, 
+        """This function should only be called at the end fo a trip. Returns the satisfaction score of the trip,
             Function Explanation: The time spent in the network is divided by the distance travelled in the trip,
             to get the average time spent per intersection. This is then multiplied by the rush factor.
             The rush factor is subtracted from the result, so that if the car won every auction, the score is 0.
             The lower the score, the better.
         Returns:
-            tuple: A tuple containing the ID of the car and the satisfaction score of the trip.
+            tuple: A tuple containing a small copy of the car and the satisfaction score of the trip.
+                By 'small', we mean that the car only contains the necessary information.
         """
         score = ((self.time_in_traffic_network * self.rush_factor) /
                  self.distance_travelled_in_trip) - self.rush_factor
-        return self.id, score
+        # Return a small copy of the car (only necessary information), so that the original car is not changed.
+        return SmallCar(self), score
 
 ### General state functions ###
     def reset_final_destination(self, grid_size):
-        """ Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned. 
+        """ Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
             The new destination is randomly picked and canot be the same as the current intersection.
             Args:
                 grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
@@ -194,7 +201,7 @@ class Car:
 
     def reset_car(self, car_queue_id, grid_size):
         """ Reset the car to a new state. E.g. Used when the car is (re)spawned.
-            This function resets the car's final destination, next destination queue, rush factor, 
+            This function resets the car's final destination, next destination queue, rush factor,
             submitted bid, time at intersection & time in network/trip duration.
             The balance is not affected.
             Args:
@@ -227,13 +234,13 @@ class Car:
                 self.id, self.submitted_bid))
             self.submitted_bid = 0
         # Return the car's id and the bid
-        return self.id, int(self.submitted_bid)
+        return self.id, self.submitted_bid
 
     def pay_bid(self, price):
-        """ Pay the given price. Used when the car wins an auction. The price should never be higher than the balance. 
+        """ Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
             The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
             Args:
-                price (float): The price that the car has to pay (i.e. amount to deduct from balance). 
+                price (float): The price that the car has to pay (i.e. amount to deduct from balance).
         """
         if price > self.balance:
             print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {})".format(
@@ -251,3 +258,32 @@ class Car:
         self.time_at_intersection += 1
         self.time_in_traffic_network += 1
         self.submitted_bid = 0
+
+
+class SmallCar:
+    """The SmallCar class is a small version of the Car class, which only contains the essential car info. This class is used for evaluation purposes, 
+    so that no full copies of cars are kept.
+    Attributes:
+        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
+        bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
+        balance (float): The balance of the car. This is the amount of credit the car has left.
+        rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
+        time_at_intersection (int): The number of epochs that the car has spent at the intersection.
+        time_in_traffic_network (int): The number of epochs that the car has spent in the traffic network.
+        distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.
+        submitted_bid (float): The bid that the car submitted in the last auction.
+    """
+
+    def __init__(self, Car):
+        """ Initialize the SmallCar object
+        Args:
+            Car (Car): The car object to copy.
+        """
+        self.bidding_type = Car.bidding_type
+        self.bid_generator = Car.bid_generator
+        self.balance = Car.balance
+        self.rush_factor = Car.rush_factor
+        self.time_at_intersection = Car.time_at_intersection
+        self.time_in_traffic_network = Car.time_in_traffic_network
+        self.distance_travelled_in_trip = Car.distance_travelled_in_trip
+        self.submitted_bid = Car.submitted_bid
