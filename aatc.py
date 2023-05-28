@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--grid_size",
-        default=4,
+        default=5,
         choices=range(2, 10),
         metavar="[2-100]",
         type=int,

@@ -2,6 +2,7 @@
 
 import random
 
+
 from src.car_queue import CarQueue
 
 
@@ -61,6 +62,16 @@ class Intersection:
             if not queue.is_empty():
                 return False
         return True
+
+    def num_of_cars_in_intersection(self):
+        """Returns the number of cars in the intersection
+        Returns:
+            int: The number of cars in the intersection
+        """
+        num_of_cars = 0
+        for queue in self.carQueues:
+            num_of_cars += queue.get_num_of_cars()
+        return num_of_cars
 
     def get_car_queue_from_intersection(self, car_queue_id):
         """Returns the car queue object given a car queue id. Car queue has to be in this intersection.
@@ -139,7 +150,6 @@ class Intersection:
 
             final_bids[key] = (1 + random.uniform(0, 0.01) +
                                summed_bids[key]) * normalised_modification
-            # print("The bid was ", summed_bids[key], " and the modification was ", normalised_modification, ". The final bid is ", final_bids[key], ".")
 
         # Winning queue is the queue with the highest bid, regardless of 1st/2nd price.
         winning_queue = self.get_car_queue_from_intersection(
@@ -164,5 +174,4 @@ class Intersection:
 
     def ready_for_new_epoch(self):
         """Prepares the intersection for the next epoch."""
-        # Nothing to clear.
         pass

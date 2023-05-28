@@ -70,6 +70,7 @@ def run_single_epoch(epoch, grid, metrics_keeper):
         car_queue.ready_for_new_epoch()
     for car in Car.all_cars:
         car.ready_for_new_epoch()
+    metrics_keeper.ready_for_new_epoch()
 
 
 def reset_all_classes():
@@ -97,7 +98,7 @@ def run(args):
     if not os.path.exists(args.results_folder):
         os.makedirs(args.results_folder)
 
-    metrics_keeper = MetricsKeeper()
+    metrics_keeper = MetricsKeeper(args)
 
     for simulation in range(args.num_of_simulations):
         print(
@@ -107,7 +108,7 @@ def run(args):
         grid = setup_simulation(args)
         # Run the epochs on the grid
         run_epochs(args, grid, metrics_keeper)
-        metrics_keeper.prep_for_new_simulation()
+        metrics_keeper.ready_for_new_simulation()
 
     # Produce Results
     metrics_keeper.produce_results(args)

@@ -1,7 +1,10 @@
 """A class to keep track of the metrics of the simulation"""
-import matplotlib.pyplot as plt
+import seaborn as sns
 import numpy as np
+import matplotlib.pyplot as plt
 from math import nan
+
+from src.intersection import Intersection
 
 
 class MetricsKeeper:
@@ -11,14 +14,20 @@ class MetricsKeeper:
         all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
         current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for each car. The key is the epoch, the value is
             a list of all the satisfaction scores for that epoch, if any.
+        total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
+            the value is the total throughput.
     Functions:
         add_satisfaction_scores: Adds a satisfaction score (and its car id, as a tuple) to the satisfaction_scores dictionary
         produce_results: Produces all the evaluation results of all simulations
         plot_satisfaction_scores_overall_average: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
+        plot_satisfaction_scores_by_bidding_type: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
+            for each bidding type, represented by a different color.
+        plot_throughput_heatmap_average: Creates a heatmap of the average throughput per intersection, over all simulations
+        ready_for_new_epoch: Prepares the metrics keeper for the next epoch.
         prep_for_new_simulation: Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
     """
 
-    def __init__(self):
+    def __init__(self, args):
         """ Initialize the MetricsKeeper object
         Args:
             all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
@@ -28,6 +37,8 @@ class MetricsKeeper:
         """
         self.all_simulations_results = []
         self.current_sim_satisfaction_scores = {}
+        self.total_throughput_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size))
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
         """Adds the satisfaction scores of the cars that completed a trip. If there was no car that completed 
@@ -49,11 +60,15 @@ class MetricsKeeper:
             for arg in vars(args):
                 f.write(arg + ': ' + str(getattr(args, arg)) + '\n')
 
-        # Create a graph of all satisfaction scores
+        # Create a graph of all satisfaction scores, over all simulations
         self.plot_satisfaction_scores_overall_average(args.results_folder)
 
-        # Create a graph of all satisfaction scores, per bidding type
+        # Create a graph of all satisfaction scores, per bidding type, over all simulations
         self.plot_satisfaction_scores_by_bidding_type(args.results_folder)
+
+        # Create a heatmap of the average throughput per intersection, over all simulations
+        self.plot_throughput_heatmap_average(
+            args.results_folder, args.num_of_simulations)
 
     def plot_satisfaction_scores_overall_average(self, results_folder):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
@@ -107,6 +122,8 @@ class MetricsKeeper:
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh 100 lines of code, that's a lot of code (but here we are)'
+        Args:
+            results_folder (str): The folder in which the results will be stored
         """
 
         static_bidding_results = {}
@@ -235,7 +252,32 @@ class MetricsKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-    def prep_for_new_simulation(self):
+    def plot_throughput_heatmap_average(self, results_folder, num_of_simulations):
+        """Creates a heatmap of the average throughput per intersection, over all simulations
+        Args:
+            results_folder (str): The folder in which the results will be stored
+            num_of_simulations (int): The number of simulations that were run
+        """
+        # Create heatmap of average throughput per intersection
+        average_throughput_per_intersection = np.floor_divide(
+            self.total_throughput_per_intersection, num_of_simulations)  # divide by number of simulations
+
+        ax = sns.heatmap(average_throughput_per_intersection, annot=True)
+        ax.set(xlabel='X coordinate', ylabel='Y coordinate',
+               title='Average throughput per intersection')
+        plt.savefig(results_folder + '/average_throughput_heatmap.png')
+        plt.clf()
+
+    def ready_for_new_epoch(self):
+        """Prepares the metrics keeper for the next epoch"""
+        # We use a 2d array of the throughput per intersection. The first index is the x coordinate, the second is the y coordinate.
+        for intersection in Intersection.all_intersections:
+            id = intersection.id
+            x_cord = int(id[0])
+            y_cord = int(id[1])
+            self.total_throughput_per_intersection[x_cord][y_cord] += intersection.num_of_cars_in_intersection()
+
+    def ready_for_new_simulation(self):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""
         self.all_simulations_results.append(
             self.current_sim_satisfaction_scores)
