@@ -38,7 +38,12 @@ def run_epochs(args, grid, metrics_keeper):
         if args.print_grid:
             grid.print_grid(epoch)
         if epoch % args.wage_time == 0:
-            give_credit(args)
+            # Give credit to all cars
+            if Car.all_cars == []:
+                print("ERROR: No Cars in Simulation.")
+            else:
+                for car in Car.all_cars:
+                    car.set_balance(args.credit_balance)
         # Now that the credit has been given, run the epoch
         run_single_epoch(epoch, grid, metrics_keeper)
 
@@ -65,18 +70,6 @@ def run_single_epoch(epoch, grid, metrics_keeper):
         car_queue.ready_for_new_epoch()
     for car in Car.all_cars:
         car.ready_for_new_epoch()
-
-
-def give_credit(args):
-    """Give credit to all cars
-    Args:
-        args (argparse.Namespace): Arguments parsed from the command line
-    """
-    if Car.all_cars == []:
-        print("ERROR: No Cars in Simulation.")
-    else:
-        for car in Car.all_cars:
-            car.set_balance(args.credit_balance)
 
 
 def reset_all_classes():
@@ -117,4 +110,4 @@ def run(args):
         metrics_keeper.prep_for_new_simulation()
 
     # Produce Results
-    metrics_keeper.produce_results(args.results_folder)
+    metrics_keeper.produce_results(args)

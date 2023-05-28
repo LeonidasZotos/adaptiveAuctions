@@ -39,16 +39,21 @@ class MetricsKeeper:
         if satisfaction_scores != []:
             self.current_sim_satisfaction_scores[epoch] = satisfaction_scores
 
-    def produce_results(self, results_folder):
+    def produce_results(self, args):
         """Produces all the evaluation results of all simulations
         Args:
-            results_folder (str): The folder in which the results will be stored
+            args (argparse.Namespace): Arguments parsed from the command line
         """
+        # Create a .txt file with the arguments used for the simulation
+        with open(args.results_folder + '/configuration.txt', 'w') as f:
+            for arg in vars(args):
+                f.write(arg + ': ' + str(getattr(args, arg)) + '\n')
+
         # Create a graph of all satisfaction scores
-        self.plot_satisfaction_scores_overall_average(results_folder)
+        self.plot_satisfaction_scores_overall_average(args.results_folder)
 
         # Create a graph of all satisfaction scores, per bidding type
-        self.plot_satisfaction_scores_by_bidding_type(results_folder)
+        self.plot_satisfaction_scores_by_bidding_type(args.results_folder)
 
     def plot_satisfaction_scores_overall_average(self, results_folder):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
