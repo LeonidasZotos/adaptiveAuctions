@@ -27,6 +27,8 @@ class AuctionModifier:
         """
         self.intersection_id = intersection_id
         self.modifier_type = modifier_type
+        self.previous_spsa_parameters = {'queue_delay_boost': 0.5, 'queue_length_boost': 0.5,
+                                         'modification_boost_limit_min': 1, 'modification_boost_limit_max': 3}
 
     def __str__(self):
         return f'Adaptive Auction Modifier'
@@ -62,6 +64,10 @@ class AuctionModifier:
         queue_length_boost = 0.7
         modification_boost_limit = [1, 3]
         return queue_delay_boost, queue_length_boost, modification_boost_limit
+    
+    def update_spsa_parameters(self):
+        
+        pass
 
     def generate_auction_parameters(self):
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type
@@ -81,4 +87,5 @@ class AuctionModifier:
     def ready_for_new_epoch(self):
         """Prepares the Adaptive Auction Modifier for the next epoch."""
         # Nothing to update.
+        self.update_spsa_parameters()
         pass

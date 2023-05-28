@@ -119,7 +119,7 @@ class Intersection:
                 queue_waiting_times[queue.id] = queue.get_time_inactive()
                 queue_lengths[queue.id] = queue.get_num_of_cars()
 
-        # If there is only 1 entry:
+        # If there is only one entry:
         if len(collected_bids) == 1:
             # We return the only queue, and its destination, and give no charge.
             winning_queue = self.get_car_queue_from_intersection(

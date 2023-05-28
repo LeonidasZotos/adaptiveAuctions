@@ -22,7 +22,6 @@ def setup_simulation(args):
     # Spawn cars in generated grid with given congestion rate
     grid.spawn_cars(args.congestion_rate,
                     args.shared_bid_generator, args.bidders_proportion)
-
     return grid
 
 
