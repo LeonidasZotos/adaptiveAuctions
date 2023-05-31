@@ -39,6 +39,8 @@ class MetricsKeeper:
         self.current_sim_satisfaction_scores = {}
         self.total_throughput_per_intersection = np.zeros(
             (args.grid_size, args.grid_size))
+        self.last_reward_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size))
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
         """Adds the satisfaction scores of the cars that completed a trip. If there was no car that completed 
@@ -260,7 +262,7 @@ class MetricsKeeper:
         """
         # Create heatmap of average throughput per intersection
         average_throughput_per_intersection = np.floor_divide(
-            self.total_throughput_per_intersection, num_of_simulations)  # divide by number of simulations
+            self.total_throughput_per_intersection, num_of_simulations)  # Divide by number of simulations
 
         ax = sns.heatmap(average_throughput_per_intersection, annot=True)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
@@ -276,6 +278,7 @@ class MetricsKeeper:
             x_cord = int(id[0])
             y_cord = int(id[1])
             self.total_throughput_per_intersection[x_cord][y_cord] += intersection.num_of_cars_in_intersection()
+            self.last_reward_per_intersection[x_cord][y_cord] = intersection.last_reward()
 
     def ready_for_new_simulation(self):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""

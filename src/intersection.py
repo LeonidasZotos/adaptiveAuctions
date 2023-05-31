@@ -37,7 +37,8 @@ class Intersection:
                           CarQueue(queue_capacity, str(id + 'E')),
                           CarQueue(queue_capacity, str(id + 'S')),
                           CarQueue(queue_capacity, str(id + 'W'))]
-
+        self.last_reward = 0
+        
     def __str__(self):
         return f'Intersection(id={self.id})'
 
