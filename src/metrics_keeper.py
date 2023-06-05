@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 from math import nan
 
 from src.intersection import Intersection
+import src.utils as utils
 
 
 class MetricsKeeper:
@@ -120,12 +121,13 @@ class MetricsKeeper:
         plt.savefig(results_folder + '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, results_folder):
+    def plot_satisfaction_scores_by_bidding_type(self, results_folder, export_results=True, filter_outliers=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh 100 lines of code, that's a lot of code (but here we are)'
         Args:
             results_folder (str): The folder in which the results will be stored
+            export_results (bool): Whether to export the results to a .csv file
         """
 
         static_bidding_results = {}
@@ -167,6 +169,26 @@ class MetricsKeeper:
         for epoch in static_bidding_results:
             if static_bidding_results[epoch] != None or random_bidding_results[epoch] != None or free_rider_bidding_results[epoch] != None or RL_bidding_results[epoch] != None:
                 epochs.append(epoch)
+
+        # Remove outliers if necessary:
+        if filter_outliers == True:
+            for epoch in epochs:
+                # Static bidding:
+                if epoch in static_bidding_results:
+                    static_bidding_results[epoch] = utils.remove_outliers(
+                        static_bidding_results[epoch])
+                # Random bidding:
+                if epoch in random_bidding_results:
+                    random_bidding_results[epoch] = utils.remove_outliers(
+                        random_bidding_results[epoch])
+                # Free-Rider bidding:
+                if epoch in free_rider_bidding_results:
+                    free_rider_bidding_results[epoch] = utils.remove_outliers(
+                        free_rider_bidding_results[epoch])
+                # RL bidding:
+                if epoch in RL_bidding_results:
+                    RL_bidding_results[epoch] = utils.remove_outliers(
+                        RL_bidding_results[epoch])
 
         # Create a list of all average satisfaction scores
         static_bidding_average_satisfaction_scores = []
@@ -254,11 +276,16 @@ class MetricsKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-    def plot_throughput_heatmap_average(self, results_folder, num_of_simulations):
+        if export_results == True:
+            np.savetxt(results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([epochs, static_bidding_average_satisfaction_scores, random_bidding_average_satisfaction_scores,
+                       free_rider_bidding_average_satisfaction_scores, RL_bidder_average_satisfaction_scores]).T, delimiter=",", header="Epoch, Static bidding, Random bidding, Free-rider bidding, RL bidding")
+
+    def plot_throughput_heatmap_average(self, results_folder, num_of_simulations, export_results=True):
         """Creates a heatmap of the average throughput per intersection, over all simulations
         Args:
             results_folder (str): The folder in which the results will be stored
             num_of_simulations (int): The number of simulations that were run
+            export_results (bool): Whether to export the results to a .csv file
         """
         # Create heatmap of average throughput per intersection
         average_throughput_per_intersection = np.floor_divide(
@@ -269,6 +296,10 @@ class MetricsKeeper:
                title='Average throughput per intersection')
         plt.savefig(results_folder + '/average_throughput_heatmap.png')
         plt.clf()
+
+        if export_results == True:
+            np.savetxt(results_folder + '/average_throughput_per_intersection.csv',
+                       average_throughput_per_intersection, delimiter=",")
 
     def ready_for_new_epoch(self):
         """Prepares the metrics keeper for the next epoch"""

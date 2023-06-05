@@ -2,6 +2,8 @@
 This class is also responsible for gathering bids from the queue and making the cars pay their individual fees.
 Lastly, it also keeps track of how long the queue has been inactive (i.e. no cars have left the queue)."""
 
+import src.utils as utils
+
 
 class CarQueue:
     """
@@ -23,6 +25,7 @@ class CarQueue:
         has_capacity: Checks whether the queue has capacity for more cars
         get_num_of_free_spots: Returns the number of free spots in the queue
         get_destination_of_first_car: Returns the destination of the first car in the queue
+        get_parent_intersection: Returns the intersection that the queue belongs to
         set_auction_fee: Sets the total fee that the cars in the queue have to pay, in case they win an auction
         add_car: Adds a car to the end of the queue
         remove_first_car: Removes the first car from the queue
@@ -47,6 +50,7 @@ class CarQueue:
         self.cars = []
         self.capacity = max_capacity
         self.num_of_cars = len(self.cars)
+        self.parent_intersection = utils.get_intersection_from_car_queue(id)
         self.bids = {}
         self.total_fee = 0
         self.time_inactive = 0
@@ -102,6 +106,10 @@ class CarQueue:
         car = self.cars[0]
         destination = car.update_next_destination_queue()
         return destination
+
+    def get_parent_intersection(self):
+        """Returns the intersection that the queue belongs to"""
+        return self.parent_intersection
 
     def set_auction_fee(self, fee):
         """Sets the total fee that the cars in the queue have to pay in total, in case they win an auction

@@ -2,7 +2,6 @@
 
 import random
 
-
 from src.car_queue import CarQueue
 
 
