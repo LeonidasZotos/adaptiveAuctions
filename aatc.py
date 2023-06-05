@@ -63,8 +63,8 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--num_of_simulations",
         default=1,
-        choices=range(1, 1001),
-        metavar="[1-1000]",
+        choices=range(1, 5001),
+        metavar="[1-5000]",
         type=int,
         help="Number of simulations to run. Defaults to 1. Must be an integer between 1 and 1000."
     )
