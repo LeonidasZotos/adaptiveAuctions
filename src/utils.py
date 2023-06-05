@@ -31,6 +31,28 @@ def get_car_queue(car_queue_id):
     print("ERROR: Queue ID not found, with id: ", car_queue_id)
 
 
+def get_intersection_from_car_queue(car_queue_id):
+    """Returns the intersection object given a car queue id
+        Args:
+        car_queue_id (str): The ID of the car queue (e.g. 11N)
+    Returns:    
+        Intersection: The intersection object with the given ID
+    """
+    # only keep the first two characters of the car_queue_id
+    intersection_id = car_queue_id[:2]
+    intersection_from_car_queue = get_intersection(intersection_id)
+    return intersection_from_car_queue
+
+def get_last_reward_of_intersection(intersection_id):
+    """Returns the last reward of the intersection
+    Args:
+        intersection_id (str): The ID of the intersection (e.g. 11)
+    Returns:
+        float: The last reward of the intersection
+    """
+    intersection = get_intersection(intersection_id)
+    return intersection.get_last_reward()
+
 def get_car(car_id):
     """Returns the car object given a car id
     Args:

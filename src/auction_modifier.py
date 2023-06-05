@@ -8,7 +8,7 @@ class AuctionModifier:
     """
     This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction. 
     Attributes:
-        intersection_id (str): The id of the intersection for which the modifier is used, or 'all' 
+        intersection_id (str): The id of the intersection for which the modifier is used, or 'same' 
             if the same auction parameters are used everywhere
         modifier_type (str): The type of the modifier. (e.g. 'random', 'static', 'spsa')
         spsa_parameters (dict): The parameters used for the SPSA algorithm
@@ -82,16 +82,17 @@ class AuctionModifier:
         modification_boost_limit = [1, 3]  # min/max multiplier of bid
         return queue_delay_boost, queue_length_boost, modification_boost_limit
 
-    def generate_spsa_parameters(self, last_reward):
+    def generate_spsa_parameters(self):
         """Returns parameters for the next auction, based on the SPSA algorithm
-        Args:
-            last_reward (float): The reward from the last auction
         Returns:
             tuple: A tuple containing the queue delay boost, queue length boost and modification boost limits
         """
 
         self.update_spsa_parameters(
-            utils.get_last_reward_of_intersection(self.intersection_id))
+
+            utils.get_last_reward_of_intersection(self.intersection_id)
+
+        )
 
         modification_boost_limit = [0, 0]
 
@@ -123,16 +124,16 @@ class AuctionModifier:
             self.spsa_parameters['delta_k'] = [
                 random.choice([1, -1]) for i in range(4)]
 
-            self.spsa_parameters['theta_params_plus'] = [self.spsa_parameters['theta_params'][i] + self.spsa_parameters['c_k'] * self.delta_k[i]
+            self.spsa_parameters['theta_params_plus'] = [self.spsa_parameters['theta_params'][i] + self.spsa_parameters['c_k'] * self.spsa_parameters['delta_k'][i]
                                                          for i in range(4)]
-            self.spsa_parameters['theta_params_minus'] = [self.spsa_parameters['theta_params'][i] - self.spsa_parameters['c_k'] * self.delta_k[i]
+            self.spsa_parameters['theta_params_minus'] = [self.spsa_parameters['theta_params'][i] - self.spsa_parameters['c_k'] * self.spsa_parameters['delta_k'][i]
                                                           for i in range(4)]
             # 3. Set params_to_check to theta+
             self.spsa_parameters['params_to_check'] = self.spsa_parameters['theta_params_plus']
             # 4. Set phase to store_F_Pos
             self.spsa_parameters['phase'] = 'store_F_Pos'
 
-        elif self.spsa['phase'] == 'store_F_Pos':
+        elif self.spsa_parameters['phase'] == 'store_F_Pos':
             # 1. Store F(theta+)
             self.spsa_parameters['f_pos'] = last_reward
             # 2. Set params_to_check to theta-
@@ -140,17 +141,20 @@ class AuctionModifier:
             # 3. Set phase to store_F_Neg
             self.spsa_parameters['phase'] = 'store_F_Neg'
 
-        elif self.spsa['phase'] == 'store_F_Neg':
+        elif self.spsa_parameters['phase'] == 'store_F_Neg':
             # 1. Store F(theta-)
             self.spsa_parameters['f_neg'] = last_reward
 
             # 2. Calculate g_k(theta_k)
-            g_k = [(self.spsa_parameters['f_pos'] - self.spsa_parameters['f_neg']) /
-                   (2 * self.spsa_parameters['c_k'] * self.spsa_parameters['delta_k'] for i in range(4))]  # not sure if the mult. will work
+            g_k = []
+            for i in range(4):
+                g_k.append((self.spsa_parameters['f_pos'] - self.spsa_parameters['f_neg']) /
+                           (2 * self.spsa_parameters['c_k'] * self.spsa_parameters['delta_k'][i]))
 
             # 3. Calculate theta_k+1 and set theta_params to theta_k+1
-            self.spsa_parameters['theta_params'] = [self.spsa_parameters['theta_params'][i] + self.spsa_parameters['l_k'] * g_k[i]
-                                                    for i in range(4)]
+            for i in range(4):
+                self.spsa_parameters['theta_params'][i] = self.spsa_parameters['theta_params'][i] + \
+                    self.spsa_parameters['l_k'] * g_k[i]
             # 4. Set params_to_check to theta_params
             self.spsa_parameters['params_to_check'] = self.spsa_parameters['theta_params']
 

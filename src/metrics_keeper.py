@@ -278,7 +278,8 @@ class MetricsKeeper:
             x_cord = int(id[0])
             y_cord = int(id[1])
             self.total_throughput_per_intersection[x_cord][y_cord] += intersection.num_of_cars_in_intersection()
-            self.last_reward_per_intersection[x_cord][y_cord] = intersection.last_reward()
+            self.last_reward_per_intersection[x_cord][y_cord] = intersection.get_last_reward(
+            )
 
     def ready_for_new_simulation(self):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""

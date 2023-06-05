@@ -27,6 +27,7 @@ class Car:
     Functions:
         get_short_description: Returns a short description of the car, containing the ID, final destination, balance and rush factor.
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
+        get_time_at_intersection: Returns the time spent at the current intersection
         set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id: Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
         increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
@@ -100,6 +101,12 @@ class Car:
         else:
             return False
 
+    def get_time_at_intersection(self):
+        """ Returns the time spent at the current intersection
+        Returns:
+            int: The time spent at the current intersection
+        """
+        return self.time_at_intersection
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
             Args:

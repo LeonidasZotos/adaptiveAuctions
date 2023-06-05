@@ -53,9 +53,9 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--num_of_epochs",
-        default=100,
-        choices=range(1, 5001),
-        metavar="[1-5000]",
+        default=100000,
+        choices=range(1, 100001),
+        metavar="[1-100000]",
         type=int,
         help="Number of epochs to run. Defaults to 200. Must be an integer between 1 and 5000."
     )
@@ -88,14 +88,14 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--congestion_rate",
-        default=0.1,
+        default=0.15,
         type=float_range(0.01, 1),
         help="Rate of congestion (Percentage of occupied spots, 0.01-1). Defaults to 0.5. Must be a float between 0.1 and 1."
     )
 
     simulate_parser.add_argument(
         "--credit_balance",
-        default=500,
+        default=100,
         type=float_range(1, 1000),
         help="Initial & Renewal credit balance for each car. Defaults to 50. Must be a float between 1 and 1000."
     )
@@ -111,7 +111,7 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--auction_modifier_type",
-        default="static",
+        default="spsa",
         choices=["random", "static", "spsa"],
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'spsa'."

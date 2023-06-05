@@ -15,6 +15,9 @@ class Intersection:
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         is_empty: Checks whether all car queues are empty in this intersection
+        num_of_cars_in_intersection: Returns the number of cars in the intersection
+        set_last_reward: Sets the last reward of the intersection
+        get_last_reward: Returns the last reward of the intersection
         get_car_queue_from_intersection: Returns the car queue object given a car queue id. Car queue has to be in this intersection.
         hold_auction: Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
@@ -38,7 +41,7 @@ class Intersection:
                           CarQueue(queue_capacity, str(id + 'S')),
                           CarQueue(queue_capacity, str(id + 'W'))]
         self.last_reward = 0
-        
+
     def __str__(self):
         return f'Intersection(id={self.id})'
 
@@ -73,6 +76,20 @@ class Intersection:
         for queue in self.carQueues:
             num_of_cars += queue.get_num_of_cars()
         return num_of_cars
+
+    def set_last_reward(self, reward):
+        """Sets the last reward of the intersection
+        Args:
+            reward (float): The reward to set
+        """
+        self.last_reward = reward
+
+    def get_last_reward(self):
+        """Returns the last reward of the intersection
+        Returns:
+            float: The last reward of the intersection
+        """
+        return self.last_reward
 
     def get_car_queue_from_intersection(self, car_queue_id):
         """Returns the car queue object given a car queue id. Car queue has to be in this intersection.

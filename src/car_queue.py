@@ -195,6 +195,8 @@ class CarQueue:
         # Finally, the inactivity time must be reset for the queue itself.
         self.time_inactive = 0
 
+        return self.cars[i].get_time_at_intersection()
+
     def reset_bids(self):
         """Resets the bids submitted by the cars in the queue, so that the next auction can be run."""
         if self.bids != None:

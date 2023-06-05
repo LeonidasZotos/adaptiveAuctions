@@ -180,7 +180,9 @@ class Grid:
         # First, all winning car queues must pay the bid and update their inactivity (though win_auction())
         for movement in self.epoch_movements:
             oringin_queue_id, destination_queue_id = movement
-            utils.get_car_queue(oringin_queue_id).win_auction()
+            reward = utils.get_car_queue(oringin_queue_id).win_auction()
+            utils.get_intersection_from_car_queue(
+                oringin_queue_id).set_last_reward(reward)
 
         # Then, all cars must be moved. This is done after to avoid having winning cars that end up in winning queues paying the fee twice.
         # NOTE: This might not be a problem as the bids are stored by the car queues themselves???
