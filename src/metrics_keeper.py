@@ -4,7 +4,6 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import nan
 
-from src.intersection import Intersection
 import src.utils as utils
 
 
@@ -320,7 +319,7 @@ class MetricsKeeper:
         """Prepares the metrics keeper for the next epoch"""
         # We use a 2d array. The first index is the x coordinate, the second is the y coordinate.
         # Here, we store all the total throughput per intersection and the last reward per intersection
-        for intersection in Intersection.all_intersections:
+        for intersection in utils.get_all_intersections():
             id = intersection.id
             x_cord = int(id[0])
             y_cord = int(id[1])

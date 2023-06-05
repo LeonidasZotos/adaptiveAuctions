@@ -1,6 +1,15 @@
 """A module containing utility functions, such as finding class objects by ID. The other files are imported 
 within the functions, to avoid circular imports."""
+from src.intersection import Intersection
+from src.car_queue import CarQueue
+from src.car import Car
 
+def get_all_intersections():
+    """Returns a list of all intersection objects
+    Returns:
+        list: A list of all intersection objects
+    """
+    return Intersection.all_intersections
 
 def get_intersection(intersection_id):
     """Returns the intersection object given an intersection id
@@ -9,7 +18,6 @@ def get_intersection(intersection_id):
     Returns:
         Intersection: The intersection object with the given ID
     """
-    from src.intersection import Intersection
     for intersection in Intersection.all_intersections:
         if intersection.id == intersection_id:
             return intersection
@@ -23,7 +31,6 @@ def get_car_queue(car_queue_id):
     Returns:
         CarQueue: The car queue object with the given ID
     """
-    from src.car_queue import CarQueue
     for queue in CarQueue.all_car_queues:
         if queue.id == car_queue_id:
             return queue
@@ -61,7 +68,6 @@ def get_car(car_id):
     Returns:
         Car: The car object with the given ID
     """
-    from src.car import Car
     for car in Car.all_cars:
         if car.id == car_id:
             return car
