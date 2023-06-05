@@ -121,7 +121,7 @@ class Grid:
         """
         # Request the winning movement from each intersection.
         # Each movement is the originating car queue id and the destination car queue id.
-        for intersection in Intersection.all_intersections:
+        for intersection in utils.get_all_intersections():
             # Only hold an auction if there are cars in the intersection
             if not intersection.is_empty():
                 origin, destination = intersection.hold_auction()
@@ -203,8 +203,8 @@ class Grid:
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
             # Randomly pick a car queue
-            queue = CarQueue.all_car_queues[random.randint(
-                0, len(CarQueue.all_car_queues) - 1)]
+            queue = utils.get_all_car_queues()[random.randint(
+                0, len(utils.get_all_car_queues()) - 1)]
             # If the queue has capacity, spawn a car
             if queue.has_capacity():
                 number_of_spawns -= 1
@@ -236,7 +236,7 @@ class Grid:
                 utils.get_car_queue(car.car_queue_id).remove_car(car)
                 # Pick a random queue that has capacity
                 random_queue = random.choice(
-                    [queue for queue in CarQueue.all_car_queues if queue.has_capacity()])
+                    [queue for queue in utils.get_all_car_queues() if queue.has_capacity()])
                 # Append copy of car and satisfaction score to list
                 satisfaction_scores.append(car.calculate_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)

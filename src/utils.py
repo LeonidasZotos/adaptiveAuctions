@@ -4,12 +4,30 @@ from src.intersection import Intersection
 from src.car_queue import CarQueue
 from src.car import Car
 
+
 def get_all_intersections():
     """Returns a list of all intersection objects
     Returns:
         list: A list of all intersection objects
     """
     return Intersection.all_intersections
+
+
+def get_all_car_queues():
+    """Returns a list of all car queue objects
+    Returns:
+        list: A list of all car queue objects
+    """
+    return CarQueue.all_car_queues
+
+
+def get_all_cars():
+    """Returns a list of all car objects
+    Returns:
+        list: A list of all car objects
+    """
+    return Car.all_cars
+
 
 def get_intersection(intersection_id):
     """Returns the intersection object given an intersection id

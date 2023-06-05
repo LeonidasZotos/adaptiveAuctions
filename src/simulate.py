@@ -4,6 +4,7 @@ import os
 from tqdm import tqdm
 import time
 
+import src.utils as utils
 from src.metrics_keeper import MetricsKeeper
 from src.grid import Grid
 from src.intersection import Intersection
@@ -39,7 +40,7 @@ def run_epochs(args, grid, metrics_keeper):
             grid.print_grid(epoch)
         if epoch % args.wage_time == 0:
             # Give credit to all cars
-            if Car.all_cars == []:
+            if utils.get_all_cars() == []:
                 print("ERROR: No Cars in Simulation.")
             else:
                 for car in Car.all_cars:
@@ -64,26 +65,26 @@ def run_single_epoch(epoch, grid, metrics_keeper):
 
     # Prepare all entities for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     grid.ready_for_new_epoch()
-    for intersection in Intersection.all_intersections:
+    for intersection in utils.get_all_intersections():
         intersection.ready_for_new_epoch()
-    for car_queue in CarQueue.all_car_queues:
+    for car_queue in utils.get_all_car_queues():
         car_queue.ready_for_new_epoch()
-    for car in Car.all_cars:
+    for car in utils.get_all_cars():
         car.ready_for_new_epoch()
     metrics_keeper.ready_for_new_epoch()
 
 
 def reset_all_classes():
     """Reset all classes to their initial state"""
-    for intersection in Intersection.all_intersections:
+    for intersection in utils.get_all_intersections():
         del intersection
     Intersection.all_intersections = []
 
-    for car_queue in CarQueue.all_car_queues:
+    for car_queue in utils.get_all_car_queues():
         del car_queue
     CarQueue.all_car_queues = []
 
-    for car in Car.all_cars:
+    for car in utils.get_all_cars():
         del car
     Car.all_cars = []
 
