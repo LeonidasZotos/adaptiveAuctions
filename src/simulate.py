@@ -2,6 +2,7 @@
 
 import os
 from tqdm import tqdm
+import time
 
 from src.metrics_keeper import MetricsKeeper
 from src.grid import Grid
@@ -18,7 +19,7 @@ def setup_simulation(args):
         Grid: The grid object that contains all intersections and car queues
     """
     grid = Grid(args.grid_size, args.queue_capacity,
-                args.unique_auctions, args.auction_modifier_type)
+                args.auction_modifier_type)
     # Spawn cars in generated grid with given congestion rate
     grid.spawn_cars(args.congestion_rate,
                     args.shared_bid_generator, args.bidders_proportion)
@@ -92,6 +93,8 @@ def run(args):
     Args:
         args (argparse.Namespace): Arguments parsed from the command line
     """
+    # Measure execution time
+    start_time = time.time()
 
     # Create results folder if it doesn't exist
     if not os.path.exists(args.results_folder):
@@ -111,3 +114,7 @@ def run(args):
 
     # Produce Results
     metrics_keeper.produce_results(args)
+    
+    # Print execution time
+    print("--- %s seconds ---" % (time.time() - start_time))
+

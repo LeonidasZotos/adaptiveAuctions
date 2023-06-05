@@ -4,8 +4,8 @@ so that no full copies are kept.
 """
 
 import random
-import src.utils as utils
 
+import src.utils as utils
 
 class Car:
     """

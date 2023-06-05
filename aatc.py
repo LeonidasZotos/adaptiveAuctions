@@ -118,12 +118,6 @@ if __name__ == '__main__':
     )
 
     simulate_parser.add_argument(
-        '--unique_auctions',
-        action=argparse.BooleanOptionalAction,
-        help="""If present, each intersection will use different auction modifiers, and by extension,
-                potentially different parameters. Otherwise, all intersections will use the same auction modifiers.""")
-
-    simulate_parser.add_argument(
         '--shared_bid_generator',
         action=argparse.BooleanOptionalAction,
         help="""Each car will learn how to bid individually, instead of sharing experiences.""")

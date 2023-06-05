@@ -187,5 +187,4 @@ class AuctionModifier:
     def ready_for_new_epoch(self):
         """Prepares the Adaptive Auction Modifier for the next epoch."""
         # Nothing to update.
-        self.update_spsa_parameters()
         pass
