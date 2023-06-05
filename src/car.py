@@ -107,6 +107,7 @@ class Car:
             int: The time spent at the current intersection
         """
         return self.time_at_intersection
+
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
             Args:

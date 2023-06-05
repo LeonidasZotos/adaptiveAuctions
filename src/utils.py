@@ -43,6 +43,7 @@ def get_intersection_from_car_queue(car_queue_id):
     intersection_from_car_queue = get_intersection(intersection_id)
     return intersection_from_car_queue
 
+
 def get_last_reward_of_intersection(intersection_id):
     """Returns the last reward of the intersection
     Args:
@@ -52,6 +53,7 @@ def get_last_reward_of_intersection(intersection_id):
     """
     intersection = get_intersection(intersection_id)
     return intersection.get_last_reward()
+
 
 def get_car(car_id):
     """Returns the car object given a car id
