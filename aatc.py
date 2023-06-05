@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     simulate_parser.add_argument(
         "--num_of_epochs",
-        default=1000,
+        default=400,
         choices=range(1, 100001),
         metavar="[1-100000]",
         type=int,

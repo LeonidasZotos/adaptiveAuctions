@@ -81,7 +81,7 @@ class MetricsKeeper:
 
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
-            return [score for (car_copy, score) in dict]
+            return [score for (_, score) in dict]
 
         all_results_dict = {}
         # First, combine all dictionaries into one dictionary
@@ -303,7 +303,8 @@ class MetricsKeeper:
 
     def ready_for_new_epoch(self):
         """Prepares the metrics keeper for the next epoch"""
-        # We use a 2d array of the throughput per intersection. The first index is the x coordinate, the second is the y coordinate.
+        # We use a 2d array. The first index is the x coordinate, the second is the y coordinate.
+        # Here, we store all the total throughput per intersection and the last reward per intersection
         for intersection in Intersection.all_intersections:
             id = intersection.id
             x_cord = int(id[0])

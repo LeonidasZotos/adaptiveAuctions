@@ -89,10 +89,7 @@ class AuctionModifier:
         """
 
         self.update_spsa_parameters(
-
-            utils.get_last_reward_of_intersection(self.intersection_id)
-
-        )
+            utils.get_last_reward_of_intersection(self.intersection_id))
 
         modification_boost_limit = [0, 0]
 
