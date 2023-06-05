@@ -13,6 +13,7 @@ class CarQueue:
         cars (list): A list of Car objects that are in the queue
         capacity (int): The maximum number of cars that can be in the queue
         num_of_cars (int): The number of cars that are currently in the queue
+        parent_intersection (Intersection): The intersection that the queue belongs to
         time_inactive (int): The number of epochs that have passed since the last car left the queue
         bids (dict): A dictionary of bids submitted by the cars in the queue. The key is the car ID,
             the value is the bid of the car

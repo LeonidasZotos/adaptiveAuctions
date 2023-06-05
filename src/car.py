@@ -4,7 +4,7 @@ so that no full copies are kept.
 """
 
 import random
-
+import src.utils as utils
 
 class Car:
     """
@@ -12,6 +12,7 @@ class Car:
     Attributes:
         id (str): The ID of the car, e.g. 1
         car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
+        car_queue (CarQueue): The car queue that the car is currently in.
         bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
         bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         final_destination (str): The ID of the final destination intersection (e.g. 22, for intersection (2,2)).
@@ -59,6 +60,7 @@ class Car:
         # Randomly pick a destination intersection
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = car_queue_id
+        self.car_queue = utils.get_car_queue(car_queue_id)
         self.bidding_type = bidding_type
         self.bid_generator = bid_generator
         self.final_destination = ""
@@ -123,6 +125,13 @@ class Car:
         if self.car_queue_id != new_car_queue_id:
             self.time_at_intersection = 0
         self.car_queue_id = new_car_queue_id
+        
+    def get_parent_car_queue(self):
+        """ Get the parent car queue of the car. This is the car queue that the car is currently in.
+        Returns:
+            CarQueue: The parent car queue of the car.
+        """
+        return self.car_queue
 
     def increase_distance_travelled_in_trip(self):
         """Increase the distance spent in the current trip by 1"""
