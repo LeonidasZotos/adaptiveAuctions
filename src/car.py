@@ -162,7 +162,7 @@ class Car:
         """
 
         # Randomly pick a destination intersection
-        x = random.randint(0, grid_size - 1)  # TODO: remove import
+        x = random.randint(0, grid_size - 1)
         y = random.randint(0, grid_size - 1)
         self.final_destination = str(x) + str(y)
         if self.car_queue_id[:-1] == self.final_destination:

@@ -71,10 +71,7 @@ class Intersection:
         Returns:
             int: The number of cars in the intersection
         """
-        num_of_cars = 0
-        for queue in self.carQueues:
-            num_of_cars += queue.get_num_of_cars()
-        return num_of_cars
+        return sum([queue.get_num_of_cars() for queue in self.carQueues])
 
     def set_last_reward(self, reward):
         """Sets the last reward of the intersection

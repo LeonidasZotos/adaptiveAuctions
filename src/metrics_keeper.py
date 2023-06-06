@@ -321,8 +321,7 @@ class MetricsKeeper:
         # Here, we store all the total throughput per intersection and the last reward per intersection
         for intersection in utils.get_all_intersections():
             id = intersection.id
-            x_cord = int(id[0])
-            y_cord = int(id[1])
+            x_cord, y_cord = map(int, id)
             self.total_throughput_per_intersection[x_cord][y_cord] += intersection.num_of_cars_in_intersection()
             self.last_reward_per_intersection[x_cord][y_cord] = intersection.get_last_reward(
             )

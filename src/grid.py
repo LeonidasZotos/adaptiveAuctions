@@ -3,6 +3,7 @@
 
 import random
 from prettytable import PrettyTable
+from collections import defaultdict
 
 import src.utils as utils
 from src.intersection import Intersection
@@ -138,13 +139,10 @@ class Grid:
             queues_and_their_capacities[destination_queue_id] = utils.get_car_queue(
                 destination_queue_id).get_num_of_free_spots()
 
-        # Second, we need to know the demand for each destination queue
-        queues_and_their_demand = {}
+        # Second, we need to know the demand for each destination queue. We use a defaultdict, so that we don't need to check if the key exists
+        queues_and_their_demand = defaultdict(int)
         for _, destination_queue_id in self.epoch_movements:
-            if destination_queue_id not in queues_and_their_demand.keys():
-                queues_and_their_demand[destination_queue_id] = 1
-            elif destination_queue_id in queues_and_their_demand.keys():
-                queues_and_their_demand[destination_queue_id] += 1
+            queues_and_their_demand[destination_queue_id] += 1
 
         # Delete random movements, so that the demand is met (not more movements than capacity of destination queue)
         for queue_id, demand in queues_and_their_demand.items():
