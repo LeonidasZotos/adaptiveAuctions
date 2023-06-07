@@ -63,8 +63,8 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--num_of_simulations",
         default=1,
-        choices=range(1, 5001),
-        metavar="[1-5000]",
+        choices=range(1, 10001),
+        metavar="[1-10000]",
         type=int,
         help="Number of simulations to run. Defaults to 1. Must be an integer between 1 and 1000."
     )
@@ -79,11 +79,11 @@ if __name__ == '__main__':
     )
     simulate_parser.add_argument(
         "--queue_capacity",
-        default=4,
+        default=20,
         choices=range(1, 101),
         metavar="[0-100]",
         type=int,
-        help="Capacity of each car queue. Defaults to 4. Must be an integer between 1 and 100."
+        help="Capacity of each car queue. Defaults to 6. Must be an integer between 1 and 100."
     )
 
     simulate_parser.add_argument(
@@ -103,15 +103,15 @@ if __name__ == '__main__':
     simulate_parser.add_argument(
         "--wage_time",
         default=5,
-        choices=range(1, 5001),
-        metavar="[1-5000]",
+        choices=range(1, 101),
+        metavar="[1-100]",
         type=int,
         help="Number of epochs between wage distributions. Defaults to 20. Must be an integer between 1 and 5000."
     )
 
     simulate_parser.add_argument(
         "--auction_modifier_type",
-        default="spsa",
+        default="static",
         choices=["random", "static", "spsa"],
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'spsa'."
