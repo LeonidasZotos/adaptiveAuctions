@@ -17,7 +17,6 @@ class CarQueue:
         time_inactive (int): The number of epochs that have passed since the last car left the queue
         bids (dict): A dictionary of bids submitted by the cars in the queue. The key is the car ID,
             the value is the bid of the car
-        total_fee (int): The total fee that the cars in the queue have to pay, in case they win an auction
     Functions:
         get_queue_description: Returns a string describing the queue and everything in it.
         is_empty: Checks whether the queue is empty
@@ -27,7 +26,6 @@ class CarQueue:
         get_num_of_free_spots: Returns the number of free spots in the queue
         get_destination_of_first_car: Returns the destination of the first car in the queue
         get_parent_intersection: Returns the intersection that the queue belongs to
-        set_auction_fee: Sets the total fee that the cars in the queue have to pay, in case they win an auction
         add_car: Adds a car to the end of the queue
         remove_first_car: Removes the first car from the queue
         remove_car: Removes a specific car from the queue
@@ -53,7 +51,6 @@ class CarQueue:
         self.num_of_cars = len(self.cars)
         self.parent_intersection = utils.get_intersection_from_car_queue(id)
         self.bids = {}
-        self.total_fee = 0
         self.time_inactive = 0
 
     def __str__(self):
@@ -112,13 +109,6 @@ class CarQueue:
         """Returns the intersection that the queue belongs to"""
         return self.parent_intersection
 
-    def set_auction_fee(self, fee):
-        """Sets the total fee that the cars in the queue have to pay in total, in case they win an auction
-        Args:
-            fee (int): The total fee that the cars in the queue have to pay
-        """
-        self.total_fee = fee
-
 ### Queue Manipulation Functions ###
     def add_car(self, car):
         """Adds a car to the end of the queue
@@ -172,9 +162,11 @@ class CarQueue:
 
         return self.bids
 
-    def win_auction(self):
+    def win_auction(self, fee):
         """This is executed when the car queue has won the auction and the movement was succesful.
         Makes the cars in the queue pay their individual fees, and resets the inactivity time of the queue
+        Args:
+            fee (int): The total fee that the cars in the queue have to pay
         """
         # If a queue wins an auction:
         # 1. The winning bid is paid by the cars in the queue.
@@ -197,7 +189,7 @@ class CarQueue:
             # Default case is that the car pays nothing (This is explicit to avoid division by zero)
             individual_price = 0
             if total_submitted_bid > 0:
-                individual_price = self.total_fee * \
+                individual_price = fee * \
                     queue_bids[i] / total_submitted_bid
 
             self.cars[i].pay_bid(individual_price)
@@ -222,4 +214,3 @@ class CarQueue:
         if not self.is_empty():
             # Inactivity time only increases if there are cars there.
             self.time_inactive += 1
-        self.total_fee = 0

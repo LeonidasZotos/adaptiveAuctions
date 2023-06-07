@@ -261,8 +261,8 @@ class Car:
                 price (float): The price that the car has to pay (i.e. amount to deduct from balance).
         """
         if price > self.balance:
-            print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {})".format(
-                self.id, price, self.balance))
+            print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {}, bidded: {})".format(
+                self.id, price, self.balance, self.submitted_bid))
             self.balance = 0
         else:
             self.balance -= price

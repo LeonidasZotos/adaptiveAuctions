@@ -3,7 +3,6 @@
 
 import random
 from prettytable import PrettyTable
-from collections import defaultdict
 
 import src.utils as utils
 from src.intersection import Intersection
@@ -26,8 +25,8 @@ class Grid:
         print_cars(): Prints all cars to the console
         move_cars(): Moves all cars in the grid based on the epoch_movements
         calculate_movements(): Calculates the movements that need to be executed in this epoch
-        filter_unfeasible_movements(): Removes movements that are not possible (because the destination queue is full)
-        execute_movements(): Executes the movements that are possible
+        filter_and_execute_movements(): Removes movements that are not possible (because the destination queue is full)
+        execute_movement(): Executes a movement (i.e. moves a car from one queue to another)
         spawn_cars(congestion_rate): Spawns cars in the grid with the given congestion rate
         respawn_cars(grid_size): Respawns cars that have reached their destination somewhere else. 
             Returns a list of scores, that represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
@@ -113,69 +112,79 @@ class Grid:
         # First, calculate all movements that need to be made
         self.calculate_movements()
         # Then, filter out movements that are not possible (e.g. because the destination queue is full)
-        self.filter_unfeasible_movements()
-        # Finally, execute the movements that are possible
-        self.execute_movements()
+        self.filter_and_execute_movements()
 
     def calculate_movements(self):
         """ Calculates the movements that need to be executed in this epoch, based on the auction results per intersection
         """
         # Request the winning movement from each intersection.
         # Each movement is the originating car queue id and the destination car queue id.
+        # Here we have lists of up to 4 tuples, where each tuple represents a movement.
+        # In case the top movement can't be made, the next movement is used for that intersection.
         for intersection in utils.get_all_intersections():
             # Only hold an auction if there are cars in the intersection
             if not intersection.is_empty():
-                origin, destination = intersection.hold_auction()
-                self.epoch_movements.append((origin, destination))
+                origins, destinations = intersection.hold_auction()
+                self.epoch_movements.append((origins, destinations))
 
-    def filter_unfeasible_movements(self):
-        """Removes movements that are not possible (because the destination queue is full).
-        If there is more demand than capacity for a destination queue, remove random movements until demand is met.
-        The capacity is calculated without considering departing cars, as they will be removed from the queue before the new cars arrive.
+    def filter_and_execute_movements(self):
+        """Removes movements that are not possible (because the destination queue is full). 
+        Executes the movements that are possible, max 1 per intersection.
+        The movements are done in a random order, so that no intersection consistently gets priority.
         """
-        # First we need to know the capacity of each destination queue
-        queues_and_their_capacities = {}
-        for _, destination_queue_id in self.epoch_movements:
-            queues_and_their_capacities[destination_queue_id] = utils.get_car_queue(
-                destination_queue_id).get_num_of_free_spots()
+        # First, randomise the order of the movements, so that no intersection consistently gets priority
+        random.shuffle(self.epoch_movements)
 
-        # Second, we need to know the demand for each destination queue. We use a defaultdict, so that we don't need to check if the key exists
-        queues_and_their_demand = defaultdict(int)
-        for _, destination_queue_id in self.epoch_movements:
-            queues_and_their_demand[destination_queue_id] += 1
+        # Go through the intersections, and execute up to one movement per intersection
+        for intersection_movement in self.epoch_movements:
 
-        # Delete random movements, so that the demand is met (not more movements than capacity of destination queue)
-        for queue_id, demand in queues_and_their_demand.items():
-            # If there is more demand than capacity, remove random movements until demand is met
-            if demand > queues_and_their_capacities[queue_id]:
-                # List of all movements that go to this queue
-                movements_to_this_queue = [
-                    movement for movement in self.epoch_movements if movement[1] == queue_id]
-                # Remove random movements destined to this queue until demand is met
-                while demand > queues_and_their_capacities[queue_id]:
-                    # Pick a random movement to remove
-                    movement_to_remove = random.choice(movements_to_this_queue)
-                    self.epoch_movements.remove(
-                        movement_to_remove)
-                    # Update the demand
-                    demand -= 1
-                    # Update the list of movements to this queue
-                    movements_to_this_queue = [
-                        movement for movement in self.epoch_movements if movement[1] == queue_id]
+            intersection = utils.get_intersection_from_car_queue(
+                intersection_movement[0][0])
+
+            for origin_queue_id, destination_queue_id in zip(intersection_movement[0], intersection_movement[1]):
+                # If the destination queue is full, remove the movement
+                if not utils.get_car_queue(destination_queue_id).has_capacity():
+                    # Since the movement is not possible, remove the top fee.
+                    intersection.remove_top_fee()
+                else:
+                    # The movement is possible, so we need to execute it before moving on to the next intersection
+                    self.execute_movement(
+                        origin_queue_id, destination_queue_id)
+                    break
+
+    def execute_movement(self, origin_queue_id, destination_queue_id):
+        """Executes a movement (i.e. a car moves from one queue to another)"""
+        car_queue = utils.get_car_queue(origin_queue_id)
+        parent_intersection = car_queue.get_parent_intersection()
+        reward = car_queue.win_auction(
+            parent_intersection.get_auction_fee())
+        parent_intersection.set_last_reward(reward)
+
+        # Then, all cars must be moved.
+        origin_queue = utils.get_car_queue(origin_queue_id)
+        destination_queue = utils.get_car_queue(destination_queue_id)
+
+        car_to_move = origin_queue.remove_first_car()
+        car_to_move.increase_distance_travelled_in_trip()
+        destination_queue.add_car(car_to_move)
+        # Let the car know of its new queue
+        car_to_move.set_car_queue_id(destination_queue_id)
 
     def execute_movements(self):
         """Execute the movements that are possible (cars need to pay the auction fee, and then move to the destination queue)
         """
         # First, all winning car queues must pay the bid and update their inactivity (though win_auction())
         for movement in self.epoch_movements:
-            oringin_queue_id, destination_queue_id = movement
-            car_queue = utils.get_car_queue(oringin_queue_id)
-            reward = car_queue.win_auction()
-            car_queue.get_parent_intersection().set_last_reward(reward)
+            origin_queue_id, destination_queue_id = movement
+            car_queue = utils.get_car_queue(origin_queue_id)
+            parent_intersection = car_queue.get_parent_intersection()
+            reward = car_queue.win_auction(
+                parent_intersection.get_auction_fee())
+            parent_intersection.set_last_reward(reward)
 
         # Then, all cars must be moved.
-            oringin_queue_id, destination_queue_id = movement
-            origin_queue = utils.get_car_queue(oringin_queue_id)
+            origin_queue_id, destination_queue_id = movement
+            origin_queue = utils.get_car_queue(origin_queue_id)
             destination_queue = utils.get_car_queue(destination_queue_id)
 
             car_to_move = origin_queue.remove_first_car()

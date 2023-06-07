@@ -11,8 +11,11 @@ class Intersection:
     Attributes:
         id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
         carQueues (list): A list of CarQueue objects that are part of the intersection
+        auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
+        get_auction_fee: Returns the fee that should be paid.
+        remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
         num_of_cars_in_intersection: Returns the number of cars in the intersection
         set_last_reward: Sets the last reward of the intersection
@@ -39,6 +42,7 @@ class Intersection:
                           CarQueue(queue_capacity, str(id + 'E')),
                           CarQueue(queue_capacity, str(id + 'S')),
                           CarQueue(queue_capacity, str(id + 'W'))]
+        self.auction_fees = []
         self.last_reward = 0
 
     def __str__(self):
@@ -55,6 +59,20 @@ class Intersection:
             description += "\n"
 
         return description
+
+    def get_auction_fee(self):
+        """Returns the fee that should be paid.
+        Returns:
+            float: The fee that should be paid
+        """
+        return self.auction_fees[0]
+
+    def remove_top_fee(self):
+        """Removes the top/highest fee from the list of fees."""
+        if len(self.auction_fees) > 0:
+            self.auction_fees.pop(0)
+        else:  # If There are no fees to remove, we set the fee to 0
+            self.auction_fees = [0]
 
     def is_empty(self):
         """Boolean. Checks whether all car queues are empty in this intersection
@@ -100,11 +118,12 @@ class Intersection:
         print("ERROR: Queue ID not found, with id: ", car_queue_id)
 
     def hold_auction(self, second_price=False):
-        """Holds an auction between the car queues in this intersection.
+        """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
         Args:
             second_price (bool): Whether to use the second price auction mechanism, instead of first-price. Defaults to False.
         Returns:
-            tuple: The ID of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
+            tuple: A tuple containing two arrays. The first array contains the IDs of the winning queues, and the second 
+                array contains the destinations of the first car in each queue.
         """
         def renormalize(n, range1, range2):
             """ Normalise a value n from range1 to range2. Nested function as it is only used to normalise the bid modifier boost
@@ -132,16 +151,14 @@ class Intersection:
                 collected_bids[queue.id] = queue.collect_bids()
                 queue_waiting_times[queue.id] = queue.get_time_inactive()
                 queue_lengths[queue.id] = queue.get_num_of_cars()
-
         # If there is only one entry:
         if len(collected_bids) == 1:
             # We return the only queue, and its destination, and give no charge.
             winning_queue = self.get_car_queue_from_intersection(
                 list(collected_bids.keys())[0])
-            total_fee = 0
             destination = winning_queue.get_destination_of_first_car()
-            winning_queue.set_auction_fee(total_fee)
-            return winning_queue.id, destination
+            self.auction_fees = [0]
+            return [winning_queue.id], [destination]
 
         # Summed_bids holds the sum of all bids for each queue
         summed_bids = {}
@@ -166,26 +183,28 @@ class Intersection:
                                summed_bids[key]) * normalised_modification
 
         # Winning queue is the queue with the highest bid, regardless of 1st/2nd price.
-        winning_queue = self.get_car_queue_from_intersection(
-            max(final_bids, key=final_bids.get))
+        # Order the bids in descending order. Since python 3.7 dictionaries are ordered.
+        final_bids = {k: v for k, v in sorted(
+            final_bids.items(), key=lambda item: item[1], reverse=True)}
 
-        total_fee = 0
-        if not second_price:
-            # Fist price auction
-            # Modifications do not count for the final fee.
-            total_fee = summed_bids[winning_queue.id]
+        queues_in_order = [self.get_car_queue_from_intersection(
+            queue_id) for queue_id in final_bids.keys()]
+
+        self.auction_fees = [summed_bids[queue.id]
+                             for queue in queues_in_order]
 
         if second_price:
-            summed_bids_ordered = sorted(summed_bids.values(), reverse=True)
-            total_fee = summed_bids_ordered[1]  # The 2nd highest bid
+            self.auction_fees.pop(0)  # Remove the highest bid
 
-        destination = winning_queue.get_destination_of_first_car()
-        winning_queue.set_auction_fee(total_fee)
+        destinations = [queue.get_destination_of_first_car()
+                        for queue in queues_in_order]
+        winning_queues_id = [queue.id for queue in queues_in_order]
 
         # We return the originating car queue and the destination car queue. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
-        return winning_queue.id, destination
+        return winning_queues_id, destinations
 
     def ready_for_new_epoch(self):
         """Prepares the intersection for the next epoch."""
+        self.auction_fees = []
         pass
