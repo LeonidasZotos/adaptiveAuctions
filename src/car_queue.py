@@ -2,9 +2,6 @@
 This class is also responsible for gathering bids from the queue and making the cars pay their individual fees.
 Lastly, it also keeps track of how long the queue has been inactive (i.e. no cars have left the queue)."""
 
-import src.utils as utils
-
-
 class CarQueue:
     """
     The Car Queue class is responsible for keeping track of the cars in the queue, adding/removing cars and making them pay when they win an auction.

@@ -6,7 +6,6 @@ from prettytable import PrettyTable
 
 import src.utils as utils
 from src.intersection import Intersection
-from src.car_queue import CarQueue
 from src.car import Car
 from src.auction_modifier import AuctionModifier
 from src.bid_generator import BidGenerator

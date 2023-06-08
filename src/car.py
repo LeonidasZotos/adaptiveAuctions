@@ -5,9 +5,6 @@ so that no full copies are kept.
 
 import random
 
-import src.utils as utils
-
-
 class Car:
     """
     The Car class is responsible for keeping track of the car's state, and for submitting bids.
