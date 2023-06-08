@@ -1,6 +1,7 @@
 """"This file contains the main simulation loop. It is responsible for the general simulation (e.g. setup, running & recording metrics)"""
 
 import os
+import sys
 import time
 from tqdm import tqdm
 from multiprocessing import Pool
@@ -27,7 +28,8 @@ def run(args):
     """
     # Measure execution time
     start_time = time.time()
-
+    sys.setrecursionlimit(25000)
+    
     # Create results folder if it doesn't exist
     if not os.path.exists(args.results_folder):
         os.makedirs(args.results_folder)
