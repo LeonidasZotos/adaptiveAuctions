@@ -35,21 +35,17 @@ class CarQueue:
         ready_for_new_epoch: Prepares the queue for the next epoch
     """
 
-    # A class variable to keep track of all car queues.
-    all_car_queues = []
-
-    def __init__(self, max_capacity, id):
+    def __init__(self, parent_intersection, max_capacity, id):
         """ Initialize the Car queue object
         Args:
             max_capacity (int): The maximum number of cars that can be in the queue
             id (str): The ID of the car queue, e.g. 11N for the north car queue at intersection (1,1)
         """
-        CarQueue.all_car_queues.append(self)
         self.id = id
         self.cars = []
         self.capacity = max_capacity
         self.num_of_cars = len(self.cars)
-        self.parent_intersection = utils.get_intersection_from_car_queue(id)
+        self.parent_intersection = parent_intersection
         self.bids = {}
         self.time_inactive = 0
 

@@ -2,6 +2,7 @@
 
 import random
 
+import src.utils as utils
 from src.car_queue import CarQueue
 
 
@@ -14,6 +15,7 @@ class Intersection:
         auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
+        get_car_queues: Returns the car queues that are part of this intersection
         get_auction_fee: Returns the fee that should be paid.
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
@@ -25,8 +27,6 @@ class Intersection:
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
-    # A class variable to keep track of all intersections.
-    all_intersections = []
 
     def __init__(self, id, queue_capacity, auction_modifier):
         """Initialize the Intersection object
@@ -35,13 +35,12 @@ class Intersection:
             queue_capacity (int): The maximum number of cars that can be in a car queue
             auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
         """
-        Intersection.all_intersections.append(self)
         self.id = id
         self.auction_modifier = auction_modifier
-        self.carQueues = [CarQueue(queue_capacity, str(id + 'N')),
-                          CarQueue(queue_capacity, str(id + 'E')),
-                          CarQueue(queue_capacity, str(id + 'S')),
-                          CarQueue(queue_capacity, str(id + 'W'))]
+        self.carQueues = [CarQueue(self, queue_capacity, str(id + 'N')),
+                          CarQueue(self, queue_capacity, str(id + 'E')),
+                          CarQueue(self, queue_capacity, str(id + 'S')),
+                          CarQueue(self, queue_capacity, str(id + 'W'))]
         self.auction_fees = []
         self.last_reward = 0
 
@@ -59,6 +58,13 @@ class Intersection:
             description += "\n"
 
         return description
+
+    def get_car_queues(self):
+        """Returns the car queues that are part of this intersection
+        Returns:
+            list: A list of CarQueue objects that are part of this intersection
+        """
+        return self.carQueues
 
     def get_auction_fee(self):
         """Returns the fee that should be paid.
@@ -105,18 +111,6 @@ class Intersection:
         """
         return self.last_reward
 
-    def get_car_queue_from_intersection(self, car_queue_id):
-        """Returns the car queue object given a car queue id. Car queue has to be in this intersection.
-        Args:
-            car_queue_id (str): The ID of the car queue (e.g. 11N)
-        Returns:
-            CarQueue: The car queue object with the given ID
-        """
-        for queue in self.carQueues:
-            if queue.id == car_queue_id:
-                return queue
-        print("ERROR: Queue ID not found, with id: ", car_queue_id)
-
     def hold_auction(self, second_price=False):
         """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
         Args:
@@ -154,8 +148,8 @@ class Intersection:
         # If there is only one entry:
         if len(collected_bids) == 1:
             # We return the only queue, and its destination, and give no charge.
-            winning_queue = self.get_car_queue_from_intersection(
-                list(collected_bids.keys())[0])
+            winning_queue = utils.get_car_queue_from_intersection(
+                self, list(collected_bids.keys())[0])
             destination = winning_queue.get_destination_of_first_car()
             self.auction_fees = [0]
             return [winning_queue.id], [destination]
@@ -187,8 +181,8 @@ class Intersection:
         final_bids = {k: v for k, v in sorted(
             final_bids.items(), key=lambda item: item[1], reverse=True)}
 
-        queues_in_order = [self.get_car_queue_from_intersection(
-            queue_id) for queue_id in final_bids.keys()]
+        queues_in_order = [utils.get_car_queue_from_intersection(
+            self, queue_id) for queue_id in final_bids.keys()]
 
         self.auction_fees = [summed_bids[queue.id]
                              for queue in queues_in_order]

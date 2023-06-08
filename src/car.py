@@ -7,6 +7,7 @@ import random
 
 import src.utils as utils
 
+
 class Car:
     """
     The Car class is responsible for keeping track of the car's state, and for submitting bids.
@@ -43,10 +44,8 @@ class Car:
             The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
-    # A class variable to keep track of all cars.
-    all_cars = []
 
-    def __init__(self, id, car_queue_id, grid_size, bidding_type, bid_generator):
+    def __init__(self, id, parent_car_queue, grid_size, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
             id (str): The ID of the car, e.g. 1
@@ -56,12 +55,11 @@ class Car:
             bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
         """
 
-        Car.all_cars.append(self)
         self.id = id
         # Randomly pick a destination intersection
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
-        self.car_queue_id = car_queue_id
-        self.parent_car_queue = utils.get_car_queue(car_queue_id)
+        self.car_queue_id = parent_car_queue.id
+        self.parent_car_queue = parent_car_queue
         self.bidding_type = bidding_type
         self.bid_generator = bid_generator
         self.final_destination = ""

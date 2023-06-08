@@ -1,92 +1,24 @@
 """"This file contains the main simulation loop. It is responsible for the general simulation (e.g. setup, running & recording metrics)"""
 
 import os
-from tqdm import tqdm
 import time
+from tqdm import tqdm
+from multiprocessing import Pool
 
-import src.utils as utils
-from src.metrics_keeper import MetricsKeeper
-from src.grid import Grid
-from src.intersection import Intersection
-from src.car_queue import CarQueue
-from src.car import Car
+from src.metrics import MasterKeeper
+from src.simulator import Simulator
 
 
-def setup_simulation(args):
-    """Setup the simulation
+def run_simulation(args_and_id):
+    """Runs a single simulation
     Args:
-        args (argparse.Namespace): Arguments parsed from the command line
-    Returns:
-        Grid: The grid object that contains all intersections and car queues
+        args_and_id (tuple): Tuple containing the arguments and the simulation id. Has to be a tuple because of the multiprocessing library
     """
-    grid = Grid(args.grid_size, args.queue_capacity,
-                args.auction_modifier_type)
-    # Spawn cars in generated grid with given congestion rate
-    grid.spawn_cars(args.congestion_rate,
-                    args.shared_bid_generator, args.bidders_proportion)
-    return grid
+    args, simulation_id = args_and_id
+    simulation = Simulator(args, simulation_id)
+    results_keeper = simulation.run_simulation(args)
+    return results_keeper
 
-
-def run_epochs(args, grid, metrics_keeper):
-    """Run the simulation for the given number of epochs
-    Args:
-        args (argparse.Namespace): Arguments parsed from the command line
-        grid (Grid): The grid object that contains all intersections and car queues
-        metrics_keeper (MetricsKeeper): The metrics keeper object that is responsible for recording metrics
-    """
-    for epoch in tqdm(range(args.num_of_epochs)):
-        # Every wage_time epochs, give credit to all cars
-        if args.print_grid:
-            grid.print_grid(epoch)
-        if epoch % args.wage_time == 0:
-            # Give credit to all cars
-            if utils.get_all_cars() == []:
-                print("ERROR: No Cars in Simulation.")
-            else:
-                for car in Car.all_cars:
-                    car.set_balance(args.credit_balance)
-        # Now that the credit has been given, run the epoch
-        run_single_epoch(epoch, grid, metrics_keeper)
-
-
-def run_single_epoch(epoch, grid, metrics_keeper):
-    """Run a single epoch of the simulation
-    Args:
-        epoch (int): The current epoch number
-        grid (Grid): The grid object that contains all intersections and car queues
-        metrics_keeper (MetricsKeeper): The metrics keeper object that is responsible for recording metrics
-    """
-    # First, run auctions & movements
-    grid.move_cars()
-
-    # Second, respawn cars that have reached their destination somewhere else, and store their satisfaction scores for evaluation
-    satisfaction_scores = grid.respawn_cars(grid.grid_size)
-    metrics_keeper.add_satisfaction_scores(epoch, satisfaction_scores)
-
-    # Prepare all entities for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
-    grid.ready_for_new_epoch()
-    for intersection in utils.get_all_intersections():
-        intersection.ready_for_new_epoch()
-    for car_queue in utils.get_all_car_queues():
-        car_queue.ready_for_new_epoch()
-    for car in utils.get_all_cars():
-        car.ready_for_new_epoch()
-    metrics_keeper.ready_for_new_epoch()
-
-
-def reset_all_classes():
-    """Reset all classes to their initial state"""
-    for intersection in utils.get_all_intersections():
-        del intersection
-    Intersection.all_intersections = []
-
-    for car_queue in utils.get_all_car_queues():
-        del car_queue
-    CarQueue.all_car_queues = []
-
-    for car in utils.get_all_cars():
-        del car
-    Car.all_cars = []
 
 def run(args):
     """Main program that runs the simulation
@@ -100,18 +32,24 @@ def run(args):
     if not os.path.exists(args.results_folder):
         os.makedirs(args.results_folder)
 
-    metrics_keeper = MetricsKeeper(args)
+    num_of_simulations = args.num_of_simulations
+    master_metrics_keeper = MasterKeeper(args)
 
-    for simulation in range(args.num_of_simulations):
-        reset_all_classes()
-        # Setup the grid on which the simulation will run
-        grid = setup_simulation(args)
-        # Run the epochs on the grid
-        run_epochs(args, grid, metrics_keeper)
-        metrics_keeper.ready_for_new_simulation()
+    pool = Pool()  # Default number of processes will be used
+
+    args_and_ids = [(args, simulation_id)
+                    for simulation_id in range(num_of_simulations)]
+
+    with tqdm(total=num_of_simulations) as pbar:
+        for results_keeper in pool.imap(run_simulation, args_and_ids):
+            master_metrics_keeper.store_simulation_results(results_keeper)
+            pbar.update()
+
+    pool.close()
+    pool.join()
 
     # Produce Results
-    metrics_keeper.produce_results(args)
+    master_metrics_keeper.produce_results(args)
 
     # Print execution time
-    print("--- %s seconds ---" % (time.time() - start_time))
+    print("--- %s seconds ---" % round((time.time() - start_time), 2))
