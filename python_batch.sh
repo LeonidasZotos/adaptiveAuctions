@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
 #SBATCH --job-name=spsa_and_static
-#SBATCH --mem=2GB
+#SBATCH --mem=32GB
 
 module purge
 module load Python/3.9.6-GCCcore-11.2.0
