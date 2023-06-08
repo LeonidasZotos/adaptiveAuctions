@@ -88,7 +88,6 @@ def reset_all_classes():
         del car
     Car.all_cars = []
 
-
 def run(args):
     """Main program that runs the simulation
     Args:
@@ -104,8 +103,6 @@ def run(args):
     metrics_keeper = MetricsKeeper(args)
 
     for simulation in range(args.num_of_simulations):
-        print(
-            f"Running Simulation {simulation + 1} of {args.num_of_simulations}")
         reset_all_classes()
         # Setup the grid on which the simulation will run
         grid = setup_simulation(args)
@@ -115,7 +112,6 @@ def run(args):
 
     # Produce Results
     metrics_keeper.produce_results(args)
-    
+
     # Print execution time
     print("--- %s seconds ---" % (time.time() - start_time))
-
