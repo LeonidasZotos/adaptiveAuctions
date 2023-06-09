@@ -3,7 +3,7 @@
 import argparse
 from datetime import datetime
 
-from src import simulate, test, clean
+from src import run_simulations, test, clean
 
 # Utility Functions
 
@@ -43,15 +43,15 @@ if __name__ == '__main__':
         description="Welcome to the 'Adaptive Auctions for Traffic Coordination' program."
     )
 
-    # The 3 subparsers are: simulate, test & clean
+    # The 3 subparsers are: run, test & clean
     subparsers = parser.add_subparsers(
         help='commands', title="commands", dest="command")
 
     # Simulate command
-    simulate_parser = subparsers.add_parser(
-        'simulate', help='Run a full Simulation')
+    run_parser = subparsers.add_parser(
+        'run', help='Run a full Simulation')
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--num_of_epochs",
         default=400,
         choices=range(1, 100001),
@@ -60,7 +60,7 @@ if __name__ == '__main__':
         help="Number of epochs to run. Defaults to 200. Must be an integer between 1 and 5000."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--num_of_simulations",
         default=1,
         choices=range(1, 10001),
@@ -69,7 +69,7 @@ if __name__ == '__main__':
         help="Number of simulations to run. Defaults to 1. Must be an integer between 1 and 1000."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--grid_size",
         default=5,
         choices=range(2, 10),
@@ -77,7 +77,7 @@ if __name__ == '__main__':
         type=int,
         help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 10."
     )
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--queue_capacity",
         default=20,
         choices=range(1, 101),
@@ -86,21 +86,21 @@ if __name__ == '__main__':
         help="Capacity of each car queue. Defaults to 6. Must be an integer between 1 and 100."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--congestion_rate",
         default=0.15,
         type=float_range(0.01, 1),
         help="Rate of congestion (Percentage of occupied spots, 0.01-1). Defaults to 0.5. Must be a float between 0.1 and 1."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--credit_balance",
         default=100,
         type=float_range(1, 1000),
         help="Initial & Renewal credit balance for each car. Defaults to 50. Must be a float between 1 and 1000."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--wage_time",
         default=5,
         choices=range(1, 101),
@@ -109,7 +109,7 @@ if __name__ == '__main__':
         help="Number of epochs between wage distributions. Defaults to 20. Must be an integer between 1 and 5000."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--auction_modifier_type",
         default="static",
         choices=["random", "static", "spsa"],
@@ -117,12 +117,12 @@ if __name__ == '__main__':
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'spsa'."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         '--shared_bid_generator',
         action=argparse.BooleanOptionalAction,
         help="""Each car will learn how to bid individually, instead of sharing experiences.""")
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         '--bidders_proportion',
         nargs=4,
         default=[1, 1, 1, 0],
@@ -132,7 +132,7 @@ if __name__ == '__main__':
             Does not have to add up to something. E.g. "2 1 1 0" means 2/4 static, 1/4 random, 1/4 free-riders and 0 RL bidders.
             """)
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         "--results_folder",
         # include time and date in the folder name
         default="results/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
@@ -140,7 +140,7 @@ if __name__ == '__main__':
         help="Path to the Results Folder. Defaults to 'results'."
     )
 
-    simulate_parser.add_argument(
+    run_parser.add_argument(
         '--print_grid',
         action=argparse.BooleanOptionalAction,
         help="""If present, the grid will be printed after each epoch.""")
@@ -155,8 +155,8 @@ if __name__ == '__main__':
 
     # Run the appropriate sub-program with arguments
     args = parser.parse_args()
-    if args.command == 'simulate':
-        simulate.run(args)
+    if args.command == 'run':
+        run_simulations.run(args)
     if args.command == 'clean':
         clean.run(args)
     if args.command == 'test':

@@ -11,8 +11,10 @@ class Intersection:
     The Intersection class is responsible for keeping track of the car queues that are part of the intersection, and for holding auctions.
     Attributes:
         id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
+        auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
         carQueues (list): A list of CarQueue objects that are part of the intersection
         auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
+        last_reward (float): The last reward of the intersection
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         get_car_queues: Returns the car queues that are part of this intersection
@@ -20,10 +22,9 @@ class Intersection:
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
         num_of_cars_in_intersection: Returns the number of cars in the intersection
-        set_last_reward: Sets the last reward of the intersection
+        set_last_reward(reward): Sets the last reward of the intersection
         get_last_reward: Returns the last reward of the intersection
-        get_car_queue_from_intersection: Returns the car queue object given a car queue id. Car queue has to be in this intersection.
-        hold_auction: Holds an auction between the car queues in this intersection. 
+        hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
@@ -120,7 +121,7 @@ class Intersection:
                 array contains the destinations of the first car in each queue.
         """
         def renormalize(n, range1, range2):
-            """ Normalise a value n from range1 to range2. Nested function as it is only used to normalise the bid modifier boost
+            """Normalise a value n from range1 to range2. Nested function as it is only used to normalise the bid modifier boost
             Args:
                 n (float): The value to be normalised
                 range1 (list): The range of the value n
@@ -201,4 +202,3 @@ class Intersection:
     def ready_for_new_epoch(self):
         """Prepares the intersection for the next epoch."""
         self.auction_fees = []
-        pass

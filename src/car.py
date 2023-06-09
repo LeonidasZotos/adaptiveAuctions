@@ -5,6 +5,7 @@ so that no full copies are kept.
 
 import random
 
+
 class Car:
     """
     The Car class is responsible for keeping track of the car's state, and for submitting bids.
@@ -28,16 +29,16 @@ class Car:
         get_short_description: Returns a short description of the car, containing the ID, final destination, balance and rush factor.
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         get_time_at_intersection: Returns the time spent at the current intersection
-        set_balance: Set the balance of the car to the given balance. E.g. Used for the wage distribution.
-        set_car_queue_id: Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
+        set_balance(new_balance): Set the balance of the car to the given balance. E.g. Used for the wage distribution.
+        set_car_queue_id(new_car_queue_id): Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
         increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
         calculate_satisfaction_score: Calculate the satisfaction score of the car after the completion of a trip
-        reset_final_destination: Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
+        reset_final_destination(grid_size): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
             we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
-        reset_car: Reset the car to a new state. E.g. Used when the car is (re)spawned.
+        reset_car(car_queue_id, grid_size): Reset the car to a new state. E.g. Used when the car is (re)spawned.
         submit_bid: Submit a bid to the auction.
-        pay_bid: Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
+        pay_bid(price): Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
             The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
@@ -46,12 +47,11 @@ class Car:
         """ Initialize the Car object
         Args:
             id (str): The ID of the car, e.g. 1
-            car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
+            parent_car_queue (CarQueue): The car queue that the car is currently in.
             grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used when e.g. the car needs to pick a new final destination.
             bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'static' or RL.
             bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
         """
-
         self.id = id
         # Randomly pick a destination intersection
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
@@ -108,15 +108,15 @@ class Car:
 
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
-            Args:
-                new_balance (float): The new balance of the car.
+        Args:
+            new_balance (float): The new balance of the car.
         """
         self.balance = new_balance
 
     def set_car_queue_id(self, new_car_queue_id):
         """ Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
-            Args:
-                new_car_queue_id (str): The new queue ID of the car.
+        Args:
+            new_car_queue_id (str): The new queue ID of the car.
         """
         if self.car_queue_id != new_car_queue_id:
             self.time_at_intersection = 0
@@ -150,10 +150,10 @@ class Car:
 
 ### General state functions ###
     def reset_final_destination(self, grid_size):
-        """ Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
-            The new destination is randomly picked and canot be the same as the current intersection.
-            Args:
-                grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
+        """Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
+           The new destination is randomly picked and canot be the same as the current intersection.
+        Args:
+            grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
         """
 
         # Randomly pick a destination intersection
@@ -165,11 +165,10 @@ class Car:
             self.reset_final_destination(grid_size)
 
     def update_next_destination_queue(self):
-        """ Update the next destination queue of the car. E.g. When the car participates in an auction,
-            we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
-            The next destination queue is picked randomly from the queues that are in the direction of the final destination.
-            Returns:
-                str: The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), south car queue).
+        """Update the next destination queue of the car. E.g. When the car participates in an auction,
+           The next destination queue is picked randomly from the queues that are in the direction of the final destination.
+        Returns:
+            str: The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), south car queue).
         """
         destination_queue = ""
         # Break down the string location IDs into x and y coordinates
@@ -213,13 +212,11 @@ class Car:
         return self.next_destination_queue
 
     def reset_car(self, car_queue_id, grid_size):
-        """ Reset the car to a new state. E.g. Used when the car is (re)spawned.
-            This function resets the car's final destination, next destination queue, rush factor,
-            submitted bid, time at intersection & time in network/trip duration.
-            The balance is not affected.
-            Args:
-                car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
-                grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
+        """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
+           next destination queue, rush factor, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
+        Args:
+            car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
+            grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
         """
         self.car_queue_id = car_queue_id
         self.reset_final_destination(grid_size)
@@ -232,7 +229,7 @@ class Car:
 
 ### Auction functions ###
     def submit_bid(self):
-        """ Submit a bid to the auction.
+        """Submit a bid to the auction.
         Returns:
             self.id (str): The ID of the car, e.g. 1. This is included so that the intersection can keep track of which car submitted which bid.
             self.submitted_bid (float): The bid that the car submits in the auction.
@@ -250,24 +247,29 @@ class Car:
         return self.id, self.submitted_bid
 
     def pay_bid(self, price):
-        """ Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
-            The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
-            Args:
-                price (float): The price that the car has to pay (i.e. amount to deduct from balance).
+        """Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
+           The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
+        Args:
+            price (float): The price that the car has to pay (i.e. amount to deduct from balance).
+        Raises:
+            Exception: If the price is higher than the balance, an exception is raised.
+            Exception: If the balance is negative, an exception is raised.
         """
-        if price > self.balance:
+        try:
+            assert price <= self.balance
+        except AssertionError:
             print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {}, bidded: {})".format(
                 self.id, price, self.balance, self.submitted_bid))
-            self.balance = 0
-        else:
-            self.balance -= price
 
-        if self.balance < 0:  # This should never happen, as the bid is limited by the balance.
-            print("ERROR: Car {} has negative balance".format(self.id))
+        self.balance -= price
+        try:
+            assert self.balance >= 0
+        except AssertionError:
+            print("ERROR: Car {} has negative balance (balance: {}, price: {}, bidded: {})".format(
+                self.id, self.balance, price, self.submitted_bid))
 
     def ready_for_new_epoch(self):
-        """ Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
-        """
+        """Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)"""
         self.time_at_intersection += 1
         self.time_in_traffic_network += 1
         self.submitted_bid = 0

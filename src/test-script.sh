@@ -10,4 +10,4 @@ CREDIT_BALANCE="$4"
 WAGE_TIME="$5"
 NUM_EPOCHS="20" # For testing, this many epochs is enough.
 
-python ./aatc.py simulate --grid_size "$GRID_SIZE" --queue_capacity "$QUEUE_CAPACITY" --congestion_rate "$CONGESTION_RATE" --credit_balance "$CREDIT_BALANCE" --wage_time "$WAGE_TIME" --num_of_epochs "$NUM_EPOCHS"
+python ./aatc.py run --grid_size "$GRID_SIZE" --queue_capacity "$QUEUE_CAPACITY" --congestion_rate "$CONGESTION_RATE" --credit_balance "$CREDIT_BALANCE" --wage_time "$WAGE_TIME" --num_of_epochs "$NUM_EPOCHS"

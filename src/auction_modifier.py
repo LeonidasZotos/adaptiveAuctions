@@ -8,18 +8,18 @@ class AuctionModifier:
     """
     This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction. 
     Attributes:
+        modifier_type (str): The type of the modifier. (e.g. 'random', 'static', 'spsa')
         intersection_id (str): The id of the intersection for which the modifier is used, or 'same' 
             if the same auction parameters are used everywhere
-        modifier_type (str): The type of the modifier. (e.g. 'random', 'static', 'spsa')
         grid (Grid): The grid object that contains all intersections and car queues
         spsa_parameters (dict): The parameters used for the SPSA algorithm
     Functions:
-        ready_for_new_epoch: Prepares the modifier for the next epoch.
-        generate_auction_parameters: Calls the appropriate function to generate the auction parameters
         generate_random_parameters: Generates random parameters for the next auction
         generate_static_parameters: Generates static parameters for the next auction
         generate_spsa_parameters: Generates spsa parameters for the next auction
-
+        update_spsa_parameters (last_reward): Updates the SPSA parameters for the next auction
+        generate_auction_parameters: Calls the appropriate function to generate the auction parameters
+        ready_for_new_epoch: Prepares the modifier for the next epoch
     """
 
     def __init__(self, modifier_type, intersection_id, grid):
@@ -33,7 +33,6 @@ class AuctionModifier:
         self.modifier_type = modifier_type
         self.intersection_id = intersection_id
         self.grid = grid
-        
 
         # SPSA parameters.
         # Theta parameters are: queue_delay_boost, queue_length_boost, modification_boost_limit_min and modification_boost_limit_max
@@ -92,7 +91,8 @@ class AuctionModifier:
             tuple: A tuple containing the queue delay boost, queue length boost and modification boost limits
         """
 
-        self.update_spsa_parameters(utils.get_last_reward_of_intersection(self.grid.all_intersections, self.intersection_id))
+        self.update_spsa_parameters(utils.get_last_reward_of_intersection(
+            self.grid.all_intersections, self.intersection_id))
 
         modification_boost_limit = [0, 0]
 
@@ -170,7 +170,6 @@ class AuctionModifier:
 
             # 6. Set phase to setup
             self.spsa_parameters['phase'] = 'setup'
-        pass
 
     def generate_auction_parameters(self):
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type

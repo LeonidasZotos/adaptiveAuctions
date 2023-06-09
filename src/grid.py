@@ -1,5 +1,5 @@
-""" This module contains the Grid class. The Grid class is responsible for creating the grid,
-(re)spawning cars etc. It contains all intersections, car queues and cars."""
+"""This module contains the Grid class. The Grid class is responsible for creating the grid,
+(re)spawning cars etc. The Grid contains all intersections, car queues and cars."""
 
 import random
 from prettytable import PrettyTable
@@ -19,18 +19,21 @@ class Grid:
         queue_capacity (int): The maximum number of cars that can be in a car queue
         all_intersections (list): A list of lists of intersections. The first list represents the rows, the second list represents the columns.
         all_car_queues (list): A list of all car queues in the grid
+        all_cars (list): A list of all cars in the grid
         epoch_movements (list): A list of movements that need to be executed in this epoch
     Functions:
+        get_all_intersections_and_car_queues: Returns a tuple of all intersections and car queues in the grid
         print_grid(epoch): Prints the grid to the console. The epoch is needed to print the epoch number
-        print_cars(): Prints all cars to the console
-        move_cars(): Moves all cars in the grid based on the epoch_movements
-        calculate_movements(): Calculates the movements that need to be executed in this epoch
-        filter_and_execute_movements(): Removes movements that are not possible (because the destination queue is full)
-        execute_movement(): Executes a movement (i.e. moves a car from one queue to another)
-        spawn_cars(congestion_rate): Spawns cars in the grid with the given congestion rate
-        respawn_cars(grid_size): Respawns cars that have reached their destination somewhere else. 
-            Returns a list of scores, that represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
-        ready_for_new_epoch(): Clear the class variables that are epoch-specific (e.g. epoch_movements)
+        print_cars: Prints all cars to the console
+        move_cars: Moves all cars in the grid based on the epoch_movements
+        calculate_movements: Calculates the movements that need to be executed in this epoch
+        filter_and_execute_movements: Removes movements that are not possible (because the destination queue is full) and 
+            executes the movements that are possible, max 1 per intersection
+        execute_movement(origin_queue_id, destination_queue_id): Executes a movement (i.e. moves a car from one queue to another)
+        spawn_cars(congestion_rate, shared_bid_generator, bidders_proportion): Spawns cars in the grid with the given congestion rate
+        respawn_cars(grid_size): Respawns cars that have reached their destination somewhere else. Returns a list of scores, that 
+            represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
+        ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
     def __init__(self, grid_size, queue_capacity, auction_modifier_type):
@@ -39,7 +42,6 @@ class Grid:
             grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
             queue_capacity (int): The maximum number of cars that can be in a car queue
             auction_modifier_type (str): The type of the auction modifier(s) (e.g. 'Random', 'Adaptive', 'Static')
-        Returns: Tuple: (list of intersections, list of car queues). These are used by the simulator to keep track of all intersections and car queues.
         """
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity
@@ -103,16 +105,14 @@ class Grid:
 
 ### Movement functions ###
     def move_cars(self):
-        """ Moves all cars in the grid based on the epoch_movements
-        """
+        """ Moves all cars in the grid based on the epoch_movements"""
         # First, calculate all movements that need to be made
         self.calculate_movements()
         # Then, filter out movements that are not possible (e.g. because the destination queue is full)
         self.filter_and_execute_movements()
 
     def calculate_movements(self):
-        """ Calculates the movements that need to be executed in this epoch, based on the auction results per intersection
-        """
+        """ Calculates the movements that need to be executed in this epoch, based on the auction results per intersection"""
         # Request the winning movement from each intersection.
         # Each movement is the originating car queue id and the destination car queue id.
         # Here we have lists of up to 4 tuples, where each tuple represents a movement.
@@ -168,32 +168,6 @@ class Grid:
         # Let the car know of its new queue
         car_to_move.set_car_queue_id(destination_queue_id)
 
-    def execute_movements(self):
-        """Execute the movements that are possible (cars need to pay the auction fee, and then move to the destination queue)
-        """
-        # First, all winning car queues must pay the bid and update their inactivity (though win_auction())
-        for movement in self.epoch_movements:
-            origin_queue_id, destination_queue_id = movement
-            car_queue = utils.get_car_queue(
-                self.all_car_queues, origin_queue_id)
-            parent_intersection = car_queue.get_parent_intersection()
-            reward = car_queue.win_auction(
-                parent_intersection.get_auction_fee())
-            parent_intersection.set_last_reward(reward)
-
-        # Then, all cars must be moved.
-            origin_queue_id, destination_queue_id = movement
-            origin_queue = utils.get_car_queue(
-                self.all_car_queues, origin_queue_id)
-            destination_queue = utils.get_car_queue(
-                self.all_car_queues, destination_queue_id)
-
-            car_to_move = origin_queue.remove_first_car()
-            car_to_move.increase_distance_travelled_in_trip()
-            destination_queue.add_car(car_to_move)
-            # Let the car know of its new queue
-            car_to_move.set_car_queue_id(destination_queue_id)
-
 ### Car spawning functions ###
     def spawn_cars(self, congestion_rate, shared_bid_generator, bidders_proportion):
         """Spawns cars in the grid with the given congestion rate. This should only be exectuted at the start of the simulation
@@ -232,6 +206,7 @@ class Grid:
                 self.all_cars.append(car)
                 # Decrease the number of spawns left
                 number_of_spawns -= 1
+
         return self.all_cars
 
     def respawn_cars(self, grid_size):

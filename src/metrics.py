@@ -13,9 +13,17 @@ class MasterKeeper:
         Args:
             all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
                 that completed their trip in an epoch, for a single simulation
-
+            total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
+                the value is the total throughput.
         Functions:
-
+            store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
+            produce_results(args): Produces all the evaluation results of all simulations
+            plot_satisfaction_scores_overall_average(results_folder): Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
+            plot_satisfaction_scores_by_bidding_type(results_folder, with_std=False, export_results=True, filter_outliers=True): Creates a 
+            graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
+                for each bidding type, represented by a different color.
+            plot_throughput_heatmap_average(results_folder, num_of_simulations, export_results=True): Creates a heatmap of the 
+                average throughput per intersection, over all simulations
         """
         self.all_simulations_results = []
         self.total_throughput_per_intersection = np.zeros(
@@ -98,7 +106,7 @@ class MasterKeeper:
     def plot_satisfaction_scores_by_bidding_type(self, results_folder, with_std=False, export_results=True, filter_outliers=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
-            'ohhh 100 lines of code, that's a lot of code (but here we are)'
+            'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
         Args:
             results_folder (str): The folder in which the results will be stored
             with_std (bool): Whether to include the standard deviation in the plot
@@ -296,20 +304,17 @@ class SimulationMetrics:
     """
     The SimulationMetrics class is responsible for keeping track of all the metrics for a single simulation.
     Attributes:
-        all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
+        grid (Grid): The grid object of the simulation
         current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for each car. The key is the epoch, the value is
             a list of all the satisfaction scores for that epoch, if any.
         total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
             the value is the total throughput.
+        last_reward_per_intersection (dict): A dictionary of the last reward of each intersection. The key is the intersection id,
+            the value is the last reward.
     Functions:
-        add_satisfaction_scores: Adds a satisfaction score (and its car id, as a tuple) to the satisfaction_scores dictionary
-        produce_results: Produces all the evaluation results of all simulations
-        plot_satisfaction_scores_overall_average: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
-        plot_satisfaction_scores_by_bidding_type: Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
-            for each bidding type, represented by a different color.
-        plot_throughput_heatmap_average: Creates a heatmap of the average throughput per intersection, over all simulations
-        ready_for_new_epoch: Prepares the metrics keeper for the next epoch.
-        prep_for_new_simulation: Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
+        add_satisfaction_scores(epoch, satisfaction_scores): Adds the satisfaction scores of the cars that completed a trip.
+            If there was no car that completed a trip in an epoch, there is no entry for that epoch.
+        ready_for_new_epoch(): Prepares the metrics keeper for the next epoch
     """
 
     def __init__(self, args, grid):

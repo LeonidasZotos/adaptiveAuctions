@@ -2,6 +2,7 @@
 This class is also responsible for gathering bids from the queue and making the cars pay their individual fees.
 Lastly, it also keeps track of how long the queue has been inactive (i.e. no cars have left the queue)."""
 
+
 class CarQueue:
     """
     The Car Queue class is responsible for keeping track of the cars in the queue, adding/removing cars and making them pay when they win an auction.
@@ -23,11 +24,11 @@ class CarQueue:
         get_num_of_free_spots: Returns the number of free spots in the queue
         get_destination_of_first_car: Returns the destination of the first car in the queue
         get_parent_intersection: Returns the intersection that the queue belongs to
-        add_car: Adds a car to the end of the queue
+        add_car(car): Adds a car to the end of the queue
         remove_first_car: Removes the first car from the queue
-        remove_car: Removes a specific car from the queue
-        collect_bids: Collects bids from all cars in the queue (not the payment, but the initial bid)
-        win_auction: Makes the cars in the queue pay their individual fees
+        remove_car(car): Removes a specific car from the queue
+        collect_bids(only_collect_first=True): Collects bids from all cars in the queue (not the payment, but the initial bid)
+        win_auction(fee): Makes the cars in the queue pay their individual fees
         reset_bids: Resets the bids submitted by the cars in the queue
         ready_for_new_epoch: Prepares the queue for the next epoch
     """
@@ -35,6 +36,7 @@ class CarQueue:
     def __init__(self, parent_intersection, max_capacity, id):
         """ Initialize the Car queue object
         Args:
+            parent_intersection (Intersection): The intersection that the queue belongs to
             max_capacity (int): The maximum number of cars that can be in the queue
             id (str): The ID of the car queue, e.g. 11N for the north car queue at intersection (1,1)
         """
@@ -43,8 +45,8 @@ class CarQueue:
         self.capacity = max_capacity
         self.num_of_cars = len(self.cars)
         self.parent_intersection = parent_intersection
-        self.bids = {}
         self.time_inactive = 0
+        self.bids = {}
 
     def __str__(self):
         # Create list of all IDs of cars in the queue
@@ -74,24 +76,38 @@ class CarQueue:
         return not (self.get_num_of_cars() > 0)
 
     def get_num_of_cars(self):
-        """Returns the number of cars in the queue"""
+        """Returns the number of cars in the queue
+        Returns:
+            int: The number of cars in the queue
+        """
         return len(self.cars)
 
     def get_time_inactive(self):
-        """Returns the time that has passed since the last car left the queue"""
+        """Returns the time that has passed since the last car left the queue
+        Returns:
+            int: The time that has passed since the last car left the queue
+        """
         return self.time_inactive
 
     def has_capacity(self):
-        """Returns whether the queue has capacity for more cars"""
+        """Returns whether the queue has capacity for more cars
+        Returns:
+            bool: True if the queue has capacity, False otherwise
+        """
         return self.get_num_of_cars() < self.capacity
 
     def get_num_of_free_spots(self):
-        """Returns the number of free spots in the queue"""
+        """Returns the number of free spots in the queue
+        Returns:
+            int: The number of free spots in the queue
+        """
         return self.capacity - self.get_num_of_cars()
 
     def get_destination_of_first_car(self):
         """Returns the destination of the first car in the queue. This is useful for the intersection to know where the car wants to go
             (e.g.to check if the new queue has capacity)
+        Returns:
+            str: The destination of the first car in the queue
         """
         # For now, the car is not removed. We first need to check if the new queue has capacity.
         car = self.cars[0]
@@ -99,25 +115,32 @@ class CarQueue:
         return destination
 
     def get_parent_intersection(self):
-        """Returns the intersection that the queue belongs to"""
+        """Returns the intersection that the queue belongs to
+        Returns:
+            Intersection: The intersection that the queue belongs to
+        """
         return self.parent_intersection
 
 ### Queue Manipulation Functions ###
     def add_car(self, car):
         """Adds a car to the end of the queue
-            Args:
-                car (Car): The car to be added to the queue
+        Args:
+            car (Car): The car to be added to the queue
+        Raises:
+            Exception: If the queue is full, an exception is raised
         """
-        # The queue should not be full when this function is called, but this is a sanity check
-        if self.has_capacity():
-            self.cars.append(car)
-        else:
+        try:  # This is a sanity check
+            assert self.has_capacity()
+        except AssertionError:
             print("ERROR: Car Queue is full, cannot add car")
+            return
+
+        self.cars.append(car)
 
     def remove_first_car(self):
         """Removes and retrieves the first car from the queue
-            Returns:
-                Car: The first car in the queue, or None if the queue is empty
+        Returns:
+            Car: The first car in the queue, or None if the queue is empty
         """
         if self.is_empty():
             print("ERROR: Cannot remove car from empty queue")
@@ -126,13 +149,17 @@ class CarQueue:
 
     def remove_car(self, car):
         """Removes a specific car from the queue
-            Args:
-                car (Car): The car to be removed from the queue
+        Args:
+            car (Car): The car to be removed from the queue
+        Raises:
+            Exception: If the car is not in the queue, an exception is raised
         """
-        if car in self.cars:
-            self.cars.remove(car)
-        else:
+        try:
+            assert car in self.cars
+        except AssertionError:
             print("ERROR: Car {} is not in queue {}".format(car.id, self.id))
+            return
+        self.cars.remove(car)
 
 ### Auction Functions ###
     def collect_bids(self, only_collect_first=True):
@@ -160,6 +187,8 @@ class CarQueue:
         Makes the cars in the queue pay their individual fees, and resets the inactivity time of the queue
         Args:
             fee (int): The total fee that the cars in the queue have to pay
+        Returns:
+            int: The time that the first car in the queue has spent at the intersection
         """
         # If a queue wins an auction:
         # 1. The winning bid is paid by the cars in the queue.
@@ -196,12 +225,13 @@ class CarQueue:
         if self.bids != None:
             self.bids = self.bids.clear()
 
-    ### Epoch Functions ###
+### Epoch Functions ###
     def ready_for_new_epoch(self):
         """Prepares the queue for the next epoch. This involved: 
             1) Resetting the bids,
             2) Updating the number of cars in the queue, 
-            3) Updating the inactivity time of the queue."""
+            3) Updating the inactivity time of the queue.
+        """
         self.reset_bids()
         self.num_of_cars = self.get_num_of_cars()
         if not self.is_empty():
