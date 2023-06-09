@@ -276,7 +276,8 @@ class Car:
 
 
 class SmallCar:
-    """The SmallCar class is a small version of the Car class, which only contains the essential car info. This class is used for evaluation purposes, 
+    """
+    The SmallCar class is a small version of the Car class, which only contains the essential car info. This class is used for evaluation purposes, 
     so that no full copies of cars are kept.
     Attributes:
         bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.

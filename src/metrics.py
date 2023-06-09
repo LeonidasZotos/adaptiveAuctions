@@ -8,22 +8,28 @@ import src.utils as utils
 
 
 class MasterKeeper:
+    """
+    The MasterKeeper class is responsible for keeping track of all the metrics for all simulations.
+    Attributes:
+        all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
+            that completed their trip in an epoch, for a single simulation
+        total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
+            the value is the total throughput.
+    Functions:
+        store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
+        produce_results(args): Produces all the evaluation results of all simulations
+        plot_satisfaction_scores_overall_average(results_folder): Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
+        plot_satisfaction_scores_by_bidding_type(results_folder, with_std=False, export_results=True, filter_outliers=True): Creates a 
+        graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
+            for each bidding type, represented by a different color.
+        plot_throughput_heatmap_average(results_folder, num_of_simulations, export_results=True): Creates a heatmap of the 
+            average throughput per intersection, over all simulations    
+    """
+
     def __init__(self, args):
         """ Initialize the MetricsKeeper object
         Args:
-            all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
-                that completed their trip in an epoch, for a single simulation
-            total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
-                the value is the total throughput.
-        Functions:
-            store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
-            produce_results(args): Produces all the evaluation results of all simulations
-            plot_satisfaction_scores_overall_average(results_folder): Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
-            plot_satisfaction_scores_by_bidding_type(results_folder, with_std=False, export_results=True, filter_outliers=True): Creates a 
-            graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
-                for each bidding type, represented by a different color.
-            plot_throughput_heatmap_average(results_folder, num_of_simulations, export_results=True): Creates a heatmap of the 
-                average throughput per intersection, over all simulations
+            args (argparse.Namespace): Arguments parsed from the command line
         """
         self.all_simulations_results = []
         self.total_throughput_per_intersection = np.zeros(
