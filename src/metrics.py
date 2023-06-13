@@ -212,51 +212,50 @@ class MasterKeeper:
             else:
                 RL_bidder_average_satisfaction_scores.append(nan)
 
+        # Create a list of all standard deviations of satisfaction scores
+        static_bidding_sd = []
+        random_bidding_sd = []
+        free_rider_bidding_sd = []
+        RL_bidder_sd = []
+        for epoch in epochs:
+            # Static bidding:
+            if epoch in static_bidding_results:
+                static_bidding_sd.append(
+                    np.std(static_bidding_results[epoch]))
+            else:
+                static_bidding_sd.append(nan)
+            # Random bidding:
+            if epoch in random_bidding_results:
+                random_bidding_sd.append(
+                    np.std(random_bidding_results[epoch]))
+            else:
+                random_bidding_sd.append(nan)
+            # Free-Rider bidding:
+            if epoch in free_rider_bidding_results:
+                free_rider_bidding_sd.append(
+                    np.std(free_rider_bidding_results[epoch]))
+            else:
+                free_rider_bidding_sd.append(nan)
+            # RL bidding:
+            if epoch in RL_bidding_results:
+                RL_bidder_sd.append(
+                    np.std(RL_bidding_results[epoch]))
+            else:
+                RL_bidder_sd.append(nan)
         if with_std == True:
-            # Create a list of all standard deviations of satisfaction scores
-            static_bidding_standard_deviations = []
-            random_bidding_standard_deviations = []
-            free_rider_bidding_standard_deviations = []
-            RL_bidder_standard_deviations = []
-            for epoch in epochs:
-                # Static bidding:
-                if epoch in static_bidding_results:
-                    static_bidding_standard_deviations.append(
-                        np.std(static_bidding_results[epoch]))
-                else:
-                    static_bidding_standard_deviations.append(nan)
-                # Random bidding:
-                if epoch in random_bidding_results:
-                    random_bidding_standard_deviations.append(
-                        np.std(random_bidding_results[epoch]))
-                else:
-                    random_bidding_standard_deviations.append(nan)
-                # Free-Rider bidding:
-                if epoch in free_rider_bidding_results:
-                    free_rider_bidding_standard_deviations.append(
-                        np.std(free_rider_bidding_results[epoch]))
-                else:
-                    free_rider_bidding_standard_deviations.append(nan)
-                # RL bidding:
-                if epoch in RL_bidding_results:
-                    RL_bidder_standard_deviations.append(
-                        np.std(RL_bidding_results[epoch]))
-                else:
-                    RL_bidder_standard_deviations.append(nan)
-
             # Plot the average satisfaction score per epoch, per bidding type & with error bars
             if len(static_bidding_results) > 0:
                 plt.errorbar(epochs, static_bidding_average_satisfaction_scores,
-                             yerr=static_bidding_standard_deviations, fmt='o', label='Static bidding')
+                             yerr=static_bidding_sd, fmt='o', label='Static bidding')
             if len(random_bidding_results) > 0:
                 plt.errorbar(epochs, random_bidding_average_satisfaction_scores,
-                             yerr=random_bidding_standard_deviations, fmt='o', label='Random bidding')
+                             yerr=random_bidding_sd, fmt='o', label='Random bidding')
             if len(free_rider_bidding_results) > 0:
                 plt.errorbar(epochs, free_rider_bidding_average_satisfaction_scores,
-                             yerr=free_rider_bidding_standard_deviations, fmt='o', label='Free-rider bidding')
+                             yerr=free_rider_bidding_sd, fmt='o', label='Free-rider bidding')
             if len(RL_bidding_results) > 0:
                 plt.errorbar(epochs, RL_bidder_average_satisfaction_scores,
-                             yerr=RL_bidder_standard_deviations, fmt='o', label='RL bidding')
+                             yerr=RL_bidder_sd, fmt='o', label='RL bidding')
         else:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
             if len(static_bidding_results) > 0:
@@ -281,8 +280,13 @@ class MasterKeeper:
         plt.clf()
 
         if export_results == True:
-            np.savetxt(results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([epochs, static_bidding_average_satisfaction_scores, random_bidding_average_satisfaction_scores,
-                       free_rider_bidding_average_satisfaction_scores, RL_bidder_average_satisfaction_scores]).T, delimiter=",", header="Epoch, Static bidding, Random bidding, Free-rider bidding, RL bidding")
+            np.savetxt(results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([
+                epochs, static_bidding_average_satisfaction_scores, static_bidding_sd,
+                random_bidding_average_satisfaction_scores, random_bidding_sd,
+                free_rider_bidding_average_satisfaction_scores, free_rider_bidding_sd,
+                RL_bidder_average_satisfaction_scores, RL_bidder_sd
+            ]).T, delimiter=",", header="Epoch, Static bidding, Static bidding SD, Random bidding, \
+                Random bidding SD, Free-rider bidding, Free-rider bidding SD, RL bidding, RL bidding SD")
 
     def plot_throughput_heatmap_average(self, results_folder, num_of_simulations, export_results=True):
         """Creates a heatmap of the average throughput per intersection, over all simulations
