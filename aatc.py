@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--num_of_epochs",
-        default=400,
+        default=500,
         choices=range(1, 100001),
         metavar="[1-100000]",
         type=int,
@@ -62,7 +62,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--num_of_simulations",
-        default=1,
+        default=50,
         choices=range(1, 10001),
         metavar="[1-10000]",
         type=int,
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--congestion_rate",
-        default=0.1,
+        default=0.15,
         type=float_range(0.01, 1),
         help="Rate of congestion (Percentage of occupied spots, 0.01-1). Defaults to 0.5. Must be a float between 0.1 and 1."
     )
@@ -119,7 +119,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--intersection_reward",
-        default="time",
+        default="time_and_urgency",
         choices=["time", "time_and_urgency"],
         type=str,
         help="Type of reward for the intersection. Defaults to 'time_and_urgency'. Must be one of 'time' or 'time_and_urgency'."
