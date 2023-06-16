@@ -3,6 +3,7 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 from math import nan
+import pandas as pd
 
 import src.utils as utils
 
@@ -31,15 +32,28 @@ class MasterKeeper:
         Args:
             args (argparse.Namespace): Arguments parsed from the command line
         """
-        self.all_simulations_results = []
+        self.all_simulations_satisfaction_scores = []
+
         self.total_throughput_per_intersection = np.zeros(
             (args.grid_size, args.grid_size))
 
+        self.count_of_measurements_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size, args.num_of_epochs))
+
+        self.total_reward_history_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size, args.num_of_epochs))
+
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""
-        self.all_simulations_results.append(
+        self.all_simulations_satisfaction_scores.append(
             sim_metrics_keeper.current_sim_satisfaction_scores)
         self.total_throughput_per_intersection += sim_metrics_keeper.total_throughput_per_intersection
+
+        # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
+        self.count_of_measurements_per_intersection += np.where(
+            sim_metrics_keeper.reward_history_per_intersection != nan, 1, 0)
+        self.total_reward_history_per_intersection += np.nan_to_num(
+            sim_metrics_keeper.reward_history_per_intersection)
 
     def produce_results(self, args):
         """Produces all the evaluation results of all simulations
@@ -61,6 +75,10 @@ class MasterKeeper:
         self.plot_throughput_heatmap_average(
             args.results_folder, args.num_of_simulations)
 
+        # Create a graph with graphs of the average reward per intersection, over all simulations
+        self.plot_reward_per_intersection_history(
+            args.results_folder)
+
     def plot_satisfaction_scores_overall_average(self, results_folder):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
@@ -73,7 +91,7 @@ class MasterKeeper:
 
         all_results_dict = {}
         # First, combine all dictionaries into one dictionary
-        for result_dict in self.all_simulations_results:
+        for result_dict in self.all_simulations_satisfaction_scores:
             for epoch in result_dict:
                 if epoch in all_results_dict:
                     all_results_dict[epoch] += remove_car_copies_from_dict(
@@ -125,7 +143,7 @@ class MasterKeeper:
         free_rider_bidding_results = {}
         RL_bidding_results = {}
 
-        for result_dict in self.all_simulations_results:
+        for result_dict in self.all_simulations_satisfaction_scores:
             for epoch in result_dict:
                 for (car_copy, score) in result_dict[epoch]:
                     bidding_type = car_copy.bidding_type
@@ -308,6 +326,33 @@ class MasterKeeper:
             np.savetxt(results_folder + '/average_throughput_per_intersection.csv',
                        average_throughput_per_intersection, delimiter=",")
 
+    def plot_reward_per_intersection_history(self, results_folder, export_results=True):
+        # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
+        average_reward_per_intersection = np.divide(
+            self.total_reward_history_per_intersection, self.count_of_measurements_per_intersection)
+        # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
+        fig, axs = plt.subplots(
+            self.total_reward_history_per_intersection.shape[0], self.total_reward_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+        for i in range(self.total_reward_history_per_intersection.shape[0]):
+            for j in range(self.total_reward_history_per_intersection.shape[1]):
+                axs[i, j].plot(average_reward_per_intersection[i, j])
+                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].set_xlabel('Epoch')
+                axs[i, j].set_ylabel('Average Reward')
+        plt.savefig(results_folder +
+                    '/average_reward_per_intersection_history.png')
+        plt.clf()
+
+        if export_results == True:
+            # Create a pandas dataframe, where each intersection is a column. The column header is the coordinates of the intersection
+            rewards_history_df = pd.DataFrame()
+            for i in range(self.total_reward_history_per_intersection.shape[0]):
+                for j in range(self.total_reward_history_per_intersection.shape[1]):
+                    rewards_history_df[str(
+                        i) + '_' + str(j)] = average_reward_per_intersection[i, j]
+            rewards_history_df.to_csv(results_folder +
+                                      '/average_reward_per_intersection_history.csv', index=False)
+
 
 class SimulationMetrics:
     """
@@ -329,15 +374,15 @@ class SimulationMetrics:
     def __init__(self, args, grid):
         """ Initialize the MetricsKeeper object
         Args:
-            current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for the current simulation. The key is the epoch,
-                the value is a list of all the satisfaction scores for that epoch, if any.
+            args (argparse.Namespace): Arguments parsed from the command line
+            grid (Grid): The grid object of the simulation
         """
         self.grid = grid
         self.current_sim_satisfaction_scores = {}
         self.total_throughput_per_intersection = np.zeros(
             (args.grid_size, args.grid_size))
-        self.last_reward_per_intersection = np.zeros(
-            (args.grid_size, args.grid_size))
+        self.reward_history_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size, args.num_of_epochs))
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
         """Adds the satisfaction scores of the cars that completed a trip. If there was no car that completed 
@@ -357,5 +402,11 @@ class SimulationMetrics:
             id = intersection.id
             x_cord, y_cord = map(int, id)
             self.total_throughput_per_intersection[x_cord][y_cord] += intersection.num_of_cars_in_intersection()
-            self.last_reward_per_intersection[x_cord][y_cord] = intersection.get_last_reward(
+
+    def retrieve_end_of_simulation_metrics(self):
+        """Retrieves the metrics at the end of the simulation"""
+        for intersection in self.grid.all_intersections:
+            id = intersection.id
+            x_cord, y_cord = map(int, id)
+            self.reward_history_per_intersection[x_cord][y_cord] = intersection.get_auction_reward_history(
             )

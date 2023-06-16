@@ -1,6 +1,7 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
 import random
+from math import nan
 
 import src.utils as utils
 from src.car_queue import CarQueue
@@ -25,6 +26,7 @@ class Intersection:
         num_of_cars_in_intersection: Returns the number of cars in the intersection
         set_last_reward(reward): Sets the last reward of the intersection
         get_last_reward: Returns the last reward of the intersection
+        get_auction_reward_history: Returns the reward history of the auction modifier
         hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
         ready_for_new_epoch: Prepares the intersection for the next epoch.
@@ -46,7 +48,7 @@ class Intersection:
                           CarQueue(self, queue_capacity, str(id + 'S')),
                           CarQueue(self, queue_capacity, str(id + 'W'))]
         self.auction_fees = []
-        self.last_reward = 0
+        self.reward_history = []
 
     def __str__(self):
         return f'Intersection(id={self.id})'
@@ -101,19 +103,25 @@ class Intersection:
         """
         return sum([queue.get_num_of_cars() for queue in self.carQueues])
 
-    def set_last_reward(self, reward):
-        """Sets the last reward of the intersection
-        Args:
-            reward (float): The reward to set
-        """
-        self.last_reward = reward
-
     def get_last_reward(self):
         """Returns the last reward of the intersection
         Returns:
             float: The last reward of the intersection
         """
-        return self.last_reward
+        if len(self.reward_history) == 0:
+            return 0
+        return self.reward_history[-1]
+
+    def add_reward(self, reward):
+        """Adds a reward to the reward history"""
+        self.reward_history.append(reward)
+
+    def get_auction_reward_history(self):
+        """Returns the reward history of the auction modifier
+        Returns:
+            list: The reward history of the auction modifier
+        """
+        return self.reward_history
 
     def hold_auction(self, second_price=False):
         """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
@@ -202,6 +210,8 @@ class Intersection:
         # as we can retrieve it later, if the move is possible.
         return winning_queues_id, destinations
 
-    def ready_for_new_epoch(self):
+    def ready_for_new_epoch(self, epoch):
         """Prepares the intersection for the next epoch."""
         self.auction_fees = []
+        if len(self.reward_history) <= epoch:
+            self.reward_history.append(nan)

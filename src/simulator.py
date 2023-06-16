@@ -61,6 +61,8 @@ class Simulator:
                         car.set_balance(args.credit_balance)
             # Now that the credit has been given, run the epoch
             self.run_single_epoch(epoch)
+        self.metrics_keeper.retrieve_end_of_simulation_metrics()
+
 
     def run_single_epoch(self, epoch):
         """Run a single epoch of the simulation
@@ -77,7 +79,7 @@ class Simulator:
         # Prepare all entities for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
         self.grid.ready_for_new_epoch()
         for intersection in self.all_intersections:
-            intersection.ready_for_new_epoch()
+            intersection.ready_for_new_epoch(epoch)
         for car_queue in self.all_car_queues:
             car_queue.ready_for_new_epoch()
         for car in self.all_cars:
@@ -88,6 +90,8 @@ class Simulator:
         """Run the simulation
         Args:
             args (argparse.Namespace): Arguments parsed from the command line
+        Returns:
+            SimulationMetrics: The metrics keeper object that is responsible for recording metrics
         """
         # Run the epochs on the grid
         self.run_epochs(args)

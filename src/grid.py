@@ -159,7 +159,7 @@ class Grid:
         parent_intersection = car_queue.get_parent_intersection()
         reward = car_queue.win_auction(
             parent_intersection.get_auction_fee())
-        parent_intersection.set_last_reward(reward)
+        parent_intersection.add_reward(reward)
 
         # Then, all cars must be moved.
         origin_queue = utils.get_car_queue(
@@ -243,6 +243,5 @@ class Grid:
 
 ### Epoch functions ###
     def ready_for_new_epoch(self):
-        """ Clears the class variables that are epoch-specific (e.g. epoch_movements)
-        """
+        """ Clears the class variables that are epoch-specific (e.g. epoch_movements)"""
         self.epoch_movements = []
