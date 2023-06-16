@@ -16,7 +16,7 @@ class Intersection:
         intersection_reward: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         carQueues (list): A list of CarQueue objects that are part of the intersection
         auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
-        last_reward (float): The last reward of the intersection
+        reward_history (list): A list of rewards collected by the intersection
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         get_car_queues: Returns the car queues that are part of this intersection
@@ -24,8 +24,8 @@ class Intersection:
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
         num_of_cars_in_intersection: Returns the number of cars in the intersection
-        set_last_reward(reward): Sets the last reward of the intersection
         get_last_reward: Returns the last reward of the intersection
+        add_reward: Adds a reward to the reward history
         get_auction_reward_history: Returns the reward history of the auction modifier
         hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
@@ -49,6 +49,8 @@ class Intersection:
                           CarQueue(self, queue_capacity, str(id + 'W'))]
         self.auction_fees = []
         self.reward_history = []
+        # Each element is either 0 or 1, depending on whether a car passed through the intersection in that epoch
+        self.throughput_history = []
 
     def __str__(self):
         return f'Intersection(id={self.id})'
@@ -122,6 +124,13 @@ class Intersection:
             list: The reward history of the auction modifier
         """
         return self.reward_history
+    
+    def get_auction_throughput_history(self):
+        """Returns the throughput history of the auction modifier
+        Returns:
+            list: The throughput history of the auction modifier
+        """
+        return self.throughput_history
 
     def hold_auction(self, second_price=False):
         """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
@@ -215,3 +224,5 @@ class Intersection:
         self.auction_fees = []
         if len(self.reward_history) <= epoch:
             self.reward_history.append(nan)
+        if len(self.throughput_history) <= epoch:
+            self.throughput_history.append(0)

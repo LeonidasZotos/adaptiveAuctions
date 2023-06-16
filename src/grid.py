@@ -160,6 +160,7 @@ class Grid:
         reward = car_queue.win_auction(
             parent_intersection.get_auction_fee())
         parent_intersection.add_reward(reward)
+        parent_intersection.throughput_history.append(1) # 1 to signal that there was a car that went through the intersection
 
         # Then, all cars must be moved.
         origin_queue = utils.get_car_queue(
