@@ -285,8 +285,7 @@ class MasterKeeper:
                 random_bidding_average_satisfaction_scores, random_bidding_sd,
                 free_rider_bidding_average_satisfaction_scores, free_rider_bidding_sd,
                 RL_bidder_average_satisfaction_scores, RL_bidder_sd
-            ]).T, delimiter=",", header="Epoch, Static bidding, Static bidding SD, Random bidding, \
-                Random bidding SD, Free-rider bidding, Free-rider bidding SD, RL bidding, RL bidding SD")
+            ]).T, delimiter=",", header="Epoch, Static bidding Score, Static bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
 
     def plot_throughput_heatmap_average(self, results_folder, num_of_simulations, export_results=True):
         """Creates a heatmap of the average throughput per intersection, over all simulations

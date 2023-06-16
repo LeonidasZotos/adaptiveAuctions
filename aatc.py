@@ -79,7 +79,7 @@ if __name__ == '__main__':
     )
     run_parser.add_argument(
         "--queue_capacity",
-        default=20,
+        default=5,
         choices=range(1, 101),
         metavar="[0-100]",
         type=int,
@@ -88,7 +88,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--congestion_rate",
-        default=0.15,
+        default=0.1,
         type=float_range(0.01, 1),
         help="Rate of congestion (Percentage of occupied spots, 0.01-1). Defaults to 0.5. Must be a float between 0.1 and 1."
     )
