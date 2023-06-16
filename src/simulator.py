@@ -45,6 +45,8 @@ class Simulator:
         """Run the simulation for the given number of epochs
         Args:
             args (argparse.Namespace): Arguments parsed from the command line
+        Raises:
+            Exception: If there are no cars in the simulation
         """
         for epoch in range(args.num_of_epochs):
             # Every wage_time epochs, give credit to all cars

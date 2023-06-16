@@ -141,6 +141,8 @@ class CarQueue:
         """Removes and retrieves the first car from the queue
         Returns:
             Car: The first car in the queue, or None if the queue is empty
+        Raises:
+            Exception: If the queue is empty, an exception is raised
         """
         if self.is_empty():
             raise Exception("ERROR: Cannot remove car from empty queue")

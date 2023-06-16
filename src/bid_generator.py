@@ -63,6 +63,8 @@ class BidGenerator:
             bidding_strategy (string): The bidding strategy of the car.
             balance (float): The balance of the car.
             urgency (float): The urgency of the car.
+        Raises:
+            Exception: If the bidding strategy is not valid.
         """
 
         if bidding_strategy == 'static':

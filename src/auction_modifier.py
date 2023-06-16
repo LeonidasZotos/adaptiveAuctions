@@ -175,6 +175,8 @@ class AuctionModifier:
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type
         Returns:
             tuple: A tuple containing the queue delay boost, queue length boost and modification boost limits
+        Raises:
+            Exception: If the modifier type is invalid
         """
         if self.modifier_type == 'random':
             return self.generate_random_parameters()

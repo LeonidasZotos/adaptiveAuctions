@@ -85,6 +85,8 @@ def get_car(cars, car_id):
         car_id (str): The ID of the car (e.g. 5)
     Returns:
         Car: The car object with the given ID
+    Raises:
+        Exception: If the car ID is not found
     """
     for car in cars:
         if car.id == car_id:

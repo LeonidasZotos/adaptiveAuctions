@@ -241,6 +241,8 @@ class Car:
         Returns:
             self.id (str): The ID of the car, e.g. 1. This is included so that the intersection can keep track of which car submitted which bid.
             self.submitted_bid (float): The bid that the car submits in the auction.
+        Raises:
+            Exception: If the car tries to submit a negative bid, an exception is raised.
         """
         self.submitted_bid = self.bid_generator.generate_bid(
             self.bidding_type, self.balance, self.urgency)
