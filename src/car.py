@@ -19,16 +19,17 @@ class Car:
         next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), South car queue).
             This is not the final destination, but the next queue the car is heading to.
         balance (float): The balance of the car. This is the amount of credit the car has left.
-        rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
+        urgency (float): The urgency of the car. This represents the driver's urgency.
         time_at_intersection (int): The number of epochs that the car has spent at the intersection.
         time_in_traffic_network (int): The number of epochs that the car has spent in the traffic network.
         distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.
         submitted_bid (float): The bid that the car submitted in the last auction.
 
     Functions:
-        get_short_description: Returns a short description of the car, containing the ID, final destination, balance and rush factor.
+        get_short_description: Returns a short description of the car, containing the ID, final destination, balance and urgency.
         is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         get_time_at_intersection: Returns the time spent at the current intersection
+        get_urgency: Returns the urgency of the current car
         set_balance(new_balance): Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id(new_car_queue_id): Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
         increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
@@ -65,8 +66,8 @@ class Car:
         self.next_destination_queue = self.update_next_destination_queue()
         # Set an initial balance. This is set to 0 because the car will receive credit in the 0th epoch.
         self.balance = 0
-        # Rush factor is random between 0 and 1, rounded to 1 decimal. The higher the rush factor, the higher the urgency.
-        self.rush_factor = round(random.random(), 1)
+        # Rush factor is random between 0 and 1, rounded to 1 decimal. The higher the urgency, the higher the urgency.
+        self.urgency = round(random.random(), 1)
         # Time spent at the current intersection
         self.time_at_intersection = 0
         # Time spent in the network for the current trip
@@ -77,14 +78,14 @@ class Car:
         self.submitted_bid = 0
 
     def __str__(self):
-        return f'Car(id={self.id}), destination: {self.final_destination}, balance: {self.balance}, rush factor: {self.rush_factor}'
+        return f'Car(id={self.id}), destination: {self.final_destination}, balance: {self.balance}, urgency: {self.urgency}'
 
     def get_short_description(self):
-        """Returns a short description of the car, containing the ID, final destination, balance and rush factor.
+        """Returns a short description of the car, containing the ID, final destination, balance and urgency.
         Returns:
-            str: A short description of the car, containing the ID, final destination, balance and rush factor.
+            str: A short description of the car, containing the ID, final destination, balance and urgency.
         """
-        return f'C(id={self.id}), d: {self.final_destination}, b: {self.balance}, r: {self.rush_factor}, t: {self.time_in_traffic_network}'
+        return f'C(id={self.id}), d: {self.final_destination}, b: {self.balance}, r: {self.urgency}, t: {self.time_in_traffic_network}'
 
 ### Helper functions ###
     def is_at_destination(self):
@@ -105,6 +106,13 @@ class Car:
             int: The time spent at the current intersection
         """
         return self.time_at_intersection
+
+    def get_urgency(self):
+        """ Returns the urgency of the current car
+        Returns:
+            float: The urgency of the current car
+        """
+        return self.urgency
 
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
@@ -136,15 +144,15 @@ class Car:
     def calculate_satisfaction_score(self):
         """This function should only be called at the end fo a trip. Returns the satisfaction score of the trip,
             Function Explanation: The time spent in the network is divided by the distance travelled in the trip,
-            to get the average time spent per intersection. This is then multiplied by the rush factor.
-            The rush factor is subtracted from the result, so that if the car won every auction, the score is 0.
+            to get the average time spent per intersection. This is then multiplied by the urgency.
+            The urgency is subtracted from the result, so that if the car won every auction, the score is 0.
             The lower the score, the better.
         Returns:
             tuple: A tuple containing a small copy of the car and the satisfaction score of the trip.
                 By 'small', we mean that the car only contains the necessary information.
         """
-        score = ((self.time_in_traffic_network * self.rush_factor) /
-                 self.distance_travelled_in_trip) - self.rush_factor
+        score = ((self.time_in_traffic_network * self.urgency) /
+                 self.distance_travelled_in_trip) - self.urgency
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
         return SmallCar(self), score
 
@@ -213,7 +221,7 @@ class Car:
 
     def reset_car(self, car_queue_id, grid_size):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
-           next destination queue, rush factor, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
+           next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
         Args:
             car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
             grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
@@ -221,7 +229,7 @@ class Car:
         self.car_queue_id = car_queue_id
         self.reset_final_destination(grid_size)
         self.next_destination_queue = self.update_next_destination_queue()
-        self.rush_factor = round(random.random(), 1)
+        self.urgency = round(random.random(), 1)
         self.submitted_bid = 0
         self.time_at_intersection = 0
         self.time_in_traffic_network = 0
@@ -235,14 +243,13 @@ class Car:
             self.submitted_bid (float): The bid that the car submits in the auction.
         """
         self.submitted_bid = self.bid_generator.generate_bid(
-            self.bidding_type, self.balance, self.rush_factor)
+            self.bidding_type, self.balance, self.urgency)
         # If there is not enough balance, bid entire balance.
         if self.submitted_bid > self.balance:
             self.submitted_bid = self.balance
         if self.submitted_bid < 0:
-            print("ERROR: Car {} tried to submit a negative bid {}".format(
+            raise Exception("ERROR: Car {} tried to submit a negative bid {}".format(
                 self.id, self.submitted_bid))
-            self.submitted_bid = 0
         # Return the car's id and the bid
         return self.id, self.submitted_bid
 
@@ -283,7 +290,7 @@ class SmallCar:
         bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
         bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         balance (float): The balance of the car. This is the amount of credit the car has left.
-        rush_factor (float): The rush factor of the car. This represents the driver's urgency (high rush_factor -> high urgency).
+        urgency (float): The urgency of the car. This represents the driver's urgency.
         time_at_intersection (int): The number of epochs that the car has spent at the intersection.
         time_in_traffic_network (int): The number of epochs that the car has spent in the traffic network.
         distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.
@@ -298,7 +305,7 @@ class SmallCar:
         self.bidding_type = Car.bidding_type
         self.bid_generator = Car.bid_generator
         self.balance = Car.balance
-        self.rush_factor = Car.rush_factor
+        self.urgency = Car.urgency
         self.time_at_intersection = Car.time_at_intersection
         self.time_in_traffic_network = Car.time_in_traffic_network
         self.distance_travelled_in_trip = Car.distance_travelled_in_trip

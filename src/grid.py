@@ -36,12 +36,13 @@ class Grid:
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
-    def __init__(self, grid_size, queue_capacity, auction_modifier_type):
+    def __init__(self, grid_size, queue_capacity, auction_modifier_type, intersection_reward):
         """ Initialize the Grid object
         Args:
             grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
             queue_capacity (int): The maximum number of cars that can be in a car queue
             auction_modifier_type (str): The type of the auction modifier(s) (e.g. 'Random', 'Adaptive', 'Static')
+            intersection_reward (str): The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         """
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity
@@ -58,7 +59,7 @@ class Grid:
                 intersection_auction_modifier = AuctionModifier(
                     auction_modifier_type, intersection_id, self)
                 intersection = Intersection(
-                    intersection_id, self.queue_capacity, intersection_auction_modifier)
+                    intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward)
                 self.all_car_queues.extend(intersection.get_car_queues())
 
                 self.all_intersections.append(intersection)
@@ -149,7 +150,11 @@ class Grid:
                     break
 
     def execute_movement(self, origin_queue_id, destination_queue_id):
-        """Executes a movement (i.e. a car moves from one queue to another)"""
+        """Executes a movement (i.e. a car moves from one queue to another)
+        Args:
+            origin_queue_id (str): The ID of the queue the car is moving from
+            destination_queue_id (str): The ID of the queue the car is moving to
+        """
         car_queue = utils.get_car_queue(self.all_car_queues, origin_queue_id)
         parent_intersection = car_queue.get_parent_intersection()
         reward = car_queue.win_auction(
@@ -210,7 +215,7 @@ class Grid:
         return self.all_cars
 
     def respawn_cars(self, grid_size):
-        """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, rush_factor)
+        """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, urgency)
         Args:
             grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
         Returns:

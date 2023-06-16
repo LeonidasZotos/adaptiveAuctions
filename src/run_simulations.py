@@ -46,7 +46,6 @@ def run(args):
     args_and_ids = [(args, simulation_id)
                     for simulation_id in range(num_of_simulations)]
 
-    # print number of cores availalbe
     print("Number of Processing cores available: ", pool._processes)
 
     with tqdm(total=num_of_simulations) as pbar:

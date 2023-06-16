@@ -8,11 +8,11 @@ class BidGenerator:
     Attributes:
         -
     Functions:
-        generate_static_bid(rush_factor): Returns a static bid, multiplied by the rush factor
+        generate_static_bid(urgency): Returns a static bid, multiplied by the urgency
         generate_random_bid(balance): Returns a random bid between 0 and the total balance of the car
         generate_free_rider_bid(): Returns a bid of 0 (free-riding)
-        generate_RL_bid(balance, rush_factor): TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
-        generate_bid(bidding_strategy, balance, rush_factor): Returns a bid, based on the bidding strategy
+        generate_RL_bid(balance, urgency): TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
+        generate_bid(bidding_strategy, balance, urgency): Returns a bid, based on the bidding strategy
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
     static_bid = 15  # To be adjusted manually.
@@ -24,14 +24,14 @@ class BidGenerator:
     def __str__(self):
         return f'Bid Generator'
 
-    def generate_static_bid(self, rush_factor):
-        """Returns a static bid, multiplied by the rush factor
+    def generate_static_bid(self, urgency):
+        """Returns a static bid, multiplied by the urgency
         Args:
-            rush_factor (float): The rush factor of the car.
+            urgency (float): The urgency of the car.
         Returns:
-            float: A static bid, multiplied by the rush factor
+            float: A static bid, multiplied by the urgency
         """
-        return self.static_bid * rush_factor
+        return self.static_bid * urgency
 
     def generate_random_bid(self, balance):
         """Returns a random bid between 0 and the total balance of the car.
@@ -49,34 +49,33 @@ class BidGenerator:
         """
         return 0
 
-    def generate_RL_bid(self, balance, rush_factor):
+    def generate_RL_bid(self, balance, urgency):
         """TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
         Args:
             balance (float): The balance of the car.
-            rush_factor (float): The rush factor of the car.
+            urgency (float): The urgency of the car.
         """
-        return self.generate_static_bid(rush_factor)
+        return self.generate_static_bid(urgency)
 
-    def generate_bid(self, bidding_strategy, balance, rush_factor):
+    def generate_bid(self, bidding_strategy, balance, urgency):
         """Returns a bid, based on the bidding strategy.
         Args:
             bidding_strategy (string): The bidding strategy of the car.
             balance (float): The balance of the car.
-            rush_factor (float): The rush factor of the car.
+            urgency (float): The urgency of the car.
         """
 
         if bidding_strategy == 'static':
-            return self.generate_static_bid(rush_factor)
+            return self.generate_static_bid(urgency)
         if bidding_strategy == 'random':
             return self.generate_random_bid(balance)
         if bidding_strategy == 'free-rider':
             return self.generate_free_rider_bid()
         if bidding_strategy == 'RL':
-            return self.generate_RL_bid(balance, rush_factor)
+            return self.generate_RL_bid(balance, urgency)
         else:
-            print("ERROR: Invalid bidding strategy: ",
-                  bidding_strategy,  ". Returning random bid.")
-            return self.generate_random_bid(balance)
+            raise Exception("ERROR: Invalid bidding strategy: ",
+                            bidding_strategy,  ". Returning random bid.")
 
     def ready_for_new_epoch(self):
         """Prepares the Bid Generator for the next epoch."""

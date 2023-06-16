@@ -33,7 +33,7 @@ class Simulator:
         self.all_cars = []
 
         self.grid = Grid(args.grid_size, args.queue_capacity,
-                         args.auction_modifier_type)
+                         args.auction_modifier_type, args.intersection_reward)
 
         # Spawn cars in generated grid with given congestion rate
         self.all_cars = self.grid.spawn_cars(args.congestion_rate,
@@ -53,7 +53,7 @@ class Simulator:
             if epoch % args.wage_time == 0:
                 # Give credit to all cars
                 if self.all_cars == []:
-                    print("ERROR: No Cars in Simulation.")
+                    raise Exception("ERROR: No Cars in Simulation.")
                 else:
                     for car in self.all_cars:
                         car.set_balance(args.credit_balance)

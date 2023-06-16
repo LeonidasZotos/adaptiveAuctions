@@ -183,8 +183,7 @@ class AuctionModifier:
         elif self.modifier_type == 'spsa':
             return self.generate_spsa_parameters()
         else:
-            print("ERROR: Invalid Auction Modifier Type, using random auction parameters")
-            return self.generate_random_parameters()
+            raise Exception("Invalid Auction Modifier Type")
 
     def ready_for_new_epoch(self):
         """Prepares the Adaptive Auction Modifier for the next epoch."""

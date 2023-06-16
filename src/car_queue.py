@@ -143,8 +143,7 @@ class CarQueue:
             Car: The first car in the queue, or None if the queue is empty
         """
         if self.is_empty():
-            print("ERROR: Cannot remove car from empty queue")
-            return None
+            raise Exception("ERROR: Cannot remove car from empty queue")
         return self.cars.pop(0)
 
     def remove_car(self, car):
@@ -218,7 +217,14 @@ class CarQueue:
         # Finally, the inactivity time must be reset for the queue itself.
         self.time_inactive = 0
 
-        return self.cars[i].get_time_at_intersection()
+        reward = 0
+        if self.parent_intersection.intersection_reward == "time":
+            reward = self.cars[0].get_time_at_intersection()
+        elif self.parent_intersection.intersection_reward == "time_and_urgency":
+            reward = self.cars[0].get_time_at_intersection(
+            ) * self.cars[0].get_urgency()
+
+        return reward
 
     def reset_bids(self):
         """Resets the bids submitted by the cars in the queue, so that the next auction can be run."""

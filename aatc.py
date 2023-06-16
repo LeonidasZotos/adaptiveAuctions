@@ -118,6 +118,14 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
+        "--intersection_reward",
+        default="time",
+        choices=["time", "time_and_urgency"],
+        type=str,
+        help="Type of reward for the intersection. Defaults to 'time_and_urgency'. Must be one of 'time' or 'time_and_urgency'."
+    )
+
+    run_parser.add_argument(
         '--shared_bid_generator',
         action=argparse.BooleanOptionalAction,
         help="""Each car will learn how to bid individually, instead of sharing experiences.""")
