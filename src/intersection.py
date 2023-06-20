@@ -1,7 +1,7 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
 import random
-from math import nan
+from math import nan, isnan
 
 import src.utils as utils
 from src.car_queue import CarQueue
@@ -49,7 +49,7 @@ class Intersection:
                           CarQueue(self, queue_capacity, str(id + 'W'))]
         self.auction_fees = []
         self.reward_history = []
-        # Each element is either 0 or 1, depending on whether a car passed through the intersection in that epoch
+        # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
 
     def __str__(self):
@@ -112,7 +112,14 @@ class Intersection:
         """
         if len(self.reward_history) == 0:
             return 0
-        return self.reward_history[-1]
+
+        # Find the last non-nan value. The list is filled with nans for the epochs where there was no reward/no movement happened
+        last_non_nan = 0
+        for value in reversed(self.reward_history):
+            if not isinstance(value, float) or not isnan(value):
+                last_non_nan = value
+                break
+        return last_non_nan
 
     def add_reward(self, reward):
         """Adds a reward to the reward history"""
@@ -124,7 +131,7 @@ class Intersection:
             list: The reward history of the auction modifier
         """
         return self.reward_history
-    
+
     def get_auction_throughput_history(self):
         """Returns the throughput history of the auction modifier
         Returns:

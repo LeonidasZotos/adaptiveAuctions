@@ -159,7 +159,6 @@ class AuctionModifier:
             self.spsa_parameters['params_to_check'] = self.spsa_parameters['theta_params']
 
             # 5. Clear variables for next iteration
-            self.spsa_parameters['params_to_check'] = [0, 0, 0, 0]
             self.spsa_parameters['theta_params_plus'] = [0, 0, 0, 0]
             self.spsa_parameters['theta_params_minus'] = [0, 0, 0, 0]
             self.spsa_parameters['l_k'] = 0

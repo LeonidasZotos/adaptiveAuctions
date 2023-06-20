@@ -63,7 +63,6 @@ class Simulator:
             self.run_single_epoch(epoch)
         self.metrics_keeper.retrieve_end_of_simulation_metrics()
 
-
     def run_single_epoch(self, epoch):
         """Run a single epoch of the simulation
         Args:

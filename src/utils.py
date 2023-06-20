@@ -75,8 +75,7 @@ def get_last_reward_of_intersection(intersections, intersection_id):
     Returns:
         float: The last reward of the intersection
     """
-    intersection = get_intersection(intersections, intersection_id)
-    return intersection.get_last_reward()
+    return get_intersection(intersections, intersection_id).get_last_reward()
 
 
 def get_car(cars, car_id):
