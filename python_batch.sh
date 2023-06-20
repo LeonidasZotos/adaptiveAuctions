@@ -12,7 +12,7 @@ module load Python/3.9.6-GCCcore-11.2.0
 source $HOME/.envs/cars/bin/activate
  
 congestion_rate=("0.1" "0.15" "0.2")
-intersection_reward=("time" "time_and_urgency" "valueC")
+intersection_reward=("time" "time_and_urgency")
 auction_modifier_type=("spsa" "static")
 
 # Loop through variable1
