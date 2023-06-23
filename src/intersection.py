@@ -13,7 +13,7 @@ class Intersection:
     Attributes:
         id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
         auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
-        intersection_reward: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+        intersection_reward_type: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         carQueues (list): A list of CarQueue objects that are part of the intersection
         auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
         reward_history (list): A list of rewards collected by the intersection
@@ -42,7 +42,7 @@ class Intersection:
         """
         self.id = id
         self.auction_modifier = auction_modifier
-        self.intersection_reward = intersection_reward_type
+        self.intersection_reward_type = intersection_reward_type
         self.carQueues = [CarQueue(self, queue_capacity, str(id + 'N')),
                           CarQueue(self, queue_capacity, str(id + 'E')),
                           CarQueue(self, queue_capacity, str(id + 'S')),

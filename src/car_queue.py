@@ -220,9 +220,9 @@ class CarQueue:
         self.time_inactive = 0
 
         reward = 0
-        if self.parent_intersection.intersection_reward == "time":
+        if self.parent_intersection.intersection_reward_type == "time":
             reward = self.cars[0].get_time_at_intersection()
-        elif self.parent_intersection.intersection_reward == "time_and_urgency":
+        elif self.parent_intersection.intersection_reward_type == "time_and_urgency":
             reward = self.cars[0].get_time_at_intersection(
             ) * self.cars[0].get_urgency()
 

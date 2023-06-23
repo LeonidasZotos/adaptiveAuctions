@@ -36,14 +36,14 @@ class Grid:
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
-    def __init__(self, grid_size, queue_capacity, shared_auction_parameters, auction_modifier_type, intersection_reward):
+    def __init__(self, grid_size, queue_capacity, shared_auction_parameters, auction_modifier_type, intersection_reward_type):
         """ Initialize the Grid object
         Args:
             grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
             queue_capacity (int): The maximum number of cars that can be in a car queue
             shared_auction_parameters (bool): Whether all intersections have the same auction parameters or not
             auction_modifier_type (str): The type of the auction modifier(s) (e.g. 'Random', 'Adaptive', 'Static')
-            intersection_reward (str): The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+            intersection_reward_type (str): The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         """
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity
@@ -65,7 +65,7 @@ class Grid:
                     intersection_auction_modifier = AuctionModifier(
                         auction_modifier_type, intersection_id, self)
                 intersection = Intersection(
-                    intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward)
+                    intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward_type)
                 self.all_car_queues.extend(intersection.get_car_queues())
 
                 self.all_intersections.append(intersection)

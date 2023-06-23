@@ -124,7 +124,7 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
-        "--intersection_reward",
+        "--intersection_reward_type",
         default="time_and_urgency",
         choices=["time", "time_and_urgency"],
         type=str,
