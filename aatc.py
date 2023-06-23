@@ -3,7 +3,7 @@
 import argparse
 from datetime import datetime
 
-from src import run_simulations, test, clean
+from src import run_simulations, clean
 
 # Utility Functions
 
@@ -43,7 +43,7 @@ if __name__ == '__main__':
         description="Welcome to the 'Adaptive Auctions for Traffic Coordination' program."
     )
 
-    # The 3 subparsers are: run, test & clean
+    # The 2 subparsers are: run & clean
     subparsers = parser.add_subparsers(
         help='commands', title="commands", dest="command")
 
@@ -159,10 +159,6 @@ if __name__ == '__main__':
         action=argparse.BooleanOptionalAction,
         help="""If present, the grid will be printed after each epoch.""")
 
-    # Test command
-    test_parser = subparsers.add_parser(
-        'test', help='Test the program with different parameters')
-
     # Clean command
     clean_parser = subparsers.add_parser(
         'clean', help='Clean files from previous runs.')
@@ -173,5 +169,3 @@ if __name__ == '__main__':
         run_simulations.run(args)
     if args.command == 'clean':
         clean.run(args)
-    if args.command == 'test':
-        test.run(args)
