@@ -36,11 +36,12 @@ class Grid:
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
-    def __init__(self, grid_size, queue_capacity, auction_modifier_type, intersection_reward):
+    def __init__(self, grid_size, queue_capacity, shared_auction_parameters, auction_modifier_type, intersection_reward):
         """ Initialize the Grid object
         Args:
             grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
             queue_capacity (int): The maximum number of cars that can be in a car queue
+            shared_auction_parameters (bool): Whether all intersections have the same auction parameters or not
             auction_modifier_type (str): The type of the auction modifier(s) (e.g. 'Random', 'Adaptive', 'Static')
             intersection_reward (str): The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         """
@@ -50,14 +51,19 @@ class Grid:
         self.all_intersections = []
         self.all_car_queues = []
         self.all_cars = []
+
+        intersection_auction_modifier = AuctionModifier(
+            auction_modifier_type, 'same', self)
+
         # Create the grid of intersections
         for i in range(self.grid_size):
             for j in range(self.grid_size):
                 # The ID is the x and y coordinates of the intersection
                 intersection_id = str(j) + str(i)
                 # Each intersection has its own unique auction modifier
-                intersection_auction_modifier = AuctionModifier(
-                    auction_modifier_type, intersection_id, self)
+                if not shared_auction_parameters:
+                    intersection_auction_modifier = AuctionModifier(
+                        auction_modifier_type, intersection_id, self)
                 intersection = Intersection(
                     intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward)
                 self.all_car_queues.extend(intersection.get_car_queues())
@@ -160,7 +166,8 @@ class Grid:
         reward = car_queue.win_auction(
             parent_intersection.get_auction_fee())
         parent_intersection.add_reward(reward)
-        parent_intersection.throughput_history.append(1) # 1 to signal that there was a car that went through the intersection
+        # 1 to signal that there was a car that went through the intersection
+        parent_intersection.throughput_history.append(1)
 
         # Then, all cars must be moved.
         origin_queue = utils.get_car_queue(

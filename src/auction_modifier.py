@@ -1,8 +1,6 @@
 """This module contains the AuctionModifier class, which contains the modofier that is used to modify the auction parameters"""
 import random
 
-import src.utils as utils
-
 
 class AuctionModifier:
     """
@@ -18,7 +16,7 @@ class AuctionModifier:
         generate_static_parameters: Generates static parameters for the next auction
         generate_spsa_parameters: Generates spsa parameters for the next auction
         update_spsa_parameters (last_reward): Updates the SPSA parameters for the next auction
-        generate_auction_parameters: Calls the appropriate function to generate the auction parameters
+        generate_auction_parameters (last_reward): Calls the appropriate function to generate the auction parameters
         ready_for_new_epoch: Prepares the modifier for the next epoch
     """
 
@@ -37,7 +35,6 @@ class AuctionModifier:
         # SPSA parameters.
         # Theta parameters are: queue_delay_boost, queue_length_boost, modification_boost_limit_min and modification_boost_limit_max
         self.spsa_parameters = {'theta_params': [0.5, 0.5, 1, 3],
-                                'history_scores': [],
                                 'k': 0,
                                 'l': 0.005,
                                 'c': 0.1,
@@ -62,7 +59,7 @@ class AuctionModifier:
                                 }
 
     def __str__(self):
-        return f'Adaptive Auction Modifier'
+        return f'Adaptive Auction Modifier (intersection {self.intersection_id})'
 
     def generate_random_parameters(self):
         """Generates random parameters for the next auction
@@ -85,14 +82,15 @@ class AuctionModifier:
         modification_boost_limit = [1, 3]  # min/max multiplier of bid
         return queue_delay_boost, queue_length_boost, modification_boost_limit
 
-    def generate_spsa_parameters(self):
+    def generate_spsa_parameters(self, last_reward):
         """Returns parameters for the next auction, based on the SPSA algorithm
+        Args:
+            last_reward (float): The reward from the last auction, using the parameters in params_to_check
         Returns:
             tuple: A tuple containing the queue delay boost, queue length boost and modification boost limits
         """
 
-        self.update_spsa_parameters(utils.get_last_reward_of_intersection(
-            self.grid.all_intersections, self.intersection_id))
+        self.update_spsa_parameters(last_reward)
 
         modification_boost_limit = [0, 0]
 
@@ -110,9 +108,6 @@ class AuctionModifier:
         if self.spsa_parameters['phase'] == 'setup':
             # 1. Increase k by 1
             self.spsa_parameters['k'] += 1
-            # 2. Append utility to history, if it exists
-            if last_reward != None:
-                self.spsa_parameters['history_scores'].append(last_reward)
             # 2. Calculate l_k, c_k, delta_k, theta+ & theta-
             self.spsa_parameters['l_k'] = self.spsa_parameters['l'] / \
                 (self.spsa_parameters['L'] + self.spsa_parameters['k']
@@ -170,8 +165,10 @@ class AuctionModifier:
             # 6. Set phase to setup
             self.spsa_parameters['phase'] = 'setup'
 
-    def generate_auction_parameters(self):
+    def generate_auction_parameters(self, last_reward):
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type
+        Args:
+            last_reward (float): The reward from the last auction, using the parameters in params_to_check
         Returns:
             tuple: A tuple containing the queue delay boost, queue length boost and modification boost limits
         Raises:
@@ -182,7 +179,7 @@ class AuctionModifier:
         elif self.modifier_type == 'static':
             return self.generate_static_parameters()
         elif self.modifier_type == 'spsa':
-            return self.generate_spsa_parameters()
+            return self.generate_spsa_parameters(last_reward)
         else:
             raise Exception("Invalid Auction Modifier Type")
 

@@ -32,7 +32,7 @@ class Simulator:
         self.all_car_queues = []
         self.all_cars = []
 
-        self.grid = Grid(args.grid_size, args.queue_capacity,
+        self.grid = Grid(args.grid_size, args.queue_capacity, args.shared_auction_parameters,
                          args.auction_modifier_type, args.intersection_reward)
 
         # Spawn cars in generated grid with given congestion rate

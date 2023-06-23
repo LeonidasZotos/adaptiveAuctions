@@ -32,17 +32,17 @@ class Intersection:
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
 
-    def __init__(self, id, queue_capacity, auction_modifier, intersection_reward):
+    def __init__(self, id, queue_capacity, auction_modifier, intersection_reward_type):
         """Initialize the Intersection object
         Args:
             id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
             queue_capacity (int): The maximum number of cars that can be in a car queue
             auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
-            intersection_reward: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+            intersection_reward_type: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         """
         self.id = id
         self.auction_modifier = auction_modifier
-        self.intersection_reward = intersection_reward
+        self.intersection_reward = intersection_reward_type
         self.carQueues = [CarQueue(self, queue_capacity, str(id + 'N')),
                           CarQueue(self, queue_capacity, str(id + 'E')),
                           CarQueue(self, queue_capacity, str(id + 'S')),
@@ -166,7 +166,8 @@ class Intersection:
         queue_waiting_times = {}
         queue_lengths = {}
         # modification_boost_limit contains the min and max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e. bid is doubled)
-        queue_delay_boost, queue_length_boost, modification_boost_limit = self.auction_modifier.generate_auction_parameters()
+        queue_delay_boost, queue_length_boost, modification_boost_limit = self.auction_modifier.generate_auction_parameters(
+            self.get_last_reward())
 
         for queue in self.carQueues:
             if not queue.is_empty():  # Only collect bids from non-empty queues
