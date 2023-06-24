@@ -21,7 +21,7 @@ def run_simulation(args_and_id):
     """
     args, simulation_id = args_and_id
     simulation = Simulator(args, simulation_id)
-    results_keeper = simulation.run_simulation(args)
+    results_keeper = simulation.run_simulation()
     return results_keeper
 
 

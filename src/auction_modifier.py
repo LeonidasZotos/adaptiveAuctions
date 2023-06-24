@@ -20,15 +20,15 @@ class AuctionModifier:
         ready_for_new_epoch: Prepares the modifier for the next epoch
     """
 
-    def __init__(self, modifier_type, intersection_id, grid):
+    def __init__(self, args, intersection_id, grid):
         """Initialize the AuctionModifier object
         Args:
-            modifier_type (str): The type of the modifier. (Can be: 'Random', 'Adaptive', 'Static')
+            args (argparse.Namespace): Arguments parsed from the command line
             intersection_id (str): The id of the intersection for which the modifier is used, or 'all' 
                 if the same auction parameters are used everywhere
             grid (Grid): The grid object that contains all intersections and car queues
         """
-        self.modifier_type = modifier_type
+        self.args = args
         self.intersection_id = intersection_id
         self.grid = grid
 
@@ -174,11 +174,11 @@ class AuctionModifier:
         Raises:
             Exception: If the modifier type is invalid
         """
-        if self.modifier_type == 'random':
+        if self.args.auction_modifier_type == 'random':
             return self.generate_random_parameters()
-        elif self.modifier_type == 'static':
+        elif self.args.auction_modifier_type == 'static':
             return self.generate_static_parameters()
-        elif self.modifier_type == 'spsa':
+        elif self.args.auction_modifier_type == 'spsa':
             return self.generate_spsa_parameters(last_reward)
         else:
             raise Exception("Invalid Auction Modifier Type")

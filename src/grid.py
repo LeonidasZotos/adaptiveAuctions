@@ -16,8 +16,6 @@ class Grid:
     The Grid class is responsible for creating the grid, (re)spawning cars etc.
     Attributes:
         args (argparse.Namespace): Arguments parsed from the command line
-        grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
-        queue_capacity (int): The maximum number of cars that can be in a car queue
         all_intersections (list): A list of lists of intersections. The first list represents the rows, the second list represents the columns.
         all_car_queues (list): A list of all car queues in the grid
         all_cars (list): A list of all cars in the grid
@@ -31,8 +29,8 @@ class Grid:
         filter_and_execute_movements: Removes movements that are not possible (because the destination queue is full) and 
             executes the movements that are possible, max 1 per intersection
         execute_movement(origin_queue_id, destination_queue_id): Executes a movement (i.e. moves a car from one queue to another)
-        spawn_cars(congestion_rate, shared_bid_generator, bidders_proportion): Spawns cars in the grid with the given congestion rate
-        respawn_cars(grid_size): Respawns cars that have reached their destination somewhere else. Returns a list of scores, that 
+        spawn_cars(): Spawns cars in the grid with the given congestion rate
+        respawn_cars(): Respawns cars that have reached their destination somewhere else. Returns a list of scores, that 
             represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
@@ -43,14 +41,13 @@ class Grid:
             args (argparse.Namespace): Arguments parsed from the command line
         """
         self.args = args
-        self.grid_size = self.args.grid_size
 
         self.all_intersections = []
         self.all_car_queues = []
         self.all_cars = []
 
         intersection_auction_modifier = AuctionModifier(
-            self.args.auction_modifier_type, 'same', self)
+            self.args, 'same', self)
 
         # Create the grid of intersections
         for i in range(self.args.grid_size):
@@ -60,7 +57,7 @@ class Grid:
                 # Each intersection has its own unique auction modifier
                 if not self.args.shared_auction_parameters:
                     intersection_auction_modifier = AuctionModifier(
-                        self.args.auction_modifier_type, intersection_id, self)
+                        self.args, intersection_id, self)
                 intersection = Intersection(
                     self.args, intersection_id, intersection_auction_modifier)
                 self.all_car_queues.extend(intersection.get_car_queues())
@@ -79,8 +76,8 @@ class Grid:
             tuple: (list of intersections, list of car queues)
         """
         return self.all_intersections, self.all_car_queues
-### Printing functions ###
 
+### Printing functions ###
     def print_grid(self, epoch):
         """Prints grid in a table format
         Args:
@@ -179,21 +176,17 @@ class Grid:
         car_to_move.set_car_queue_id(destination_queue_id)
 
 ### Car spawning functions ###
-    def spawn_cars(self, congestion_rate, shared_bid_generator, bidders_proportion):
+    def spawn_cars(self):
         """Spawns cars in the grid with the given congestion rate. This should only be exectuted at the start of the simulation
-        Args:
-            congestion_rate (float): The congestion rate of the grid (e.g. 0.5 means 50% of the spots are occupied)
-            shared_bid_generator (bool): Whether all cars have the same BidGenerator object or not.
-            bidders_proportion (list): List of distribution of bidders to use (e.g. [50, 50, 0, 0] for 50% static and 50% random)
         Returns:
             cars (list): A list of all cars that have been spawned. This is used by the simulator to keep track of all cars.
         """
         # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
         total_spots = self.args.grid_size * \
             self.args.grid_size * 4 * self.args.queue_capacity
-        number_of_spawns = int(total_spots * congestion_rate)
+        number_of_spawns = int(total_spots * self.args.congestion_rate)
         # Create a default BidGenerator object, which will be used if shared_bid_generator is True
-        bid_generator = BidGenerator()
+        bid_generator = BidGenerator(self.args)
 
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
@@ -204,10 +197,10 @@ class Grid:
             # If the queue has capacity, spawn a car
             if random_queue.has_capacity():
                 # If shared_bid_generator is False, create a new BidGenerator object for each car
-                if not shared_bid_generator:
-                    bid_generator = BidGenerator()
+                if not self.args.shared_bid_generator:
+                    bid_generator = BidGenerator(self.args)
                 bidding_type = random.choices(
-                    ['static', 'random', 'free-rider', 'RL'], weights=bidders_proportion)[0]
+                    ['static', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
                 # Create a new car, number_of_spawns is actually the ID.
                 car = Car(self.args, number_of_spawns,
                           random_queue, bidding_type, bid_generator)
@@ -220,7 +213,7 @@ class Grid:
 
         return self.all_cars
 
-    def respawn_cars(self, grid_size):
+    def respawn_cars(self):
         """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, urgency)
         Args:
             grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
@@ -242,7 +235,7 @@ class Grid:
                 # Append copy of car and satisfaction score to list
                 satisfaction_scores.append(car.calculate_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)
-                car.reset_car(random_queue.id, grid_size)
+                car.reset_car(random_queue.id, self.args.grid_size)
 
                 random_queue.add_car(car)
         return satisfaction_scores

@@ -27,6 +27,7 @@ class Simulator:
             args (argparse.Namespace): Arguments parsed from the command line
             simulation_id (int): The ID of the simulation
         """
+        self.args = args
         self.id = simulation_id
         self.all_intersections = []
         self.all_car_queues = []
@@ -35,29 +36,26 @@ class Simulator:
         self.grid = Grid(args)
 
         # Spawn cars in generated grid with given congestion rate
-        self.all_cars = self.grid.spawn_cars(args.congestion_rate,
-                                             args.shared_bid_generator, args.bidders_proportion)
+        self.all_cars = self.grid.spawn_cars()
         self.all_intersections, self.all_car_queues = self.grid.get_all_intersections_and_car_queues()
-        self.metrics_keeper = SimulationMetrics(args, self.grid)
+        self.metrics_keeper = SimulationMetrics(self.args, self.grid)
 
-    def run_epochs(self, args):
+    def run_epochs(self):
         """Run the simulation for the given number of epochs
-        Args:
-            args (argparse.Namespace): Arguments parsed from the command line
         Raises:
             Exception: If there are no cars in the simulation
         """
-        for epoch in range(args.num_of_epochs):
+        for epoch in range(self.args.num_of_epochs):
             # Every wage_time epochs, give credit to all cars
-            if args.print_grid:
+            if self.args.print_grid:
                 self.grid.print_grid(epoch)
-            if epoch % args.wage_time == 0:
+            if epoch % self.args.wage_time == 0:
                 # Give credit to all cars
                 if self.all_cars == []:
                     raise Exception("ERROR: No Cars in Simulation.")
                 else:
                     for car in self.all_cars:
-                        car.set_balance(args.credit_balance)
+                        car.set_balance(self.args.credit_balance)
             # Now that the credit has been given, run the epoch
             self.run_single_epoch(epoch)
         self.metrics_keeper.retrieve_end_of_simulation_metrics()
@@ -71,7 +69,7 @@ class Simulator:
         self.grid.move_cars()
 
         # Second, respawn cars that have reached their destination somewhere else, and store their satisfaction scores for evaluation
-        satisfaction_scores = self.grid.respawn_cars(self.grid.grid_size)
+        satisfaction_scores = self.grid.respawn_cars()
         self.metrics_keeper.add_satisfaction_scores(epoch, satisfaction_scores)
 
         # Prepare all entities for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
@@ -84,14 +82,12 @@ class Simulator:
             car.ready_for_new_epoch()
         self.metrics_keeper.ready_for_new_epoch()
 
-    def run_simulation(self, args):
+    def run_simulation(self):
         """Run the simulation
-        Args:
-            args (argparse.Namespace): Arguments parsed from the command line
         Returns:
             SimulationMetrics: The metrics keeper object that is responsible for recording metrics
         """
         # Run the epochs on the grid
-        self.run_epochs(args)
+        self.run_epochs()
         # Return the metrics keeper, which contains the results of the simulation
         return self.metrics_keeper
