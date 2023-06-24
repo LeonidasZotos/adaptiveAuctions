@@ -90,7 +90,7 @@ if __name__ == '__main__':
         "--congestion_rate",
         default=0.15,
         type=float_range(0.01, 1),
-        help="Rate of congestion (Percentage of occupied spots, 0.01-1). Defaults to 0.5. Must be a float between 0.1 and 1."
+        help="Rate of congestion (Percentage of occupied spots, 0.01-1)."
     )
 
     run_parser.add_argument(
@@ -124,10 +124,11 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
-        '--efficient_movement',
+        '--only_winning_bid_moves',
         action=argparse.BooleanOptionalAction,
-        help="""If enabled, efficient movements are allowed (i.e. if the winning bidder can't move because the destination is full,
-            the second bidder will try to move)""")
+        help="""If enabled, only the car with the wining bid will move (i.e. otherwise, if the 
+            winning car can't move, the second highest bidder will move)."""
+    )
 
     run_parser.add_argument(
         "--intersection_reward_type",

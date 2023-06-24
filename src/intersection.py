@@ -32,13 +32,14 @@ class Intersection:
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
 
-    def __init__(self, id, queue_capacity, auction_modifier, intersection_reward_type):
+    def __init__(self, id, queue_capacity, auction_modifier, intersection_reward_type, only_winning_bid):
         """Initialize the Intersection object
         Args:
             id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
             queue_capacity (int): The maximum number of cars that can be in a car queue
             auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
             intersection_reward_type: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+            only_winning_bid (bool): Whether to only return the winning bid's movmenent, instead of all bids
         """
         self.id = id
         self.auction_modifier = auction_modifier
@@ -47,6 +48,7 @@ class Intersection:
                           CarQueue(self, queue_capacity, str(id + 'E')),
                           CarQueue(self, queue_capacity, str(id + 'S')),
                           CarQueue(self, queue_capacity, str(id + 'W'))]
+        self.only_winning_bid = only_winning_bid
         self.auction_fees = []
         self.reward_history = []
         # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
@@ -225,7 +227,7 @@ class Intersection:
 
         # We return the originating car queues and the destination car queues. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
-        if only_winning_bid:
+        if self.only_winning_bid:
             # If we only care about the winning bid, instead of all bids, we only return the winning bid
             # This doesn't consider other movements in case the winning bidder's movement is not possible.
             destinations = destinations[:1]

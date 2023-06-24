@@ -36,7 +36,7 @@ class Grid:
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
-    def __init__(self, grid_size, queue_capacity, shared_auction_parameters, auction_modifier_type, intersection_reward_type):
+    def __init__(self, grid_size, queue_capacity, shared_auction_parameters, auction_modifier_type, intersection_reward_type, only_winning_bid_moves):
         """ Initialize the Grid object
         Args:
             grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
@@ -47,6 +47,7 @@ class Grid:
         """
         self.grid_size = grid_size
         self.queue_capacity = queue_capacity
+        self.only_winning_bid_moves = only_winning_bid_moves
 
         self.all_intersections = []
         self.all_car_queues = []
@@ -65,7 +66,7 @@ class Grid:
                     intersection_auction_modifier = AuctionModifier(
                         auction_modifier_type, intersection_id, self)
                 intersection = Intersection(
-                    intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward_type)
+                    intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward_type, only_winning_bid_moves)
                 self.all_car_queues.extend(intersection.get_car_queues())
 
                 self.all_intersections.append(intersection)
