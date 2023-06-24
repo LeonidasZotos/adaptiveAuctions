@@ -21,6 +21,7 @@ class Intersection:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         get_car_queues: Returns the car queues that are part of this intersection
         get_auction_fee: Returns the fee that should be paid.
+        get_intersection_reward_type: Returns the type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
         num_of_cars_in_intersection: Returns the number of cars in the intersection
@@ -32,23 +33,19 @@ class Intersection:
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
 
-    def __init__(self, id, queue_capacity, auction_modifier, intersection_reward_type, only_winning_bid):
+    def __init__(self, args, id, auction_modifier):
         """Initialize the Intersection object
         Args:
             id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
-            queue_capacity (int): The maximum number of cars that can be in a car queue
             auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
-            intersection_reward_type: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
-            only_winning_bid (bool): Whether to only return the winning bid's movmenent, instead of all bids
         """
+        self.args = args
         self.id = id
         self.auction_modifier = auction_modifier
-        self.intersection_reward_type = intersection_reward_type
-        self.carQueues = [CarQueue(self, queue_capacity, str(id + 'N')),
-                          CarQueue(self, queue_capacity, str(id + 'E')),
-                          CarQueue(self, queue_capacity, str(id + 'S')),
-                          CarQueue(self, queue_capacity, str(id + 'W'))]
-        self.only_winning_bid = only_winning_bid
+        self.carQueues = [CarQueue(args, self, str(id + 'N')),
+                          CarQueue(args, self, str(id + 'E')),
+                          CarQueue(args, self, str(id + 'S')),
+                          CarQueue(args, self, str(id + 'W'))]
         self.auction_fees = []
         self.reward_history = []
         # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
@@ -82,6 +79,13 @@ class Intersection:
             float: The fee that should be paid
         """
         return self.auction_fees[0]
+
+    def get_intersection_reward_type(self):
+        """Returns the type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+        Returns:
+            str: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+        """
+        return self.args.intersection_reward_type
 
     def remove_top_fee(self):
         """Removes the top/highest fee from the list of fees."""
@@ -227,7 +231,7 @@ class Intersection:
 
         # We return the originating car queues and the destination car queues. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
-        if self.only_winning_bid:
+        if self.args.only_winning_bid_moves:
             # If we only care about the winning bid, instead of all bids, we only return the winning bid
             # This doesn't consider other movements in case the winning bidder's movement is not possible.
             destinations = destinations[:1]

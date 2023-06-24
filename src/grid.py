@@ -15,6 +15,7 @@ class Grid:
     """
     The Grid class is responsible for creating the grid, (re)spawning cars etc.
     Attributes:
+        args (argparse.Namespace): Arguments parsed from the command line
         grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
         queue_capacity (int): The maximum number of cars that can be in a car queue
         all_intersections (list): A list of lists of intersections. The first list represents the rows, the second list represents the columns.
@@ -36,37 +37,32 @@ class Grid:
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
-    def __init__(self, grid_size, queue_capacity, shared_auction_parameters, auction_modifier_type, intersection_reward_type, only_winning_bid_moves):
+    def __init__(self, args):
         """ Initialize the Grid object
         Args:
-            grid_size (int): The size of the grid (e.g. 3 means a 3x3 grid)
-            queue_capacity (int): The maximum number of cars that can be in a car queue
-            shared_auction_parameters (bool): Whether all intersections have the same auction parameters or not
-            auction_modifier_type (str): The type of the auction modifier(s) (e.g. 'Random', 'Adaptive', 'Static')
-            intersection_reward_type (str): The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+            args (argparse.Namespace): Arguments parsed from the command line
         """
-        self.grid_size = grid_size
-        self.queue_capacity = queue_capacity
-        self.only_winning_bid_moves = only_winning_bid_moves
+        self.args = args
+        self.grid_size = self.args.grid_size
 
         self.all_intersections = []
         self.all_car_queues = []
         self.all_cars = []
 
         intersection_auction_modifier = AuctionModifier(
-            auction_modifier_type, 'same', self)
+            self.args.auction_modifier_type, 'same', self)
 
         # Create the grid of intersections
-        for i in range(self.grid_size):
-            for j in range(self.grid_size):
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
                 # The ID is the x and y coordinates of the intersection
                 intersection_id = str(j) + str(i)
                 # Each intersection has its own unique auction modifier
-                if not shared_auction_parameters:
+                if not self.args.shared_auction_parameters:
                     intersection_auction_modifier = AuctionModifier(
-                        auction_modifier_type, intersection_id, self)
+                        self.args.auction_modifier_type, intersection_id, self)
                 intersection = Intersection(
-                    intersection_id, self.queue_capacity, intersection_auction_modifier, intersection_reward_type, only_winning_bid_moves)
+                    self.args, intersection_id, intersection_auction_modifier)
                 self.all_car_queues.extend(intersection.get_car_queues())
 
                 self.all_intersections.append(intersection)
@@ -75,7 +71,7 @@ class Grid:
         self.epoch_movements = []
 
     def __str__(self):
-        return f'Grid of size: {self.grid_size}, with car queue capacity: {self.queue_capacity}'
+        return f'Grid of size: {self.args.grid_size}, with car queue capacity: {self.args.queue_capacity}'
 
     def get_all_intersections_and_car_queues(self):
         """Returns a tuple of all intersections and car queues in the grid
@@ -92,13 +88,13 @@ class Grid:
         """
         print("Grid in epoch: ", epoch)
         grid_table = PrettyTable()
-        grid_table.field_names = range(0, self.grid_size)
+        grid_table.field_names = range(0, self.args.grid_size)
         grid_table.header = False
         grid_table.hrules = True
 
-        for i in range(self.grid_size):
+        for i in range(self.args.grid_size):
             row = []
-            for j in range(self.grid_size):
+            for j in range(self.args.grid_size):
                 row.append(
                     self.all_intersections[i].get_intersection_description())
             grid_table.add_row(row)
@@ -193,7 +189,8 @@ class Grid:
             cars (list): A list of all cars that have been spawned. This is used by the simulator to keep track of all cars.
         """
         # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
-        total_spots = self.grid_size * self.grid_size * 4 * self.queue_capacity
+        total_spots = self.args.grid_size * \
+            self.args.grid_size * 4 * self.args.queue_capacity
         number_of_spawns = int(total_spots * congestion_rate)
         # Create a default BidGenerator object, which will be used if shared_bid_generator is True
         bid_generator = BidGenerator()
@@ -201,7 +198,7 @@ class Grid:
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
             # Pick a random intersection and queue
-            # We need 2 randoms as we have a 2d array
+            # We need two randoms as we have a 2D array
             random_intersection = random.choice(self.all_intersections)
             random_queue = random.choice(random_intersection.get_car_queues())
             # If the queue has capacity, spawn a car
@@ -212,8 +209,8 @@ class Grid:
                 bidding_type = random.choices(
                     ['static', 'random', 'free-rider', 'RL'], weights=bidders_proportion)[0]
                 # Create a new car, number_of_spawns is actually the ID.
-                car = Car(number_of_spawns,
-                          random_queue, self.grid_size, bidding_type, bid_generator)
+                car = Car(self.args, number_of_spawns,
+                          random_queue, bidding_type, bid_generator)
                 # Add the car to the queue
                 random_queue.add_car(car)
                 # Add the car to the list of all cars

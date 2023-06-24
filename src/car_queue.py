@@ -33,16 +33,16 @@ class CarQueue:
         ready_for_new_epoch: Prepares the queue for the next epoch
     """
 
-    def __init__(self, parent_intersection, max_capacity, id):
+    def __init__(self, args, parent_intersection, id):
         """ Initialize the Car queue object
         Args:
+            args (argparse.Namespace): The arguments passed to the program
             parent_intersection (Intersection): The intersection that the queue belongs to
-            max_capacity (int): The maximum number of cars that can be in the queue
             id (str): The ID of the car queue, e.g. 11N for the north car queue at intersection (1,1)
         """
+        self.args = args
         self.id = id
         self.cars = []
-        self.capacity = max_capacity
         self.num_of_cars = len(self.cars)
         self.parent_intersection = parent_intersection
         self.time_inactive = 0
@@ -94,14 +94,14 @@ class CarQueue:
         Returns:
             bool: True if the queue has capacity, False otherwise
         """
-        return self.get_num_of_cars() < self.capacity
+        return self.get_num_of_cars() < self.args.queue_capacity
 
     def get_num_of_free_spots(self):
         """Returns the number of free spots in the queue
         Returns:
             int: The number of free spots in the queue
         """
-        return self.capacity - self.get_num_of_cars()
+        return self.args.queue_capacity - self.get_num_of_cars()
 
     def get_destination_of_first_car(self):
         """Returns the destination of the first car in the queue. This is useful for the intersection to know where the car wants to go
@@ -220,9 +220,9 @@ class CarQueue:
         self.time_inactive = 0
 
         reward = 0
-        if self.parent_intersection.intersection_reward_type == "time":
+        if self.parent_intersection.get_intersection_reward_type() == "time":
             reward = self.cars[0].get_time_at_intersection()
-        elif self.parent_intersection.intersection_reward_type == "time_and_urgency":
+        elif self.parent_intersection.get_intersection_reward_type() == "time_and_urgency":
             reward = self.cars[0].get_time_at_intersection(
             ) * self.cars[0].get_urgency()
 

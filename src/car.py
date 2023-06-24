@@ -44,16 +44,16 @@ class Car:
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
 
-    def __init__(self, id, parent_car_queue, grid_size, bidding_type, bid_generator):
+    def __init__(self, args, id, parent_car_queue, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
             id (str): The ID of the car, e.g. 1
             parent_car_queue (CarQueue): The car queue that the car is currently in.
-            grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used when e.g. the car needs to pick a new final destination.
             bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'static' or RL.
             bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
         """
         self.id = id
+        self.args = args
         # Randomly pick a destination intersection
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = parent_car_queue.id
@@ -61,7 +61,7 @@ class Car:
         self.bidding_type = bidding_type
         self.bid_generator = bid_generator
         self.final_destination = ""
-        self.reset_final_destination(grid_size)
+        self.reset_final_destination(self.args.grid_size)
         # next_destination_queue is the ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), south car queue).
         self.next_destination_queue = self.update_next_destination_queue()
         # Set an initial balance. This is set to 0 because the car will receive credit in the 0th epoch.
