@@ -112,7 +112,7 @@ if __name__ == '__main__':
     run_parser.add_argument(
         '--shared_auction_parameters',
         action=argparse.BooleanOptionalAction,
-        help="""All auctions will share parameters, instead of each auction having its own parameters. 
+        help="""All auctions will share parameters, instead of each auction having its own parameters.
             As a consequent, SPSA will adjust based on all auctions.""")
 
     run_parser.add_argument(
@@ -122,6 +122,12 @@ if __name__ == '__main__':
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'spsa'."
     )
+
+    run_parser.add_argument(
+        '--efficient_movement',
+        action=argparse.BooleanOptionalAction,
+        help="""If enabled, efficient movements are allowed (i.e. if the winning bidder can't move because the destination is full,
+            the second bidder will try to move)""")
 
     run_parser.add_argument(
         "--intersection_reward_type",
@@ -134,7 +140,7 @@ if __name__ == '__main__':
     run_parser.add_argument(
         '--shared_bid_generator',
         action=argparse.BooleanOptionalAction,
-        help="""Each car will learn how to bid individually, instead of sharing experiences.""")
+        help="""If enabled, all bidders will share the same bid generator, instead of agents learning to bid separately.""")
 
     run_parser.add_argument(
         '--bidders_proportion',

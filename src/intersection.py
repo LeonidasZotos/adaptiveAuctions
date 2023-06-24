@@ -223,8 +223,14 @@ class Intersection:
                         for queue in queues_in_order]
         winning_queues_id = [queue.id for queue in queues_in_order]
 
-        # We return the originating car queue and the destination car queue. We don't need to know the car ID,
+        # We return the originating car queues and the destination car queues. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
+        if only_winning_bid:
+            # If we only care about the winning bid, instead of all bids, we only return the winning bid
+            # This doesn't consider other movements in case the winning bidder's movement is not possible.
+            destinations = destinations[:1]
+            winning_queues_id = winning_queues_id[:1]
+
         return winning_queues_id, destinations
 
     def ready_for_new_epoch(self, epoch):
