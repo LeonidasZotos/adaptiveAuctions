@@ -10,6 +10,7 @@ class Car:
     """
     The Car class is responsible for keeping track of the car's state, and for submitting bids.
     Attributes:
+        args (argparse.Namespace): Arguments parsed from the command line
         id (str): The ID of the car, e.g. 1
         car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
         parent_car_queue (CarQueue): The car queue that the car is currently in.
@@ -34,10 +35,10 @@ class Car:
         set_car_queue_id(new_car_queue_id): Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
         increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
         calculate_satisfaction_score: Calculate the satisfaction score of the car after the completion of a trip
-        reset_final_destination(grid_size): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
+        reset_final_destination(): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
             we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
-        reset_car(car_queue_id, grid_size): Reset the car to a new state. E.g. Used when the car is (re)spawned.
+        reset_car(car_queue_id): Reset the car to a new state. E.g. Used when the car is (re)spawned.
         submit_bid: Submit a bid to the auction.
         pay_bid(price): Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
             The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
@@ -47,13 +48,14 @@ class Car:
     def __init__(self, args, id, parent_car_queue, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
+            args (argparse.Namespace): Arguments parsed from the command line
             id (str): The ID of the car, e.g. 1
             parent_car_queue (CarQueue): The car queue that the car is currently in.
             bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'static' or RL.
             bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
         """
-        self.id = id
         self.args = args
+        self.id = id
         # Randomly pick a destination intersection
         # car_queue_id is the ID of the intersection and queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         self.car_queue_id = parent_car_queue.id
@@ -61,7 +63,7 @@ class Car:
         self.bidding_type = bidding_type
         self.bid_generator = bid_generator
         self.final_destination = ""
-        self.reset_final_destination(self.args.grid_size)
+        self.reset_final_destination()
         # next_destination_queue is the ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), south car queue).
         self.next_destination_queue = self.update_next_destination_queue()
         # Set an initial balance. This is set to 0 because the car will receive credit in the 0th epoch.
@@ -157,20 +159,18 @@ class Car:
         return SmallCar(self), score
 
 ### General state functions ###
-    def reset_final_destination(self, grid_size):
+    def reset_final_destination(self):
         """Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
            The new destination is randomly picked and canot be the same as the current intersection.
-        Args:
-            grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
         """
 
         # Randomly pick a destination intersection
-        x = random.randint(0, grid_size - 1)
-        y = random.randint(0, grid_size - 1)
+        x = random.randint(0, self.args.grid_size - 1)
+        y = random.randint(0, self.args.grid_size - 1)
         self.final_destination = str(x) + str(y)
         if self.car_queue_id[:-1] == self.final_destination:
             # If the car is already at its final destination, pick a new one.
-            self.reset_final_destination(grid_size)
+            self.reset_final_destination()
 
     def update_next_destination_queue(self):
         """Update the next destination queue of the car. E.g. When the car participates in an auction,
@@ -219,7 +219,7 @@ class Car:
         # Return the next destination queue
         return self.next_destination_queue
 
-    def reset_car(self, car_queue_id, grid_size):
+    def reset_car(self, car_queue_id):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
            next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
         Args:
@@ -227,7 +227,7 @@ class Car:
             grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
         """
         self.car_queue_id = car_queue_id
-        self.reset_final_destination(grid_size)
+        self.reset_final_destination()
         self.next_destination_queue = self.update_next_destination_queue()
         self.urgency = round(random.random(), 1)
         self.submitted_bid = 0

@@ -18,13 +18,18 @@ class MasterKeeper:
             the value is the total throughput.
     Functions:
         store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
-        produce_results(args): Produces all the evaluation results of all simulations
-        plot_satisfaction_scores_overall_average(results_folder): Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
-        plot_satisfaction_scores_by_bidding_type(results_folder, with_std=False, export_results=True, filter_outliers=True): Creates a 
-        graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
+        produce_results(): Produces all the evaluation results of all simulations
+        plot_satisfaction_scores_overall_average(): Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
+        plot_satisfaction_scores_by_bidding_type(, with_std=False, export_results=True, filter_outliers=True): Creates a 
+            graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
-        plot_throughput_heatmap_average(results_folder, num_of_simulations, export_results=True): Creates a heatmap of the 
+        plot_throughput_heatmap_average(, export_results=True): Creates a heatmap of the 
             average throughput per intersection, over all simulations    
+        plot_throughput_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
+            Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
+        plot_reward_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
+            Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
+
     """
 
     def __init__(self, args):
@@ -32,19 +37,20 @@ class MasterKeeper:
         Args:
             args (argparse.Namespace): Arguments parsed from the command line
         """
+        self.args = args
         self.all_simulations_satisfaction_scores = []
 
         self.total_throughput_per_intersection = np.zeros(
-            (args.grid_size, args.grid_size))
+            (self.args.grid_size, self.args.grid_size))
 
         self.total_throughput_history_per_intersection = np.zeros(
-            (args.grid_size, args.grid_size, args.num_of_epochs))
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         self.count_of_measurements_per_intersection = np.zeros(
-            (args.grid_size, args.grid_size, args.num_of_epochs))
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         self.total_reward_history_per_intersection = np.zeros(
-            (args.grid_size, args.grid_size, args.num_of_epochs))
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""
@@ -61,38 +67,29 @@ class MasterKeeper:
         self.total_reward_history_per_intersection += np.nan_to_num(
             sim_metrics_keeper.reward_history_per_intersection)
 
-    def produce_results(self, args):
-        """Produces all the evaluation results of all simulations
-        Args:
-            args (argparse.Namespace): Arguments parsed from the command line
-        """
+    def produce_results(self):
+        """Produces all the evaluation results of all simulations"""
         # Create a .txt file with the arguments used for the simulation
-        with open(args.results_folder + '/configuration.txt', 'w') as f:
-            for arg in vars(args):
-                f.write(arg + ': ' + str(getattr(args, arg)) + '\n')
+        with open(self.args.results_folder + '/configuration.txt', 'w') as f:
+            for arg in vars(self.args):
+                f.write(arg + ': ' + str(getattr(self.args, arg)) + '\n')
 
         # Create a graph of all satisfaction scores, over all simulations
-        self.plot_satisfaction_scores_overall_average(args.results_folder)
+        self.plot_satisfaction_scores_overall_average()
 
         # Create a graph of all satisfaction scores, per bidding type, over all simulations
-        self.plot_satisfaction_scores_by_bidding_type(args.results_folder)
+        self.plot_satisfaction_scores_by_bidding_type()
 
         # Create a heatmap of the average throughput per intersection, over all simulations
-        self.plot_throughput_heatmap_average(
-            args.results_folder, args.num_of_simulations)
+        self.plot_throughput_heatmap_average()
 
-        self.plot_throughput_per_intersection_history(
-            args.results_folder, args.num_of_simulations)
+        self.plot_throughput_per_intersection_history()
 
         # Create a graph with graphs of the average reward per intersection, over all simulations
-        self.plot_reward_per_intersection_history(
-            args.results_folder)
+        self.plot_reward_per_intersection_history()
 
-    def plot_satisfaction_scores_overall_average(self, results_folder):
-        """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
-        Args:
-            results_folder (str): The folder in which the results will be stored
-        """
+    def plot_satisfaction_scores_overall_average(self):
+        """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations."""
 
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
@@ -133,15 +130,15 @@ class MasterKeeper:
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
         plt.title('Average Satisfaction Score per Epoch')
-        plt.savefig(results_folder + '/average_satisfaction_score.png')
+        plt.savefig(self.args.results_folder +
+                    '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, results_folder, with_std=False, export_results=True, filter_outliers=True):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
         Args:
-            results_folder (str): The folder in which the results will be stored
             with_std (bool): Whether to include the standard deviation in the plot
             export_results (bool): Whether to export the results to a .csv file
             filter_outliers (bool): Whether to filter out outliers from the results
@@ -302,43 +299,42 @@ class MasterKeeper:
         plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
         plt.title('Average Satisfaction Score per Epoch')
         plt.legend()
-        plt.savefig(results_folder +
+        plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
         if export_results == True:
-            np.savetxt(results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([
+            np.savetxt(self.args.results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([
                 epochs, static_bidding_average_satisfaction_scores, static_bidding_sd,
                 random_bidding_average_satisfaction_scores, random_bidding_sd,
                 free_rider_bidding_average_satisfaction_scores, free_rider_bidding_sd,
                 RL_bidder_average_satisfaction_scores, RL_bidder_sd
             ]).T, delimiter=",", header="Epoch, Static bidding Score, Static bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
 
-    def plot_throughput_heatmap_average(self, results_folder, num_of_simulations, export_results=True):
+    def plot_throughput_heatmap_average(self, export_results=True):
         """Creates a heatmap of the average throughput per intersection, over all simulations
         Args:
-            results_folder (str): The folder in which the results will be stored
-            num_of_simulations (int): The number of simulations that were run
             export_results (bool): Whether to export the results to a .csv file
         """
         # Create heatmap of average throughput per intersection
         average_throughput_per_intersection = np.floor_divide(
-            self.total_throughput_per_intersection, num_of_simulations)  # Divide by number of simulations
+            self.total_throughput_per_intersection, self.args.num_of_simulations)  # Divide by number of simulations
 
         ax = sns.heatmap(average_throughput_per_intersection, annot=True)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
                title='Average throughput per intersection')
-        plt.savefig(results_folder + '/average_throughput_heatmap.png')
+        plt.savefig(self.args.results_folder +
+                    '/average_throughput_heatmap.png')
         plt.clf()
 
         if export_results == True:
-            np.savetxt(results_folder + '/average_throughput_per_intersection.csv',
+            np.savetxt(self.args.results_folder + '/average_throughput_per_intersection.csv',
                        average_throughput_per_intersection, delimiter=",")
 
-    def plot_throughput_per_intersection_history(self, results_folder, num_of_simulations, export_results=True):
+    def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         average_throughput_per_intersection = np.divide(
-            self.total_throughput_history_per_intersection, num_of_simulations)
+            self.total_throughput_history_per_intersection, self.args.num_of_simulations)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             self.total_throughput_history_per_intersection.shape[0], self.total_throughput_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
@@ -348,7 +344,7 @@ class MasterKeeper:
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Throughput')
-        plt.savefig(results_folder +
+        plt.savefig(self.args.results_folder +
                     '/average_throughput_per_intersection_history.png')
         plt.clf()
 
@@ -359,10 +355,10 @@ class MasterKeeper:
                 for j in range(self.total_reward_history_per_intersection.shape[1]):
                     rewards_history_df[str(
                         i) + '_' + str(j)] = average_throughput_per_intersection[i, j]
-            rewards_history_df.to_csv(results_folder +
+            rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_throughput_per_intersection_history.csv', index=False)
 
-    def plot_reward_per_intersection_history(self, results_folder, export_results=True):
+    def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         average_reward_per_intersection = np.divide(
             self.total_reward_history_per_intersection, self.count_of_measurements_per_intersection)
@@ -375,7 +371,7 @@ class MasterKeeper:
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Reward')
-        plt.savefig(results_folder +
+        plt.savefig(self.args.results_folder +
                     '/average_reward_per_intersection_history.png')
         plt.clf()
 
@@ -386,7 +382,7 @@ class MasterKeeper:
                 for j in range(self.total_reward_history_per_intersection.shape[1]):
                     rewards_history_df[str(
                         i) + '_' + str(j)] = average_reward_per_intersection[i, j]
-            rewards_history_df.to_csv(results_folder +
+            rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_reward_per_intersection_history.csv', index=False)
 
 
@@ -405,6 +401,7 @@ class SimulationMetrics:
         add_satisfaction_scores(epoch, satisfaction_scores): Adds the satisfaction scores of the cars that completed a trip.
             If there was no car that completed a trip in an epoch, there is no entry for that epoch.
         ready_for_new_epoch(): Prepares the metrics keeper for the next epoch
+        retrieve_end_of_simulation_metrics(): Retrieves the metrics at the end of the simulation
     """
 
     def __init__(self, args, grid):

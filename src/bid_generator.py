@@ -6,7 +6,7 @@ class BidGenerator:
     """
     This is the BidGenerator class. The role of the generator is to generate bids for the cars, based on the bidding strategy.
     Attributes:
-        -
+        args (argparse.Namespace): Arguments parsed from the command line
     Functions:
         generate_static_bid(urgency): Returns a static bid, multiplied by the urgency
         generate_random_bid(balance): Returns a random bid between 0 and the total balance of the car

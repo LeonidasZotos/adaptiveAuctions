@@ -7,9 +7,9 @@ class CarQueue:
     """
     The Car Queue class is responsible for keeping track of the cars in the queue, adding/removing cars and making them pay when they win an auction.
     Attributes:
+        args (argparse.Namespace): The arguments passed to the program
         id (str): The ID of the car queue, e.g. 11N for the north car queue at intersection (1,1)
         cars (list): A list of Car objects that are in the queue
-        capacity (int): The maximum number of cars that can be in the queue
         num_of_cars (int): The number of cars that are currently in the queue
         parent_intersection (Intersection): The intersection that the queue belongs to
         time_inactive (int): The number of epochs that have passed since the last car left the queue

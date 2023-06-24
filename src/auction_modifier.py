@@ -6,7 +6,7 @@ class AuctionModifier:
     """
     This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction. 
     Attributes:
-        modifier_type (str): The type of the modifier. (e.g. 'random', 'static', 'spsa')
+        args (argparse.Namespace): Arguments parsed from the command line
         intersection_id (str): The id of the intersection for which the modifier is used, or 'same' 
             if the same auction parameters are used everywhere
         grid (Grid): The grid object that contains all intersections and car queues

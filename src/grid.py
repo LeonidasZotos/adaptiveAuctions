@@ -235,7 +235,7 @@ class Grid:
                 # Append copy of car and satisfaction score to list
                 satisfaction_scores.append(car.calculate_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)
-                car.reset_car(random_queue.id, self.args.grid_size)
+                car.reset_car(random_queue.id)
 
                 random_queue.add_car(car)
         return satisfaction_scores

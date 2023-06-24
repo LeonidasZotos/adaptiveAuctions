@@ -11,12 +11,13 @@ class Intersection:
     """
     The Intersection class is responsible for keeping track of the car queues that are part of the intersection, and for holding auctions.
     Attributes:
+        args (argparse.Namespace): Arguments parsed from the command line
         id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
         auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
-        intersection_reward_type: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         carQueues (list): A list of CarQueue objects that are part of the intersection
         auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
         reward_history (list): A list of rewards collected by the intersection
+        throughput_history (list): A list of throughput values collected by the intersection
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         get_car_queues: Returns the car queues that are part of this intersection
@@ -36,6 +37,7 @@ class Intersection:
     def __init__(self, args, id, auction_modifier):
         """Initialize the Intersection object
         Args:
+            args (argparse.Namespace): Arguments parsed from the command line
             id (str): The ID of the intersection, e.g. 11 for the intersection at (1,1)
             auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
         """
@@ -240,7 +242,10 @@ class Intersection:
         return winning_queues_id, destinations
 
     def ready_for_new_epoch(self, epoch):
-        """Prepares the intersection for the next epoch."""
+        """Prepares the intersection for the next epoch.
+        Args:
+            epoch (int): The current epoch
+        """
         self.auction_fees = []
         if len(self.reward_history) <= epoch:
             self.reward_history.append(nan)

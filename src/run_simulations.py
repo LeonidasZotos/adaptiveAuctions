@@ -57,7 +57,7 @@ def run(args):
     pool.join()
 
     # Produce Results
-    master_metrics_keeper.produce_results(args)
+    master_metrics_keeper.produce_results()
 
     # Print execution time
     print("--- %s seconds ---" % round((time.time() - start_time), 2))
