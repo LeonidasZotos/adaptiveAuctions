@@ -118,9 +118,9 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--auction_modifier_type",
         default="static",
-        choices=["random", "static", "spsa"],
+        choices=["random", "static", "adaptive"],
         type=str,
-        help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'spsa'."
+        help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'adaptive'."
     )
 
     run_parser.add_argument(

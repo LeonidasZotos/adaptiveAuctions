@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=128
-#SBATCH --job-name=spsa_and_static
+#SBATCH --job-name=adaptive_and_static
 #SBATCH --mem=64GB
 
 module purge
@@ -13,7 +13,7 @@ source $HOME/.envs/cars/bin/activate
  
 congestion_rate=("0.1" "0.15" "0.2")
 intersection_reward_type=("time" "time_and_urgency")
-auction_modifier_type=("spsa" "static")
+auction_modifier_type=("adaptive" "static")
 
 # Loop through congestion_rate
 for var1 in "${congestion_rate[@]}"
