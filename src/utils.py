@@ -102,6 +102,8 @@ def remove_outliers(data, restriction=0.1):
     Returns:
         list: A list of data with outliers removed
     """
+    if len(data) == 0:
+        return data
     mean = sum(data) / len(data)
     standard_deviation = (sum([(i - mean)**2 for i in data]) / len(data))**0.5
 

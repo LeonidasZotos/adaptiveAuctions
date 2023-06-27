@@ -4,6 +4,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import nan
 import pandas as pd
+import csv
+from itertools import zip_longest
 
 import src.utils as utils
 
@@ -23,6 +25,8 @@ class MasterKeeper:
         plot_satisfaction_scores_by_bidding_type(, with_std=False, export_results=True, filter_outliers=True): Creates a 
             graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
+        histogram_satisfaction_scores_by_bidding_type(, export_results=True, filter_outliers=True): Creates a histogram of all satisfaction scores,
+            over all simulations, per bidding type
         plot_throughput_heatmap_average(, export_results=True): Creates a heatmap of the 
             average tƒhroughput per intersection, over all simulations    
         plot_throughput_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
@@ -53,7 +57,10 @@ class MasterKeeper:
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
     def store_simulation_results(self, sim_metrics_keeper):
-        """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation"""
+        """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
+        Args: 
+            sim_metrics_keeper (SimulationMetrics): The metrics keeper of the current simulation
+        """
         self.all_simulations_satisfaction_scores.append(
             sim_metrics_keeper.current_sim_satisfaction_scores)
 
@@ -79,6 +86,9 @@ class MasterKeeper:
 
         # Create a graph of all satisfaction scores, per bidding type, over all simulations
         self.plot_satisfaction_scores_by_bidding_type()
+
+        # Create a histogram of all satisfaction scores, over all simulations, per bidding type
+        self.histogram_satisfaction_scores_by_bidding_type()
 
         # Create a heatmap of the average throughput per intersection, over all simulations
         self.plot_throughput_heatmap_average()
@@ -311,6 +321,79 @@ class MasterKeeper:
                 RL_bidder_average_satisfaction_scores, RL_bidder_sd
             ]).T, delimiter=",", header="Epoch, Static bidding Score, Static bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
 
+    def histogram_satisfaction_scores_by_bidding_type(self, export_results=True, filter_outliers=True):
+        """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
+        Args:
+            export_results (bool): Whether to export the results to a .csv file
+            filter_outliers (bool): Whether to filter out outliers from the results
+        """
+        all_static_bidding_results = []
+        all_random_bidding_results = []
+        all_free_rider_bidding_results = []
+        all_RL_bidding_results = []
+
+        for result_dict in self.all_simulations_satisfaction_scores:
+            for epoch in result_dict:
+                for (car_copy, score) in result_dict[epoch]:
+                    bidding_type = car_copy.bidding_type
+                    # Static bidding
+                    if bidding_type == 'static':
+                        all_static_bidding_results.append(score)
+                    # Random bidding
+                    elif bidding_type == 'random':
+                        all_random_bidding_results.append(score)
+                    # Free-rider bidding
+                    elif bidding_type == 'free-rider':
+                        all_free_rider_bidding_results.append(score)
+                    # RL bidding
+                    elif bidding_type == 'RL':
+                        all_RL_bidding_results.append(score)
+
+        # Remove outliers if necessary:
+        if filter_outliers == True:
+            if len(all_static_bidding_results) > 0:
+                all_static_bidding_results = utils.remove_outliers(
+                    all_static_bidding_results)
+            if len(all_random_bidding_results) > 0:
+                all_random_bidding_results = utils.remove_outliers(
+                    all_random_bidding_results)
+            if len(all_free_rider_bidding_results) > 0:
+                all_free_rider_bidding_results = utils.remove_outliers(
+                    all_free_rider_bidding_results)
+            if len(all_RL_bidding_results) > 0:
+                all_RL_bidding_results = utils.remove_outliers(
+                    all_RL_bidding_results)
+
+        # Create a histogram of all satisfaction scores, per bidding type
+        if len(all_static_bidding_results) > 0:
+            plt.hist(all_static_bidding_results, bins=30,
+                     alpha=0.5, label='Static bidding')
+        if len(all_random_bidding_results) > 0:
+            plt.hist(all_random_bidding_results, bins=30,
+                     alpha=0.5, label='Random bidding')
+        if len(all_free_rider_bidding_results) > 0:
+            plt.hist(all_free_rider_bidding_results, bins=30,
+                     alpha=0.5, label='Free-rider bidding')
+        if len(all_RL_bidding_results) > 0:
+            plt.hist(all_RL_bidding_results, bins=30,
+                     alpha=0.5, label='RL bidding')
+
+        plt.xlabel('Satisfaction Score \n (the lower, the better)')
+        plt.ylabel('Frequency')
+        plt.title('Histogram of Satisfaction Scores')
+        plt.legend()
+        plt.savefig(self.args.results_folder +
+                    '/histogram_satisfaction_scores_by_bidding_type.png')
+        plt.clf()
+
+        if export_results == True:
+            with open(self.args.results_folder + "/satisfaction_scores_by_type.csv", "w+") as f:
+                writer = csv.writer(f)
+                writer.writerow(
+                    ['Static bidding', 'Random bidding', 'Free-rider bidding', 'RL bidding'])
+                for values in zip_longest(*[all_static_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
+                    writer.writerow(values)
+
     def plot_throughput_heatmap_average(self, export_results=True):
         """Creates a heatmap of the average throughput per intersection, over all simulations
         Args:
@@ -438,7 +521,7 @@ class SimulationMetrics:
         for intersection in self.grid.all_intersections:
             id = intersection.id
             x_cord, y_cord = map(int, id)
-            self.total_throughput_per_intersection[x_cord][y_cord] += intersection.num_of_cars_in_intersection()
+            self.total_throughput_per_intersection[x_cord][y_cord] += intersection.get_num_of_cars_in_intersection()
 
     def retrieve_end_of_simulation_metrics(self):
         """Retrieves the metrics at the end of the simulation"""
