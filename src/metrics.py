@@ -24,7 +24,7 @@ class MasterKeeper:
             graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
         plot_throughput_heatmap_average(, export_results=True): Creates a heatmap of the 
-            average throughput per intersection, over all simulations    
+            average tƒhroughput per intersection, over all simulations    
         plot_throughput_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
             Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
         plot_reward_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.

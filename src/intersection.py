@@ -25,7 +25,8 @@ class Intersection:
         get_intersection_reward_type: Returns the type of reward for the intersection. Can be 'time' or 'time_and_urgency'
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
-        num_of_cars_in_intersection: Returns the number of cars in the intersection
+        get_num_of_cars_in_intersection: Returns the number of cars in the intersection
+        get_max_time_waited: Returns the maximum time waited by a car_queue in the intersection
         get_last_reward: Returns the last reward of the intersection
         add_reward: Adds a reward to the reward history
         get_auction_reward_history: Returns the reward history of the auction modifier
@@ -106,7 +107,7 @@ class Intersection:
                 return False
         return True
 
-    def num_of_cars_in_intersection(self):
+    def get_num_of_cars_in_intersection(self):
         """Returns the number of cars in the intersection
         Returns:
             int: The number of cars in the intersection
