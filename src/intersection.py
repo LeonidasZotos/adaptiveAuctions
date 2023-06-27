@@ -113,6 +113,15 @@ class Intersection:
         """
         return sum([queue.get_num_of_cars() for queue in self.carQueues])
 
+    def get_max_time_waited(self):
+        """Returns the maximum time waited by a car_queue in the intersection
+        Returns:
+            float: The maximum time waited by a car_queue in the intersection
+        """
+        all_times = [queue.get_time_inactive() for queue in self.carQueues]
+
+        return max(all_times)
+
     def get_last_reward(self):
         """Returns the last reward of the intersection
         Returns:

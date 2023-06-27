@@ -225,6 +225,8 @@ class CarQueue:
         elif self.parent_intersection.get_intersection_reward_type() == "time_and_urgency":
             reward = self.cars[0].get_time_at_intersection(
             ) * self.cars[0].get_urgency()
+        elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
+            reward = self.parent_intersection.get_max_time_waited()
 
         return reward
 

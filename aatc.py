@@ -132,10 +132,10 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--intersection_reward_type",
-        default="time_and_urgency",
-        choices=["time", "time_and_urgency"],
+        default="max_time_waited",
+        choices=["time", "time_and_urgency", "max_time_waited"],
         type=str,
-        help="Type of reward for the intersection. Defaults to 'time_and_urgency'. Must be one of 'time' or 'time_and_urgency'."
+        help="Type of reward for the intersection. Defaults to 'max_time_waited'. Must be one of 'time', 'time_and_urgency' or 'max_time_waited' ."
     )
 
     run_parser.add_argument(
