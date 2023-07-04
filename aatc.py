@@ -113,14 +113,14 @@ if __name__ == '__main__':
         '--shared_auction_parameters',
         action=argparse.BooleanOptionalAction,
         help="""All auctions will share parameters, instead of each auction having its own parameters.
-            As a consequent, SPSA will adjust based on all auctions.""")
+            As a consequent, the learning algorithm will adjust based on all auctions.""")
 
     run_parser.add_argument(
         "--auction_modifier_type",
         default="static",
-        choices=["random", "static", "adaptive"],
+        choices=["random", "static", "bandit"],
         type=str,
-        help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'adaptive'."
+        help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'bandit'."
     )
 
     run_parser.add_argument(

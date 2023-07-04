@@ -219,6 +219,7 @@ class CarQueue:
         # Finally, the inactivity time must be reset for the queue itself.
         self.time_inactive = 0
 
+        # TODO: rewrite to not return something? 
         reward = 0
         if self.parent_intersection.get_intersection_reward_type() == "time":
             reward = self.cars[0].get_time_at_intersection()
@@ -227,6 +228,8 @@ class CarQueue:
             ) * self.cars[0].get_urgency()
         elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
             reward = self.parent_intersection.get_max_time_waited()
+            
+        self.parent_intersection.update_mechanism(reward)
 
         return reward
 

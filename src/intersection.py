@@ -50,6 +50,7 @@ class Intersection:
                           CarQueue(args, self, str(id + 'S')),
                           CarQueue(args, self, str(id + 'W'))]
         self.auction_fees = []
+        self.last_tried_auction_params = [-1, -1, -1]  # TODO: doc!
         self.reward_history = []
         # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
@@ -183,9 +184,11 @@ class Intersection:
         collected_bids = {}
         queue_waiting_times = {}
         queue_lengths = {}
-        # modification_boost_limit contains the min and max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e. bid is doubled)
-        queue_delay_boost, queue_length_boost, modification_boost_limit = self.auction_modifier.generate_auction_parameters(
-            self.get_last_reward())
+        # modification_boost_max_limit contains the max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e.
+        # bid is doubled. The min limit is always 1)
+        queue_delay_boost, queue_length_boost, modification_boost_max_limit = self.auction_modifier.generate_auction_parameters()
+        self.last_tried_auction_params = [
+            queue_delay_boost, queue_length_boost, modification_boost_max_limit]
 
         for queue in self.carQueues:
             if not queue.is_empty():  # Only collect bids from non-empty queues
@@ -214,11 +217,11 @@ class Intersection:
                 queue_delay_boost + queue_lengths[key] * queue_length_boost
             initial_modifications[key] = initial_modification
 
-        # Then normalise the modifications based on the min/max values of all modifications, and the given modification_boost_limit
+        # Then normalise the modifications based on the min/max values of all modifications, and the given modification_boost_max_limit
         final_bids = {}
         for key in summed_bids.keys():
             normalised_modification = renormalize(
-                initial_modifications[key], initial_modifications.values(), modification_boost_limit)
+                initial_modifications[key], initial_modifications.values(), [1, modification_boost_max_limit])
 
             final_bids[key] = (1 + random.uniform(0, 0.01) +
                                summed_bids[key]) * normalised_modification
@@ -250,6 +253,14 @@ class Intersection:
             winning_queues_id = winning_queues_id[:1]
 
         return winning_queues_id, destinations
+
+    def update_mechanism(self, reward):
+        """Updates the auction modifier mechanism
+        Args:
+            reward (float): The reward of the last auction
+        """
+        if self.args.auction_modifier_type == "bandit":
+            self.auction_modifier.update_bandit_params(self.last_tried_auction_params, reward)
 
     def ready_for_new_epoch(self, epoch):
         """Prepares the intersection for the next epoch.
