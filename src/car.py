@@ -153,8 +153,8 @@ class Car:
             tuple: A tuple containing a small copy of the car and the satisfaction score of the trip.
                 By 'small', we mean that the car only contains the necessary information.
         """
-        score = ((self.time_in_traffic_network * self.urgency) /
-                 self.distance_travelled_in_trip) - self.urgency
+        score = 1/(1+(((self.time_in_traffic_network * self.urgency) /
+                      self.distance_travelled_in_trip) - self.urgency))
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
         return SmallCar(self), score
 

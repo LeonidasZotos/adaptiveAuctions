@@ -157,10 +157,7 @@ class Grid:
         """
         car_queue = utils.get_car_queue(self.all_car_queues, origin_queue_id)
         parent_intersection = car_queue.get_parent_intersection()
-        # TODO: re-write to not return reward?/add it in win_auction?
-        reward = car_queue.win_auction(
-            parent_intersection.get_auction_fee())
-        parent_intersection.add_reward(reward)
+        car_queue.win_auction(parent_intersection.get_auction_fee())
         # 1 to signal that there was a car that went through the intersection
         parent_intersection.throughput_history.append(1)
 

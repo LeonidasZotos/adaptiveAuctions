@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--num_of_epochs",
-        default=10000,
+        default=1000,
         choices=range(1, 100001),
         metavar="[1-100000]",
         type=int,

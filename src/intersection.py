@@ -16,6 +16,7 @@ class Intersection:
         auction_modifier (AuctionModifier): The auction modifier object that is used to modify the auction parameters
         carQueues (list): A list of CarQueue objects that are part of the intersection
         auction_fees (list): A list of fees collected from the auctions held in this intersection, ordered in descending order
+        last_tried_auction_params (list): A list of the last tried auction parameters
         reward_history (list): A list of rewards collected by the intersection
         throughput_history (list): A list of throughput values collected by the intersection
     Functions:
@@ -32,6 +33,7 @@ class Intersection:
         get_auction_reward_history: Returns the reward history of the auction modifier
         hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
+        update_mechanism(reward): Updates the auction modifier mechanism
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
 
@@ -50,7 +52,7 @@ class Intersection:
                           CarQueue(args, self, str(id + 'S')),
                           CarQueue(args, self, str(id + 'W'))]
         self.auction_fees = []
-        self.last_tried_auction_params = [-1, -1, -1]  # TODO: doc!
+        self.last_tried_auction_params = [-1, -1, -1]
         self.reward_history = []
         # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
@@ -260,7 +262,8 @@ class Intersection:
             reward (float): The reward of the last auction
         """
         if self.args.auction_modifier_type == "bandit":
-            self.auction_modifier.update_bandit_params(self.last_tried_auction_params, reward)
+            self.auction_modifier.update_bandit_params(
+                self.last_tried_auction_params, reward)
 
     def ready_for_new_epoch(self, epoch):
         """Prepares the intersection for the next epoch.

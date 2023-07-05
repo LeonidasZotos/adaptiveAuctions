@@ -11,9 +11,13 @@ class AuctionModifier:
         intersection_id (str): The id of the intersection for which the modifier is used, or 'same'
             if the same auction parameters are used everywhere
         grid (Grid): The grid object that contains all intersections and car queues
+        bandit_params (dict): The parameters used for the bandit adaptive algorithm, if used.
     Functions:
+        init_bandit_params: Initializes the bandit parameters for the bandit adaptive algorithm
         generate_random_parameters: Generates random parameters for the next auction
         generate_static_parameters: Generates static parameters for the next auction
+        generate_bandit_parameters: Generates the auction parameters for the next auction, using the bandit adaptive algorithm
+        update_bandit_params (last_tried_auction_params, reward): Updates the bandit parameters for the bandit adaptive algorithm, based on the reward received
         generate_auction_parameters (last_reward): Calls the appropriate function to generate the auction parameters
         ready_for_new_epoch: Prepares the modifier for the next epoch
     """
@@ -30,7 +34,7 @@ class AuctionModifier:
         self.intersection_id = intersection_id
         self.grid = grid
 
-        self.bandit_params = {}  # TODO: doc!
+        self.bandit_params = {}  # Bandit adaptive parameters
 
         if args.auction_modifier_type == "bandit":
             self.init_bandit_params()
@@ -38,44 +42,7 @@ class AuctionModifier:
     def __str__(self):
         return f'Auction Modifier (intersection {self.intersection_id})'
 
-    def init_bandit_params(self):
-        # TODO: doc!
-        # The four main parameters are: queue delay boost, queue length boost, modification boost min limit and modification boost max limit.
-        # We need to discretize the parameters, so we can use them in the bandit algorithm.
-        # We will use x values for each parameter, so we have x^3 possible combinations.
-
-        level_of_discretization = 5
-        uninformed_score = 1
-        current_temperature = 0.1
-        temperature_decay = 0.99
-
-        # Create all possible parameter combinations based on the level of discretization.
-        possible_param_combs = []
-        for i in range(0, 10):
-            for j in range(0, 10):
-                for k in range(1, 6):
-                    possible_param_combs.append(
-                        [i/level_of_discretization, j/level_of_discretization, k])
-        # Create the initial counts & average scores.
-        counts = [0] * len(possible_param_combs)
-        average_scores = [uninformed_score] * len(possible_param_combs)
-
-        # Calculate the Boltzmann probabilities.
-        boltzmann_probabilities = [0] * len(possible_param_combs)
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = round(exp(
-                average_scores[prob_index]/current_temperature), 2)
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
-
-        self.bandit_params = {'possible_param_combs': possible_param_combs,
-                              'temperature_decay': temperature_decay,
-                              'counts': counts,
-                              'average_scores': average_scores,
-                              'current_temperature': current_temperature
-                              }
-
+# Random and static adaptive algorithm functions
     def generate_random_parameters(self):
         """Generates random parameters for the next auction
         Returns:
@@ -98,8 +65,52 @@ class AuctionModifier:
         modification_boost_max_limit = 3  # max multiplier of bid
         return queue_delay_boost, queue_length_boost, modification_boost_max_limit
 
+# Bandit adaptive algorithm functions
+
+    def init_bandit_params(self):
+        """Initializes the bandit parameters for the bandit adaptive algorithm. 
+        The three main parameters that are adapted are: queue delay boost, queue length boost and boost max limit.
+        There are some metaparametrers that are also used:
+        level_of_discretization: The level of discretization used for the parameters.
+        uninformed_score: The initial score for each parameter combination.
+        initial_temperature: The initial temperature used for the algorithm
+        temperature_decay: The decay of the temperature after each auction (not epoch, as multiple auctions can happen in an epoch).
+        """
+
+        level_of_discretization = 5
+        uninformed_score = 1
+        initial_temperature = 0.1
+        temperature_decay = 0.99
+
+        # Create all possible parameter combinations based on the level of discretization.
+        possible_param_combs = []
+        for i in range(0, 10):
+            for j in range(0, 10):
+                for k in range(1, 6):
+                    possible_param_combs.append(
+                        [i/level_of_discretization, j/level_of_discretization, k])
+        # Create the initial counts & average scores.
+        counts = [0] * len(possible_param_combs)
+        average_scores = [uninformed_score] * len(possible_param_combs)
+
+        # Calculate the Boltzmann probabilities.
+        boltzmann_probabilities = [0] * len(possible_param_combs)
+        for prob_index, _ in enumerate(boltzmann_probabilities):
+            boltzmann_probabilities[prob_index] = round(exp(
+                average_scores[prob_index]/initial_temperature), 2)
+        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
+        for prob in boltzmann_probabilities:
+            prob = prob/sum_of_boltzmann_probabilities
+
+        self.bandit_params = {'possible_param_combs': possible_param_combs,
+                              'temperature_decay': temperature_decay,
+                              'counts': counts,
+                              'average_scores': average_scores,
+                              'current_temperature': initial_temperature
+                              }
+
     def generate_bandit_parameters(self):
-        # TODO: doc!
+        """Returns the auction parameters for the next auction, using the bandit adaptive algorithm."""
         # First, reduce the temperature based on the decay.
         self.bandit_params['current_temperature'] = round(self.bandit_params['current_temperature'] *
                                                           self.bandit_params['temperature_decay'], 3)
@@ -129,12 +140,20 @@ class AuctionModifier:
         return chosen_params[0][0], chosen_params[0][1], chosen_params[0][2]
 
     def update_bandit_params(self, last_tried_auction_params, reward):
-        # Update the counts, average scores and Boltzmann probabilities TODO: doc!
+        """Updates the bandit parameters for the bandit adaptive algorithm, based on the reward received
+        Args:
+            last_tried_auction_params (tuple): The parameters that were used for the last auction
+            reward (float): The reward received for the last auction
+        """
+
+        # Update the counts, average scores and Boltzmann probabilities
         params_index = self.bandit_params['possible_param_combs'].index(
             last_tried_auction_params)
         self.bandit_params['counts'][params_index] += 1
         self.bandit_params['average_scores'][params_index] = (self.bandit_params['average_scores'][params_index] * (
             self.bandit_params['counts'][params_index]) + reward) / (self.bandit_params['counts'][params_index] + 1)
+
+# General functions
 
     def generate_auction_parameters(self):
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type

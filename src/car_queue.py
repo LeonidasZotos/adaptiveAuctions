@@ -188,8 +188,6 @@ class CarQueue:
         Makes the cars in the queue pay their individual fees, and resets the inactivity time of the queue
         Args:
             fee (int): The total fee that the cars in the queue have to pay
-        Returns:
-            int: The time that the first car in the queue has spent at the intersection
         """
         # If a queue wins an auction:
         # 1. The winning bid is paid by the cars in the queue.
@@ -219,19 +217,18 @@ class CarQueue:
         # Finally, the inactivity time must be reset for the queue itself.
         self.time_inactive = 0
 
-        # TODO: rewrite to not return something?
         reward = 0
         if self.parent_intersection.get_intersection_reward_type() == "time":
-            reward = 1/(self.cars[0].get_time_at_intersection())
+            reward = 1/(1+self.cars[0].get_time_at_intersection())
         elif self.parent_intersection.get_intersection_reward_type() == "time_and_urgency":
-            reward = 1/(self.cars[0].get_time_at_intersection(
-            ) * self.cars[0].get_urgency())
+            reward = 1 / \
+                (1+self.cars[0].get_time_at_intersection()
+                 * self.cars[0].get_urgency())
         elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
-            reward = 1/(self.parent_intersection.get_max_time_waited())
+            reward = 1/(1+self.parent_intersection.get_max_time_waited())
 
         self.parent_intersection.update_mechanism(reward)
-
-        return reward
+        self.parent_intersection.add_reward(reward)
 
     def reset_bids(self):
         """Resets the bids submitted by the cars in the queue, so that the next auction can be run."""
