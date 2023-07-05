@@ -138,7 +138,7 @@ class MasterKeeper:
         plt.errorbar(epochs, average_satisfaction_scores,
                      yerr=standard_deviations, fmt='o')
         plt.xlabel('Epoch')
-        plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
+        plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score.png')
@@ -306,7 +306,7 @@ class MasterKeeper:
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding')
 
         plt.xlabel('Epoch')
-        plt.ylabel('Average Satisfaction Score \n (the lower, the better)')
+        plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')
         plt.legend()
         plt.savefig(self.args.results_folder +

@@ -5,10 +5,10 @@ from math import exp
 
 class AuctionModifier:
     """
-    This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction. 
+    This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction.
     Attributes:
         args (argparse.Namespace): Arguments parsed from the command line
-        intersection_id (str): The id of the intersection for which the modifier is used, or 'same' 
+        intersection_id (str): The id of the intersection for which the modifier is used, or 'same'
             if the same auction parameters are used everywhere
         grid (Grid): The grid object that contains all intersections and car queues
     Functions:
@@ -22,7 +22,7 @@ class AuctionModifier:
         """Initialize the AuctionModifier object
         Args:
             args (argparse.Namespace): Arguments parsed from the command line
-            intersection_id (str): The id of the intersection for which the modifier is used, or 'same' 
+            intersection_id (str): The id of the intersection for which the modifier is used, or 'same'
                 if the same auction parameters are used everywhere
             grid (Grid): The grid object that contains all intersections and car queues
         """
@@ -45,7 +45,7 @@ class AuctionModifier:
         # We will use x values for each parameter, so we have x^3 possible combinations.
 
         level_of_discretization = 5
-        uninformed_score = 3
+        uninformed_score = 1
         current_temperature = 0.1
         temperature_decay = 0.99
 
@@ -63,14 +63,11 @@ class AuctionModifier:
         # Calculate the Boltzmann probabilities.
         boltzmann_probabilities = [0] * len(possible_param_combs)
         for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = exp(
-                average_scores[prob_index]/current_temperature)
-
+            boltzmann_probabilities[prob_index] = round(exp(
+                average_scores[prob_index]/current_temperature), 2)
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
         for prob in boltzmann_probabilities:
             prob = prob/sum_of_boltzmann_probabilities
-        # print("The first 50 Boltzmann probabilities are (initial): ",
-        #       boltzmann_probabilities[:50])
 
         self.bandit_params = {'possible_param_combs': possible_param_combs,
                               'temperature_decay': temperature_decay,
@@ -89,7 +86,7 @@ class AuctionModifier:
         # The max limit needs to be larger than the min limit
         modification_boost_max_limit = random.uniform(1, 5)
 
-        return queue_delay_boost, queue_length_boost, [1, modification_boost_max_limit]
+        return queue_delay_boost, queue_length_boost, modification_boost_max_limit
 
     def generate_static_parameters(self):
         """Returns static parameters for the next auction
@@ -99,27 +96,31 @@ class AuctionModifier:
         queue_delay_boost = 0.5
         queue_length_boost = 0.5
         modification_boost_max_limit = 3  # max multiplier of bid
-        return queue_delay_boost, queue_length_boost, [1, modification_boost_max_limit]
+        return queue_delay_boost, queue_length_boost, modification_boost_max_limit
 
     def generate_bandit_parameters(self):
         # TODO: doc!
         # First, reduce the temperature based on the decay.
-        self.bandit_params['current_temperature'] = self.bandit_params['current_temperature'] * \
-            self.bandit_params['temperature_decay']
+        self.bandit_params['current_temperature'] = round(self.bandit_params['current_temperature'] *
+                                                          self.bandit_params['temperature_decay'], 3)
 
         # Then, calculate the Boltzmann probabilities.
         boltzmann_probabilities = [
             0] * len(self.bandit_params['possible_param_combs'])
 
         for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = exp(
-                self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
+            try:
+                boltzmann_probabilities[prob_index] = round(exp(
+                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature']), 2)
+            except:
+                print(
+                    "ERROR: Error occured when trying to calculate the Boltzmann probabilities")
+                print("attempted to calc: exp(",
+                      self.bandit_params['average_scores'][prob_index], "/", self.bandit_params['current_temperature'])
 
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
         for prob in boltzmann_probabilities:
             prob = prob/sum_of_boltzmann_probabilities
-        # print("The first 50 Boltzmann probabilities are: ",
-        #       boltzmann_probabilities[:50])
 
         # Last, choose a parameter combination based on the Boltzmann probabilities.
         chosen_params = random.choices(
@@ -131,9 +132,9 @@ class AuctionModifier:
         # Update the counts, average scores and Boltzmann probabilities TODO: doc!
         params_index = self.bandit_params['possible_param_combs'].index(
             last_tried_auction_params)
+        self.bandit_params['counts'][params_index] += 1
         self.bandit_params['average_scores'][params_index] = (self.bandit_params['average_scores'][params_index] * (
             self.bandit_params['counts'][params_index]) + reward) / (self.bandit_params['counts'][params_index] + 1)
-        self.bandit_params['counts'][params_index] += 1
 
     def generate_auction_parameters(self):
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type

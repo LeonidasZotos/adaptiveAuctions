@@ -15,7 +15,7 @@ class BidGenerator:
         generate_bid(bidding_strategy, balance, urgency): Returns a bid, based on the bidding strategy
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
-    static_bid = 20  # This needs to be adjusted manually.
+    static_bid = 5  # This needs to be adjusted manually.
 
     def __init__(self, args):
         """Initialize the BidGenerator object.

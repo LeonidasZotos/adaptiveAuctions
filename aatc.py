@@ -53,7 +53,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--num_of_epochs",
-        default=500,
+        default=10000,
         choices=range(1, 100001),
         metavar="[1-100000]",
         type=int,
@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--grid_size",
-        default=5,
+        default=7,
         choices=range(2, 10),
         metavar="[2-100]",
         type=int,
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     )
     run_parser.add_argument(
         "--queue_capacity",
-        default=5,
+        default=10,
         choices=range(1, 101),
         metavar="[0-100]",
         type=int,
@@ -88,21 +88,21 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--congestion_rate",
-        default=0.15,
+        default=0.1,
         type=float_range(0.01, 1),
         help="Rate of congestion (Percentage of occupied spots, 0.01-1)."
     )
 
     run_parser.add_argument(
         "--credit_balance",
-        default=100,
+        default=50,
         type=float_range(1, 1000),
         help="Initial & Renewal credit balance for each car. Defaults to 50. Must be a float between 1 and 1000."
     )
 
     run_parser.add_argument(
         "--wage_time",
-        default=5,
+        default=50,
         choices=range(1, 101),
         metavar="[1-100]",
         type=int,
