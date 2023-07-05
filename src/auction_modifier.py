@@ -13,6 +13,7 @@ class AuctionModifier:
         grid (Grid): The grid object that contains all intersections and car queues
         bandit_params (dict): The parameters used for the bandit adaptive algorithm, if used.
     Functions:
+        get_parameters_and_valuations: Returns the parameters and valuations for the adaptive algorithm
         init_bandit_params: Initializes the bandit parameters for the bandit adaptive algorithm
         generate_random_parameters: Generates random parameters for the next auction
         generate_static_parameters: Generates static parameters for the next auction
@@ -42,53 +43,74 @@ class AuctionModifier:
     def __str__(self):
         return f'Auction Modifier (intersection {self.intersection_id})'
 
+    def get_parameters_and_valuations(self):
+        """Returns the parameters and valuations for the adaptive algorithm
+        Returns:
+            None or
+            tuple: A tuple containing the parameters and valuations for the adaptive algorithm
+        """
+        if self.args.auction_modifier_type == 'bandit':
+            return self.bandit_params["possible_param_combs"], self.bandit_params["average_scores"]
+        return None
+
 # Random and static adaptive algorithm functions
     def generate_random_parameters(self):
         """Generates random parameters for the next auction
         Returns:
-            tuple: A tuple containing the queue delay boost, queue length boost and modification boost max limit
+            tuple: A tuple containing the queue delay boost and queue length boost 
         """
         queue_delay_boost = random.uniform(0, 1)
         queue_length_boost = random.uniform(0, 1)
-        # The max limit needs to be larger than the min limit
-        modification_boost_max_limit = random.uniform(1, 5)
 
-        return queue_delay_boost, queue_length_boost, modification_boost_max_limit
+        return queue_delay_boost, queue_length_boost
 
     def generate_static_parameters(self):
         """Returns static parameters for the next auction
         Returns:
-            tuple: A tuple containing the queue delay boost, queue length boost and modification max limits
+            tuple: A tuple containing the queue delay boost and queue length boost
         """
         queue_delay_boost = 0.5
         queue_length_boost = 0.5
-        modification_boost_max_limit = 3  # max multiplier of bid
-        return queue_delay_boost, queue_length_boost, modification_boost_max_limit
+        return queue_delay_boost, queue_length_boost
 
 # Bandit adaptive algorithm functions
 
     def init_bandit_params(self):
         """Initializes the bandit parameters for the bandit adaptive algorithm. 
-        The three main parameters that are adapted are: queue delay boost, queue length boost and boost max limit.
+        The three main parameters that are adapted are: queue delay boost and queue length boost
         There are some metaparametrers that are also used:
-        level_of_discretization: The level of discretization used for the parameters.
         uninformed_score: The initial score for each parameter combination.
         initial_temperature: The initial temperature used for the algorithm
         temperature_decay: The decay of the temperature after each auction (not epoch, as multiple auctions can happen in an epoch).
         """
 
-        level_of_discretization = 5
+        # number of values to try for each parameter
+        level_of_discretization = self.args.adaptive_auction_discretization
         uninformed_score = 1
         initial_temperature = 0.1
         temperature_decay = 0.99
 
         # Create all possible parameter combinations based on the level of discretization.
+        queue_delay_min_limit = 0
+        queue_delay_max_limit = 1
+        queue_length_min_limit = 0
+        queue_length_max_limit = 1
+
+        possible_queue_delay_boosts = []
+        possible_queue_length_boosts = []
+
+        for i in range(level_of_discretization):
+            possible_queue_delay_boosts.append(queue_delay_min_limit + i * (
+                queue_delay_max_limit - queue_delay_min_limit) / (level_of_discretization - 1))
+            possible_queue_length_boosts.append(queue_length_min_limit + i * (
+                queue_length_max_limit - queue_length_min_limit) / (level_of_discretization - 1))
+
         possible_param_combs = []
-        for i in range(0, 10):
-            for j in range(0, 10):
-                for k in range(1, 6):
-                    possible_param_combs.append(
-                        [i/level_of_discretization, j/level_of_discretization, k])
+        for queue_delay_boost in possible_queue_delay_boosts:
+            for queue_length_boost in possible_queue_length_boosts:
+                possible_param_combs.append(
+                    [queue_delay_boost, queue_length_boost])
+
         # Create the initial counts & average scores.
         counts = [0] * len(possible_param_combs)
         average_scores = [uninformed_score] * len(possible_param_combs)
@@ -137,7 +159,7 @@ class AuctionModifier:
         chosen_params = random.choices(
             self.bandit_params['possible_param_combs'], weights=boltzmann_probabilities)
 
-        return chosen_params[0][0], chosen_params[0][1], chosen_params[0][2]
+        return chosen_params[0][0], chosen_params[0][1]
 
     def update_bandit_params(self, last_tried_auction_params, reward):
         """Updates the bandit parameters for the bandit adaptive algorithm, based on the reward received
@@ -154,11 +176,10 @@ class AuctionModifier:
             self.bandit_params['counts'][params_index]) + reward) / (self.bandit_params['counts'][params_index] + 1)
 
 # General functions
-
     def generate_auction_parameters(self):
         """Returns the auction parameters for the next auction, using the appropriate function depending on the modifier type
         Returns:
-            tuple: A tuple containing the queue delay boost, queue length boost and modification boost max limit
+            tuple: A tuple containing the queue delay boost and queue length boost
         Raises:
             Exception: If the modifier type is invalid
         """

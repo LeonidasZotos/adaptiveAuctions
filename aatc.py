@@ -122,6 +122,15 @@ if __name__ == '__main__':
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'bandit'."
     )
+    
+    run_parser.add_argument(
+        "--adaptive_auction_discretization",
+        default=5,
+        choices=range(1, 101),
+        metavar="[1-100]",
+        type=int,
+        help="Number of discrete values to check for each parameter of the adaptive auction. Defaults to 5. Must be an integer between 1 and 100."
+    )
 
     run_parser.add_argument(
         '--only_winning_bid_moves',
@@ -132,7 +141,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--intersection_reward_type",
-        default="max_time_waited",
+        default="time",
         choices=["time", "time_and_urgency", "max_time_waited"],
         type=str,
         help="Type of reward for the intersection. Defaults to 'max_time_waited'. Must be one of 'time', 'time_and_urgency' or 'max_time_waited' ."

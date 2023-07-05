@@ -31,6 +31,8 @@ class Intersection:
         get_last_reward: Returns the last reward of the intersection
         add_reward: Adds a reward to the reward history
         get_auction_reward_history: Returns the reward history of the auction modifier
+        get_auction_throughput_history: Returns the throughput history of the auction modifier
+        get_auction_parameters_and_valuations: Returns the parameters and their valuations of the auction
         hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
         update_mechanism(reward): Updates the auction modifier mechanism
@@ -160,6 +162,14 @@ class Intersection:
         """
         return self.throughput_history
 
+    def get_auction_parameters_and_valuations(self):
+        """Returns the parameters and their valuations of the auction
+            Returns:
+                None or
+                tuple: A tuple containing the parameters and their valuations of the auction  
+            """
+        return self.auction_modifier.get_parameters_and_valuations()
+
     def hold_auction(self, second_price=False):
         """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
         Args:
@@ -188,9 +198,10 @@ class Intersection:
         queue_lengths = {}
         # modification_boost_max_limit contains the max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e.
         # bid is doubled. The min limit is always 1)
-        queue_delay_boost, queue_length_boost, modification_boost_max_limit = self.auction_modifier.generate_auction_parameters()
+        modification_boost_max_limit = 3  # Maximum multiplier of the bid modifier boost
+        queue_delay_boost, queue_length_boost = self.auction_modifier.generate_auction_parameters()
         self.last_tried_auction_params = [
-            queue_delay_boost, queue_length_boost, modification_boost_max_limit]
+            queue_delay_boost, queue_length_boost]
 
         for queue in self.carQueues:
             if not queue.is_empty():  # Only collect bids from non-empty queues

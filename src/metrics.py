@@ -2,6 +2,7 @@
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
+from matplotlib import cm
 from math import nan
 import pandas as pd
 import csv
@@ -33,7 +34,8 @@ class MasterKeeper:
             Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
         plot_reward_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
             Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
-
+        plot_adaptive_auction_parameters_valuations_per_intersection(): Creates a plot with subplots for each intersection.
+            Each subplot is a graph of the valuations of the auction parameters of that intersection.
     """
 
     def __init__(self, args):
@@ -44,17 +46,28 @@ class MasterKeeper:
         self.args = args
         self.all_simulations_satisfaction_scores = []
 
+        # Total throughput per intersection
         self.total_throughput_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size))
 
+        # Total throughput history per intersection
         self.total_throughput_history_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
+        # Number of measurements per intersection, used to calculate the average
         self.count_of_measurements_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
+        # Total reward history per intersection
         self.total_reward_history_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+
+        # Auction parameter space
+        self.auction_parameters_space = []
+
+        # Sum of auction parameters valuations per intersection
+        self.sum_auction_parameters_valuations_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, 2)))
 
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
@@ -73,6 +86,12 @@ class MasterKeeper:
             sim_metrics_keeper.reward_history_per_intersection != nan, 1, 0)
         self.total_reward_history_per_intersection += np.nan_to_num(
             sim_metrics_keeper.reward_history_per_intersection)
+
+        if self.args.auction_modifier_type == "bandit":  # Only relevant for adaptive auctions
+            # Retrieve the parameter space and the valuations per intersection. The parameters space is the same for all intersections
+            self.auction_parameters_space = sim_metrics_keeper.auction_parameters_space
+
+            self.sum_auction_parameters_valuations_per_intersection += sim_metrics_keeper.auction_parameters_valuations_per_intersection
 
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
@@ -97,6 +116,9 @@ class MasterKeeper:
 
         # Create a graph with graphs of the average reward per intersection, over all simulations
         self.plot_reward_per_intersection_history()
+
+        if self.args.auction_modifier_type == "bandit":
+            self.plot_adaptive_auction_parameters_valuations_per_intersection()
 
     def plot_satisfaction_scores_overall_average(self):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations."""
@@ -468,18 +490,51 @@ class MasterKeeper:
             rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_reward_per_intersection_history.csv', index=False)
 
+    def plot_adaptive_auction_parameters_valuations_per_intersection(self):
+        """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set.
+            Args:
+                export_results (bool): Whether to export the results to a .csv file
+        """
+        # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
+        average_reward_per_parameter_set_per_intersection = np.divide(
+            self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
+
+        parameter_space_2d = np.reshape(
+            self.auction_parameters_space, (self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization, 2))
+        rewards_2d = np.reshape(
+            average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization))
+
+        # Create a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set.
+        fig = plt.figure(figsize=(20, 20))
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                ax = fig.add_subplot(self.args.grid_size, self.args.grid_size, i *
+                                     self.args.grid_size + j + 1, projection='3d')
+                ax.set_title('[' + str(i) + str(j) + ']')
+                ax.set_xlabel('Delay Boost')
+                ax.set_ylabel('QueueLength Boost')
+                ax.set_zlabel('Average Reward')
+                ax.plot_surface(parameter_space_2d[:, :, 0], parameter_space_2d[:, :, 1],
+                                rewards_2d[i, j, :, :], cmap='viridis', edgecolor='none')
+        plt.savefig(self.args.results_folder +
+                    '/average_reward_per_parameter_set_per_intersection.png')
+        plt.clf()
+
 
 class SimulationMetrics:
     """
     The SimulationMetrics class is responsible for keeping track of all the metrics for a single simulation.
     Attributes:
+        args (argparse.Namespace): Arguments parsed from the command line
         grid (Grid): The grid object of the simulation
         current_sim_satisfaction_scores (dict): A dictionary of satisfaction scores for each car. The key is the epoch, the value is
             a list of all the satisfaction scores for that epoch, if any.
         total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
             the value is the total throughput.
-        last_reward_per_intersection (dict): A dictionary of the last reward of each intersection. The key is the intersection id,
-            the value is the last reward.
+        throughput_history_per_intersection (dict): A dictionary of the throughput history of each intersection. The key is the intersection id,
+            the value is the throughput history.
+        reward_history_per_intersection (dict): A dictionary of the reward history of each intersection. The key is the intersection id,
+            the value is the reward history.
     Functions:
         add_satisfaction_scores(epoch, satisfaction_scores): Adds the satisfaction scores of the cars that completed a trip.
             If there was no car that completed a trip in an epoch, there is no entry for that epoch.
@@ -493,6 +548,7 @@ class SimulationMetrics:
             args (argparse.Namespace): Arguments parsed from the command line
             grid (Grid): The grid object of the simulation
         """
+        self.args = args
         self.grid = grid
         self.current_sim_satisfaction_scores = {}
         self.total_throughput_per_intersection = np.zeros(
@@ -503,6 +559,14 @@ class SimulationMetrics:
 
         self.reward_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
+
+        # If discretisation is adaptive_auction_discretization and there are 2 parameters,
+        # then there are adaptive_auction_discretization^2 possible combinations of parameters
+        self.auction_parameters_space = np.zeros(
+            (pow(args.adaptive_auction_discretization, 2), 2))
+
+        self.auction_parameters_valuations_per_intersection = [
+            [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
         """Adds the satisfaction scores of the cars that completed a trip. If there was no car that completed 
@@ -528,7 +592,14 @@ class SimulationMetrics:
         for intersection in self.grid.all_intersections:
             id = intersection.id
             x_cord, y_cord = map(int, id)
+            # Gather the reward history of each intersection
             self.reward_history_per_intersection[x_cord][y_cord] = intersection.get_auction_reward_history(
             )
+            # Gather the throughput history of each intersection
             self.throughput_history_per_intersection[x_cord][y_cord] = intersection.get_auction_throughput_history(
             )
+
+            if self.args.auction_modifier_type == "bandit":  # Only if adaptive auction is used
+                # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
+                self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations(
+                )
