@@ -17,8 +17,8 @@ class MasterKeeper:
     Attributes:
         all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
             that completed their trip in an epoch, for a single simulation.
-        total_throughput_per_intersection (np.array): A 2d array of the total throughput of each intersection. The first index is the x coordinate,
-            the second is the y coordinate. The value is the total throughput.
+        total_population_per_intersection_all_sims (np.array): A 3d array of the population of each intersection for each simulation. The first index is the x coordinate,
+            the second is the y coordinate, the third is the simulation. The value is the population.
         total_throughput_history_per_intersection (np.array): A 3d array of the throughput history of each intersection. The first index is the x coordinate,
             the second is the y coordinate, the third is the epoch. The value is the throughput.
         count_of_reward_measurements_per_intersection (np.array): A 3d array of the number of measurements of each intersection. The first index is the x coordinate,
@@ -61,8 +61,7 @@ class MasterKeeper:
         self.all_simulations_satisfaction_scores = []
 
         # Total throughput per intersection
-        self.total_throughput_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size))
+        self.total_population_per_intersection_all_sims = []
 
         # Total throughput history per intersection
         self.total_throughput_history_per_intersection = np.zeros(
@@ -99,7 +98,8 @@ class MasterKeeper:
         self.all_simulations_satisfaction_scores.append(
             sim_metrics_keeper.current_sim_satisfaction_scores)
 
-        self.total_throughput_per_intersection += sim_metrics_keeper.total_throughput_per_intersection
+        self.total_population_per_intersection_all_sims.append(
+            sim_metrics_keeper.total_throughput_per_intersection)
 
         self.total_throughput_history_per_intersection += sim_metrics_keeper.throughput_history_per_intersection
 
@@ -139,7 +139,7 @@ class MasterKeeper:
         self.histogram_satisfaction_scores_by_bidding_type()
 
         # Create a heatmap of the average throughput per intersection, over all simulations
-        self.plot_throughput_heatmap_average()
+        self.plot_congestion_heatmap_average()
 
         # Create a graph with graphs of the average throughput per intersection, over all simulations
         self.plot_throughput_per_intersection_history()
@@ -536,25 +536,32 @@ class MasterKeeper:
                 for values in zip_longest(*[all_static_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
                     writer.writerow(values)
 
-    def plot_throughput_heatmap_average(self, export_results=True):
-        """Creates a heatmap of the average throughput per intersection, over all simulations
+    def plot_congestion_heatmap_average(self, export_results=True):
+        """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
         """
-        # Create heatmap of average throughput per intersection
-        average_throughput_per_intersection = np.floor_divide(
-            self.total_throughput_per_intersection, self.args.num_of_simulations)  # Divide by number of simulations
+        # Create heatmap of average congestion per intersection
 
-        ax = sns.heatmap(average_throughput_per_intersection, annot=True)
+        total_throughput_per_intersection = np.sum(
+            self.total_population_per_intersection_all_sims, axis=0)
+        average_congestion_per_intersection = np.divide(
+            total_throughput_per_intersection, self.args.num_of_simulations)
+        average_congestion_per_intersection = np.divide(
+            average_congestion_per_intersection, self.args.num_of_epochs)
+        average_congestion_per_intersection = np.divide(
+            average_congestion_per_intersection, (self.args.queue_capacity * 4))
+
+        ax = sns.heatmap(average_congestion_per_intersection, annot=True)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
-               title='Average throughput per intersection')
+               title='Average Congestion per Intersection')
         plt.savefig(self.args.results_folder +
-                    '/average_throughput_heatmap.png')
+                    '/average_congestion_heatmap.png')
         plt.clf()
 
         if export_results == True:
-            np.savetxt(self.args.results_folder + '/average_throughput_per_intersection.csv',
-                       average_throughput_per_intersection, delimiter=",")
+            np.savetxt(self.args.results_folder + '/average_congestion_per_intersection.csv',
+                       average_congestion_per_intersection, delimiter=",")
 
     def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
