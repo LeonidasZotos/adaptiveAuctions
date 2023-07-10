@@ -316,16 +316,16 @@ class MasterKeeper:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
             if len(static_bidding_results) > 0:
                 plt.plot(
-                    epochs, static_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Static bidding')
+                    epochs, static_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Static bidding', markersize=1.5)
             if len(random_bidding_results) > 0:
                 plt.plot(
-                    epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding')
+                    epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding', markersize=1.5)
             if len(free_rider_bidding_results) > 0:
                 plt.plot(epochs, free_rider_bidding_average_satisfaction_scores,
                          'o', linestyle='None', label='Free-rider bidding')
             if len(RL_bidding_results) > 0:
                 plt.plot(
-                    epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding')
+                    epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
 
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
@@ -491,10 +491,7 @@ class MasterKeeper:
                                       '/average_reward_per_intersection_history.csv', index=False)
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
-        """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set.
-            Args:
-                export_results (bool): Whether to export the results to a .csv file
-        """
+        """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set."""
         # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
         average_reward_per_parameter_set_per_intersection = np.divide(
             self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
