@@ -36,12 +36,12 @@ class MasterKeeper:
         store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
         produce_results(): Produces all the evaluation results of all simulations
         plot_satisfaction_scores_overall_average(): Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations
-        plot_satisfaction_scores_by_bidding_type(, with_std=False, export_results=True, filter_outliers=True): Creates a 
+        plot_satisfaction_scores_by_bidding_type(with_std=False, export_results=True, filter_outliers=True): Creates a 
             graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
-        histogram_satisfaction_scores_by_bidding_type(, export_results=True, filter_outliers=True): Creates a histogram of all satisfaction scores,
+        histogram_satisfaction_scores_by_bidding_type(export_results=True, filter_outliers=True): Creates a histogram of all satisfaction scores,
             over all simulations, per bidding type
-        plot_throughput_heatmap_average(, export_results=True): Creates a heatmap of the 
+        plot_throughput_heatmap_average(export_results=True): Creates a heatmap of the 
             average tƒhroughput per intersection, over all simulations    
         plot_throughput_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
             Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
