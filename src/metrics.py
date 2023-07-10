@@ -322,7 +322,7 @@ class MasterKeeper:
                     epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding', markersize=1.5)
             if len(free_rider_bidding_results) > 0:
                 plt.plot(epochs, free_rider_bidding_average_satisfaction_scores,
-                         'o', linestyle='None', label='Free-rider bidding')
+                         'o', linestyle='None', label='Free-rider bidding', markersize=1.5)
             if len(RL_bidding_results) > 0:
                 plt.plot(
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
