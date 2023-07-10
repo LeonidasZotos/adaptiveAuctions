@@ -64,8 +64,9 @@ class MasterKeeper:
         self.total_population_per_intersection_all_sims = []
 
         # Total throughput history per intersection
-        self.total_throughput_history_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+        self.total_throughput_history_per_intersection_all_sims = []
+        # self.total_throughput_history_per_intersection = np.zeros(
+        #     (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         # Number of reward measurements per intersection, used to calculate the average
         self.count_of_reward_measurements_per_intersection = np.zeros(
@@ -101,7 +102,8 @@ class MasterKeeper:
         self.total_population_per_intersection_all_sims.append(
             sim_metrics_keeper.total_throughput_per_intersection)
 
-        self.total_throughput_history_per_intersection += sim_metrics_keeper.throughput_history_per_intersection
+        self.total_throughput_history_per_intersection_all_sims.append(
+            sim_metrics_keeper.throughput_history_per_intersection)
 
         # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
         self.count_of_reward_measurements_per_intersection += np.where(
@@ -155,16 +157,27 @@ class MasterKeeper:
 
     def produce_general_metrics(self):
         """Produces the general metrics of all simulations"""
-        # 1st: Calculate the last-epoch average throughput over all intersections and all simulations.
-        last_epoch_average_throughput = 0
+        # 1st: Calculate the last-epoch average throughput per intersection over all simulations.
+        # Only keep the last epoch
+        throughput_only_last_epoch_all_sims = []
+        for sim in self.total_throughput_history_per_intersection_all_sims:
+            throughput_only_last_epoch_all_sims.append(sim[:, :, -1])
+        throughput_only_last_epoch_all_sims = np.array(
+            throughput_only_last_epoch_all_sims)
+
+        throughput_only_last_epoch_all_sims_sum = np.sum(
+            throughput_only_last_epoch_all_sims, axis=0)
+        throughput_only_last_epoch_all_sims_avg = np.divide(
+            throughput_only_last_epoch_all_sims_sum, self.args.num_of_simulations)
+        # Calculate the standard deviation of throughput_only_last_epoch_all_sims over all sims.
+        last_epoch_average_throughput_std = np.std(
+            throughput_only_last_epoch_all_sims, axis=0)
+        # Dictionary for each intersection, holding the average throughput and the SD for printing
+        throughput_per_intersection_last_epoch_dict = {}
         for i in range(self.args.grid_size):
             for j in range(self.args.grid_size):
-                last_epoch_average_throughput += self.total_throughput_history_per_intersection[i, j, -1]
-        last_epoch_average_throughput /= self.args.grid_size * \
-            self.args.grid_size * self.args.num_of_simulations
-        # Calculate the standard deviation of the last_epoch_average_throughput
-        last_epoch_average_throughput_std = np.std(
-            self.total_throughput_history_per_intersection[:, :, -1])
+                throughput_per_intersection_last_epoch_dict[str(i) + str(j)] = str(
+                    str(throughput_only_last_epoch_all_sims_avg[i, j]) + " (SD: " + str(round(last_epoch_average_throughput_std[i, j], 2)) + ")")
 
         # 2nd: Calculate the last-epoch average reward over all intersections and all simulations.
         last_epoch_average_reward = 0
@@ -227,8 +240,9 @@ class MasterKeeper:
 
         # Export the results to a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
-            f.write('Last-epoch average throughput over all intersections and all simulations: ' +
-                    str(round(last_epoch_average_throughput, 2)) + " (SD: " + str(round(last_epoch_average_throughput_std, 2)) + ')\n')
+            f.write('Last-epoch average throughput over all intersections and all simulations: ' + str(
+                throughput_per_intersection_last_epoch_dict) + " (SD: " + str(throughput_per_intersection_last_epoch_dict) + ')\n')
+
             f.write('Last-epoch average reward over all intersections and all simulations: ' +
                     str(round(last_epoch_average_reward, 2)) + " (SD: " + str(round(last_epoch_average_reward_std, 2)) + ')\n')
             f.write('Last-epoch average max time waited over all intersections and all simulations: ' +
@@ -565,13 +579,15 @@ class MasterKeeper:
 
     def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
+        total_throughput_history_summed_sims = np.sum(
+            self.total_throughput_history_per_intersection_all_sims, axis=0)
         average_throughput_per_intersection = np.divide(
-            self.total_throughput_history_per_intersection, self.args.num_of_simulations)
+            total_throughput_history_summed_sims, self.args.num_of_simulations)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
-            self.total_throughput_history_per_intersection.shape[0], self.total_throughput_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
-        for i in range(self.total_throughput_history_per_intersection.shape[0]):
-            for j in range(self.total_throughput_history_per_intersection.shape[1]):
+            average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+        for i in range(average_throughput_per_intersection.shape[0]):
+            for j in range(average_throughput_per_intersection.shape[1]):
                 axs[i, j].plot(average_throughput_per_intersection[i, j])
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
