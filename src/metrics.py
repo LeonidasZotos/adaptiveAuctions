@@ -1,4 +1,4 @@
-"""A class to keep track of the metrics of the simulation"""
+"""A class to keep track of the metrics of the simulation and create relevant graphs."""
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
@@ -16,9 +16,22 @@ class MasterKeeper:
     The MasterKeeper class is responsible for keeping track of all the metrics for all simulations.
     Attributes:
         all_simulations_results (list): A list of dictionaries, each dictionary containing the satisfaction scores of all cars
-            that completed their trip in an epoch, for a single simulation
-        total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
-            the value is the total throughput.
+            that completed their trip in an epoch, for a single simulation.
+        total_throughput_per_intersection (np.array): A 2d array of the total throughput of each intersection. The first index is the x coordinate,
+            the second is the y coordinate. The value is the total throughput.
+        total_throughput_history_per_intersection (np.array): A 3d array of the throughput history of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the throughput.
+        count_of_reward_measurements_per_intersection (np.array): A 3d array of the number of measurements of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the number of measurements.
+        total_reward_history_per_intersection (np.array): A 3d array of the reward history of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the reward.
+        count_of_max_time_waited_measurements_per_intersection (np.array): A 3d array of the number of measurements of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the number of measurements.
+        max_time_waited_history_per_intersection (np.array): A 3d array of the max time waited history of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the max time waited.
+        auction_parameters_space (np.array): A 2d array of the auction parameters space. The first index is the delay boost, the second is the queue length boost.
+        sum_auction_parameters_valuations_per_intersection (np.array): A 3d array of the sum of the valuations of the auction parameters of each intersection.
+            The first index is the x coordinate, the second is the y coordinate, the third is the parameter space. The value is the sum of the valuations.
     Functions:
         store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
         produce_results(): Produces all the evaluation results of all simulations
@@ -54,12 +67,20 @@ class MasterKeeper:
         self.total_throughput_history_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
-        # Number of measurements per intersection, used to calculate the average
-        self.count_of_measurements_per_intersection = np.zeros(
+        # Number of reward measurements per intersection, used to calculate the average
+        self.count_of_reward_measurements_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         # Total reward history per intersection
         self.total_reward_history_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+
+        # Number of reward measurements per intersection, used to calculate the average
+        self.count_of_max_time_waited_measurements_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+
+        # Max time waited history per intersection
+        self.total_max_time_waited_history_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         # Auction parameter space
@@ -82,10 +103,14 @@ class MasterKeeper:
         self.total_throughput_history_per_intersection += sim_metrics_keeper.throughput_history_per_intersection
 
         # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
-        self.count_of_measurements_per_intersection += np.where(
+        self.count_of_reward_measurements_per_intersection += np.where(
             sim_metrics_keeper.reward_history_per_intersection != nan, 1, 0)
         self.total_reward_history_per_intersection += np.nan_to_num(
             sim_metrics_keeper.reward_history_per_intersection)
+        self.count_of_max_time_waited_measurements_per_intersection += np.where(
+            sim_metrics_keeper.max_time_waited_history_per_intersection != nan, 1, 0)
+        self.total_max_time_waited_history_per_intersection += np.nan_to_num(
+            sim_metrics_keeper.max_time_waited_history_per_intersection)
 
         if self.args.auction_modifier_type == "bandit":  # Only relevant for adaptive auctions
             # Retrieve the parameter space and the valuations per intersection. The parameters space is the same for all intersections
@@ -112,7 +137,11 @@ class MasterKeeper:
         # Create a heatmap of the average throughput per intersection, over all simulations
         self.plot_throughput_heatmap_average()
 
+        # Create a graph with graphs of the average throughput per intersection, over all simulations
         self.plot_throughput_per_intersection_history()
+
+        # Create a graph with graphs of the average max time waited per intersection, over all simulations
+        self.plot_max_time_waited_per_intersection_history()
 
         # Create a graph with graphs of the average reward per intersection, over all simulations
         self.plot_reward_per_intersection_history()
@@ -466,7 +495,7 @@ class MasterKeeper:
     def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         average_reward_per_intersection = np.divide(
-            self.total_reward_history_per_intersection, self.count_of_measurements_per_intersection)
+            self.total_reward_history_per_intersection, self.count_of_reward_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             self.total_reward_history_per_intersection.shape[0], self.total_reward_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
@@ -489,6 +518,33 @@ class MasterKeeper:
                         i) + '_' + str(j)] = average_reward_per_intersection[i, j]
             rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_reward_per_intersection_history.csv', index=False)
+
+    def plot_max_time_waited_per_intersection_history(self, export_results=True):
+        # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
+        average_max_time_waited_per_intersection = np.divide(
+            self.total_max_time_waited_history_per_intersection, self.count_of_reward_measurements_per_intersection)
+        # Create a plot with subplots for each intersection. Each subplot is a graph of the average max time waited history of that intersection.
+        fig, axs = plt.subplots(
+            self.total_max_time_waited_history_per_intersection.shape[0], self.total_max_time_waited_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+        for i in range(self.total_max_time_waited_history_per_intersection.shape[0]):
+            for j in range(self.total_max_time_waited_history_per_intersection.shape[1]):
+                axs[i, j].plot(average_max_time_waited_per_intersection[i, j])
+                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].set_xlabel('Epoch')
+                axs[i, j].set_ylabel('Average max time waited')
+        plt.savefig(self.args.results_folder +
+                    '/average_max_time_waited_per_intersection_history.png')
+        plt.clf()
+
+        if export_results == True:
+            # Create a pandas dataframe, where each intersection is a column. The column header is the coordinates of the intersection
+            rewards_history_df = pd.DataFrame()
+            for i in range(self.total_reward_history_per_intersection.shape[0]):
+                for j in range(self.total_reward_history_per_intersection.shape[1]):
+                    rewards_history_df[str(
+                        i) + '_' + str(j)] = average_max_time_waited_per_intersection[i, j]
+            rewards_history_df.to_csv(self.args.results_folder +
+                                      '/average_max_time_waited_per_intersection_history.csv', index=False)
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
         """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set."""
@@ -528,10 +584,12 @@ class SimulationMetrics:
             a list of all the satisfaction scores for that epoch, if any.
         total_throughput_per_intersection (dict): A dictionary of the total throughput of each intersection. The key is the intersection id,
             the value is the total throughput.
-        throughput_history_per_intersection (dict): A dictionary of the throughput history of each intersection. The key is the intersection id,
-            the value is the throughput history.
-        reward_history_per_intersection (dict): A dictionary of the reward history of each intersection. The key is the intersection id,
-            the value is the reward history.
+        throughput_history_per_intersection (np.array): A 3d array of the throughput history of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the throughput.
+        reward_history_per_intersection (np.array): A 3d array of the reward history of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the reward.
+        max_time_waited_history_per_intersection (np.array): A 3d array of the max time waited history of each intersection. The first index is the x coordinate,
+            the second is the y coordinate, the third is the epoch. The value is the max time waited for that intersection at that epoch.
     Functions:
         add_satisfaction_scores(epoch, satisfaction_scores): Adds the satisfaction scores of the cars that completed a trip.
             If there was no car that completed a trip in an epoch, there is no entry for that epoch.
@@ -555,6 +613,9 @@ class SimulationMetrics:
             (args.grid_size, args.grid_size, args.num_of_epochs))
 
         self.reward_history_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size, args.num_of_epochs))
+
+        self.max_time_waited_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
 
         # If discretisation is adaptive_auction_discretization and there are 2 parameters,
@@ -594,6 +655,9 @@ class SimulationMetrics:
             )
             # Gather the throughput history of each intersection
             self.throughput_history_per_intersection[x_cord][y_cord] = intersection.get_auction_throughput_history(
+            )
+            # Gather the max_time_waited history of each intersection
+            self.max_time_waited_history_per_intersection[x_cord][y_cord] = intersection.get_max_time_waited_history(
             )
 
             if self.args.auction_modifier_type == "bandit":  # Only if adaptive auction is used

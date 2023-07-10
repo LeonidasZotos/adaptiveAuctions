@@ -19,6 +19,7 @@ class Intersection:
         last_tried_auction_params (list): A list of the last tried auction parameters
         reward_history (list): A list of rewards collected by the intersection
         throughput_history (list): A list of throughput values collected by the intersection
+        max_time_waited_history (list): A list of the maximum_time_waited values collected by the intersection for all epochs.
     Functions:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         get_car_queues: Returns the car queues that are part of this intersection
@@ -29,9 +30,11 @@ class Intersection:
         get_num_of_cars_in_intersection: Returns the number of cars in the intersection
         get_max_time_waited: Returns the maximum time waited by a car_queue in the intersection
         get_last_reward: Returns the last reward of the intersection
-        add_reward: Adds a reward to the reward history
+        add_reward_to_history: Adds a reward to the reward history
+        add_max_time_waited_to_history: Adds the maximum time waited by any car_queue in the intersection to the history
         get_auction_reward_history: Returns the reward history of the auction modifier
         get_auction_throughput_history: Returns the throughput history of the auction modifier
+        get_max_time_waited_history: Returns the maximum time waited history of the auction modifier
         get_auction_parameters_and_valuations: Returns the parameters and their valuations of the auction
         hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
             Returns the id of the winning car queue and the destination (a car queue id) of the 1st car in the winning queue.
@@ -58,6 +61,7 @@ class Intersection:
         self.reward_history = []
         # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
+        self.max_time_waited_history = []
 
     def __str__(self):
         return f'Intersection(id={self.id})'
@@ -123,7 +127,11 @@ class Intersection:
         """Returns the maximum time waited by a car_queue in the intersection
         Returns:
             float: The maximum time waited by a car_queue in the intersection
+            or nan  if the intersection is empty
         """
+        if self.is_empty():
+            return nan
+
         all_times = [queue.get_time_inactive() for queue in self.carQueues]
 
         return max(all_times)
@@ -144,9 +152,13 @@ class Intersection:
                 break
         return last_non_nan
 
-    def add_reward(self, reward):
+    def add_reward_to_history(self, reward):
         """Adds a reward to the reward history"""
         self.reward_history.append(reward)
+
+    def add_max_time_waited_to_history(self):
+        """Adds the maximum time waited by any car_queue in the intersection to the history"""
+        self.max_time_waited_history.append(self.get_max_time_waited())
 
     def get_auction_reward_history(self):
         """Returns the reward history of the auction modifier
@@ -156,11 +168,18 @@ class Intersection:
         return self.reward_history
 
     def get_auction_throughput_history(self):
-        """Returns the throughput history of the auction modifier
+        """Returns the throughput history of the intersection
         Returns:
-            list: The throughput history of the auction modifier
+            list: The throughput history of the intersection
         """
         return self.throughput_history
+
+    def get_max_time_waited_history(self):
+        """Returns the maximum time waited history of the intersection
+        Returns:
+            list: The maximum time waited history of the intersection
+        """
+        return self.max_time_waited_history
 
     def get_auction_parameters_and_valuations(self):
         """Returns the parameters and their valuations of the auction
@@ -286,3 +305,4 @@ class Intersection:
             self.reward_history.append(nan)
         if len(self.throughput_history) <= epoch:
             self.throughput_history.append(0)
+        self.add_max_time_waited_to_history()

@@ -228,7 +228,7 @@ class CarQueue:
             reward = 1/(1+self.parent_intersection.get_max_time_waited())
 
         self.parent_intersection.update_mechanism(reward)
-        self.parent_intersection.add_reward(reward)
+        self.parent_intersection.add_reward_to_history(reward)
 
     def reset_bids(self):
         """Resets the bids submitted by the cars in the queue, so that the next auction can be run."""
