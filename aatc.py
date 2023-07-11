@@ -122,7 +122,7 @@ if __name__ == '__main__':
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'bandit'."
     )
-    
+
     run_parser.add_argument(
         "--adaptive_auction_discretization",
         default=5,

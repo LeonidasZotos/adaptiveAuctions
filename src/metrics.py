@@ -200,7 +200,8 @@ class MasterKeeper:
         # 3rd: Calculate the last-epoch average max time waited over all intersections and all simulations.
         total_max_time_waited_only_last_epoch_all_sims = []
         for sim in self.max_time_waited_history_per_intersection_all_sims:
-            total_max_time_waited_only_last_epoch_all_sims.append(sim[:, :, -1])
+            total_max_time_waited_only_last_epoch_all_sims.append(
+                sim[:, :, -1])
         total_max_time_waited_only_last_epoch_all_sims = np.array(
             total_max_time_waited_only_last_epoch_all_sims)
 
@@ -219,41 +220,41 @@ class MasterKeeper:
                     str(round(total_max_time_waited_only_last_epoch_all_sims_avg[i, j], 2)) + " (SD: " + str(round(total_max_time_waited_only_last_epoch_all_sims_std[i, j], 2)) + ")")
 
         # 4th: Calculate the last-epoch average satisfaction score over all simulations.
-        last_epoch_average_satisfaction_score = 0
-        for result_dict in self.all_simulations_satisfaction_scores:
-            for epoch in result_dict:
-                for (car_copy, score) in result_dict[epoch]:
-                    last_epoch_average_satisfaction_score += score
-        last_epoch_average_satisfaction_score /= self.args.num_of_simulations
-        # Calculate the standard deviation of the last_epoch_average_satisfaction_score
-        last_epoch_average_satisfaction_score_std = np.std(
-            [score for (_, score) in result_dict[epoch] for epoch in result_dict])
+        last_epoch_satisfaction_scores_all_sims = []
+        for sim_dict in self.all_simulations_satisfaction_scores:
+            # This gets the last epoch measurements of each simulation
+            for (car_copy, score) in sim_dict[list(sim_dict)[-1]]:
+                last_epoch_satisfaction_scores_all_sims.append(score)
+        last_epoch_satisfaction_scores_avg = sum(
+            last_epoch_satisfaction_scores_all_sims) / len(last_epoch_satisfaction_scores_all_sims)
+        last_epoch_satisfaction_scores_std = np.std(
+            last_epoch_satisfaction_scores_all_sims)
 
         # 5th: Calculate the last-epoch average satisfaction score per bidding type, over all simulations.
         last_epoch_average_satisfaction_score_per_bidding_type = {}
-        for result_dict in self.all_simulations_satisfaction_scores:
-            for epoch in result_dict:
-                for (car_copy, score) in result_dict[epoch]:
-                    bidding_type = car_copy.bidding_type
-                    if bidding_type in last_epoch_average_satisfaction_score_per_bidding_type:
-                        last_epoch_average_satisfaction_score_per_bidding_type[bidding_type] += score
-                    else:
-                        last_epoch_average_satisfaction_score_per_bidding_type[bidding_type] = score
-        for bidding_type in last_epoch_average_satisfaction_score_per_bidding_type:
-            last_epoch_average_satisfaction_score_per_bidding_type[
-                bidding_type] /= self.args.num_of_simulations
-        # Calculate the standard deviation of the last_epoch_average_satisfaction_score_per_bidding_type
         last_epoch_average_satisfaction_score_per_bidding_type_std = {}
-        for result_dict in self.all_simulations_satisfaction_scores:
-            for epoch in result_dict:
-                for (car_copy, score) in result_dict[epoch]:
-                    bidding_type = car_copy.bidding_type
-                    if bidding_type in last_epoch_average_satisfaction_score_per_bidding_type_std:
-                        last_epoch_average_satisfaction_score_per_bidding_type_std[bidding_type] += pow(
-                            score - last_epoch_average_satisfaction_score_per_bidding_type[bidding_type], 2)
-                    else:
-                        last_epoch_average_satisfaction_score_per_bidding_type_std[bidding_type] = pow(
-                            score - last_epoch_average_satisfaction_score_per_bidding_type[bidding_type], 2)
+        # Holds all the cars that completed a trip on the last epoch.
+        all_last_sim_cars = []
+        for sim_dict in self.all_simulations_satisfaction_scores:
+            # This gets the last epoch measurements of each simulation
+            for (car_copy, score) in sim_dict[list(sim_dict)[-1]]:
+                all_last_sim_cars.append((car_copy, score))
+        scores_per_bidding_type = {}
+        for (car_copy, score) in all_last_sim_cars:
+            bidding_type = car_copy.bidding_type
+            if bidding_type in scores_per_bidding_type:
+                scores_per_bidding_type[bidding_type].append(score)
+            else:
+                scores_per_bidding_type[bidding_type] = [score]
+        # The average is now calculated
+        for bidding_type in scores_per_bidding_type:
+            last_epoch_average_satisfaction_score_per_bidding_type[bidding_type] = sum(
+                scores_per_bidding_type[bidding_type]) / len(scores_per_bidding_type[bidding_type])
+        # Calculate the standard deviation
+        last_epoch_average_satisfaction_score_per_bidding_type_std = {}
+        for bidding_type in scores_per_bidding_type:
+            last_epoch_average_satisfaction_score_per_bidding_type_std[bidding_type] = np.std(
+                scores_per_bidding_type[bidding_type])
 
         # Export the results to a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
@@ -264,8 +265,8 @@ class MasterKeeper:
             f.write('Last-epoch average max_time_waited over all intersections and all simulations: ' + str(
                 total_max_time_waited_per_intersection_last_epoch_dict) + '\n')
             f.write('Last-epoch average satisfaction score over all simulations: ' +
-                    str(round(last_epoch_average_satisfaction_score, 2)) + " (SD: " +
-                    str(round(last_epoch_average_satisfaction_score_std, 2)) + ')\n')
+                    str(round(last_epoch_satisfaction_scores_avg, 2)) + " (SD: " +
+                    str(round(last_epoch_satisfaction_scores_std, 2)) + ')\n')
             f.write('Last-epoch average satisfaction score per bidding type, over all simulations: ' +
                     str(last_epoch_average_satisfaction_score_per_bidding_type) + " (SD: " + str(last_epoch_average_satisfaction_score_per_bidding_type_std) + ')\n')
 
@@ -674,7 +675,7 @@ class MasterKeeper:
                     max_time_waited_history_df[str(
                         i) + '_' + str(j)] = average_max_time_waited_per_intersection[i, j]
             max_time_waited_history_df.to_csv(self.args.results_folder +
-                                      '/average_max_time_waited_per_intersection_history.csv', index=False)
+                                              '/average_max_time_waited_per_intersection_history.csv', index=False)
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
         """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set."""
@@ -763,7 +764,7 @@ class SimulationMetrics:
             epoch (int): The epoch in which the cars completed their trip
             satisfaction_scores (list): A list of tuples, containing small car copies and their satisfaction scores of the completed trip
         """
-        if satisfaction_scores:  # if it is not empty
+        if satisfaction_scores:  # If it is not empty
             self.current_sim_satisfaction_scores[epoch] = satisfaction_scores
 
     def ready_for_new_epoch(self):
