@@ -65,16 +65,13 @@ class MasterKeeper:
 
         # Total throughput history per intersection
         self.total_throughput_history_per_intersection_all_sims = []
-        # self.total_throughput_history_per_intersection = np.zeros(
-        #     (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         # Number of reward measurements per intersection, used to calculate the average
         self.count_of_reward_measurements_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
 
         # Total reward history per intersection
-        self.total_reward_history_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+        self.total_reward_history_per_intersection_all_sims = []
 
         # Number of reward measurements per intersection, used to calculate the average
         self.count_of_max_time_waited_measurements_per_intersection = np.zeros(
@@ -100,7 +97,7 @@ class MasterKeeper:
             sim_metrics_keeper.current_sim_satisfaction_scores)
 
         self.total_population_per_intersection_all_sims.append(
-            sim_metrics_keeper.total_throughput_per_intersection)
+            sim_metrics_keeper.total_population_per_intersection)
 
         self.total_throughput_history_per_intersection_all_sims.append(
             sim_metrics_keeper.throughput_history_per_intersection)
@@ -108,8 +105,9 @@ class MasterKeeper:
         # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
         self.count_of_reward_measurements_per_intersection += np.where(
             sim_metrics_keeper.reward_history_per_intersection != nan, 1, 0)
-        self.total_reward_history_per_intersection += np.nan_to_num(
-            sim_metrics_keeper.reward_history_per_intersection)
+        self.total_reward_history_per_intersection_all_sims.append(
+            np.nan_to_num(sim_metrics_keeper.reward_history_per_intersection))
+
         self.count_of_max_time_waited_measurements_per_intersection += np.where(
             sim_metrics_keeper.max_time_waited_history_per_intersection != nan, 1, 0)
         self.total_max_time_waited_history_per_intersection += np.nan_to_num(
@@ -180,15 +178,25 @@ class MasterKeeper:
                     str(throughput_only_last_epoch_all_sims_avg[i, j]) + " (SD: " + str(round(last_epoch_average_throughput_std[i, j], 2)) + ")")
 
         # 2nd: Calculate the last-epoch average reward over all intersections and all simulations.
-        last_epoch_average_reward = 0
+        total_reward_only_last_epoch_all_sims = []
+        for sim in self.total_reward_history_per_intersection_all_sims:
+            total_reward_only_last_epoch_all_sims.append(sim[:, :, -1])
+        total_reward_only_last_epoch_all_sims = np.array(
+            total_reward_only_last_epoch_all_sims)
+
+        total_reward_only_last_epoch_all_sims_sum = np.sum(
+            total_reward_only_last_epoch_all_sims, axis=0)
+        total_reward_only_last_epoch_all_sims_avg = np.divide(
+            total_reward_only_last_epoch_all_sims_sum, self.args.num_of_simulations)
+        # Calculate the standard deviation of throughput_only_last_epoch_all_sims over all sims.
+        last_epoch_average_total_reward_std = np.std(
+            total_reward_only_last_epoch_all_sims, axis=0)
+        # Dictionary for each intersection, holding the average throughput and the SD for printing
+        total_reward_per_intersection_last_epoch_dict = {}
         for i in range(self.args.grid_size):
             for j in range(self.args.grid_size):
-                last_epoch_average_reward += self.total_reward_history_per_intersection[i, j, -1]
-        last_epoch_average_reward /= self.args.grid_size * \
-            self.args.grid_size * self.args.num_of_simulations
-        # Calculate the standard deviation of the last_epoch_average_reward
-        last_epoch_average_reward_std = np.std(
-            self.total_reward_history_per_intersection[:, :, -1])
+                total_reward_per_intersection_last_epoch_dict[str(i) + str(j)] = str(
+                    str(round(total_reward_only_last_epoch_all_sims_avg[i, j], 2)) + " (SD: " + str(round(last_epoch_average_total_reward_std[i, j], 2)) + ")")
 
         # 3rd: Calculate the last-epoch average max time waited over all intersections and all simulations.
         last_epoch_average_max_time_waited = 0
@@ -241,10 +249,9 @@ class MasterKeeper:
         # Export the results to a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
             f.write('Last-epoch average throughput over all intersections and all simulations: ' + str(
-                throughput_per_intersection_last_epoch_dict) + " (SD: " + str(throughput_per_intersection_last_epoch_dict) + ')\n')
-
-            f.write('Last-epoch average reward over all intersections and all simulations: ' +
-                    str(round(last_epoch_average_reward, 2)) + " (SD: " + str(round(last_epoch_average_reward_std, 2)) + ')\n')
+                throughput_per_intersection_last_epoch_dict) + '\n')
+            f.write('Last-epoch average throughput over all intersections and all simulations: ' + str(
+                total_reward_per_intersection_last_epoch_dict) + '\n')
             f.write('Last-epoch average max time waited over all intersections and all simulations: ' +
                     str(round(last_epoch_average_max_time_waited, 2)) + " (SD: " +
                     str(round(last_epoch_average_max_time_waited_std, 2)) + ')\n')
@@ -583,7 +590,7 @@ class MasterKeeper:
             self.total_throughput_history_per_intersection_all_sims, axis=0)
         average_throughput_per_intersection = np.divide(
             total_throughput_history_summed_sims, self.args.num_of_simulations)
-        # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
+        # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_throughput_per_intersection.shape[0]):
@@ -597,37 +604,37 @@ class MasterKeeper:
         plt.clf()
 
         if export_results == True:
-            # Create a pandas dataframe, where each intersection is a column. The column header is the coordinates of the intersection
-            rewards_history_df = pd.DataFrame()
-            for i in range(self.total_reward_history_per_intersection.shape[0]):
-                for j in range(self.total_reward_history_per_intersection.shape[1]):
-                    rewards_history_df[str(
+            throughput_history_df = pd.DataFrame()
+            for i in range(average_throughput_per_intersection.shape[0]):
+                for j in range(average_throughput_per_intersection.shape[1]):
+                    throughput_history_df[str(
                         i) + '_' + str(j)] = average_throughput_per_intersection[i, j]
-            rewards_history_df.to_csv(self.args.results_folder +
-                                      '/average_throughput_per_intersection_history.csv', index=False)
+            throughput_history_df.to_csv(self.args.results_folder +
+                                         '/average_throughput_per_intersection_history.csv', index=False)
 
     def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
+        total_reward_history_summed_sims = np.sum(
+            self.total_reward_history_per_intersection_all_sims, axis=0)
         average_reward_per_intersection = np.divide(
-            self.total_reward_history_per_intersection, self.count_of_reward_measurements_per_intersection)
+            total_reward_history_summed_sims, self.count_of_reward_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
-            self.total_reward_history_per_intersection.shape[0], self.total_reward_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
-        for i in range(self.total_reward_history_per_intersection.shape[0]):
-            for j in range(self.total_reward_history_per_intersection.shape[1]):
+            average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+        for i in range(average_reward_per_intersection.shape[0]):
+            for j in range(average_reward_per_intersection.shape[1]):
                 axs[i, j].plot(average_reward_per_intersection[i, j])
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel('Average Reward')
+                axs[i, j].set_ylabel('Average Auction Reward')
         plt.savefig(self.args.results_folder +
                     '/average_reward_per_intersection_history.png')
         plt.clf()
 
         if export_results == True:
-            # Create a pandas dataframe, where each intersection is a column. The column header is the coordinates of the intersection
             rewards_history_df = pd.DataFrame()
-            for i in range(self.total_reward_history_per_intersection.shape[0]):
-                for j in range(self.total_reward_history_per_intersection.shape[1]):
+            for i in range(average_reward_per_intersection.shape[0]):
+                for j in range(average_reward_per_intersection.shape[1]):
                     rewards_history_df[str(
                         i) + '_' + str(j)] = average_reward_per_intersection[i, j]
             rewards_history_df.to_csv(self.args.results_folder +
@@ -636,7 +643,7 @@ class MasterKeeper:
     def plot_max_time_waited_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         average_max_time_waited_per_intersection = np.divide(
-            self.total_max_time_waited_history_per_intersection, self.count_of_reward_measurements_per_intersection)
+            self.total_max_time_waited_history_per_intersection, self.count_of_max_time_waited_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the average max time waited history of that intersection.
         fig, axs = plt.subplots(
             self.total_max_time_waited_history_per_intersection.shape[0], self.total_max_time_waited_history_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
@@ -652,13 +659,13 @@ class MasterKeeper:
 
         if export_results == True:
             # Create a pandas dataframe, where each intersection is a column. The column header is the coordinates of the intersection
-            rewards_history_df = pd.DataFrame()
-            for i in range(self.total_reward_history_per_intersection.shape[0]):
-                for j in range(self.total_reward_history_per_intersection.shape[1]):
-                    rewards_history_df[str(
+            max_time_waited_history_df = pd.DataFrame()
+            for i in range(average_max_time_waited_per_intersection.shape[0]):
+                for j in range(average_max_time_waited_per_intersection.shape[1]):
+                    max_time_waited_history_df[str(
                         i) + '_' + str(j)] = average_max_time_waited_per_intersection[i, j]
-            rewards_history_df.to_csv(self.args.results_folder +
-                                      '/average_max_time_waited_per_intersection_history.csv', index=False)
+            max_time_waited_history_df.to_csv(self.args.results_folder +
+                                              '/average_max_time_waited_per_intersection_history.csv', index=False)
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
         """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set."""
@@ -720,7 +727,7 @@ class SimulationMetrics:
         self.args = args
         self.grid = grid
         self.current_sim_satisfaction_scores = {}
-        self.total_throughput_per_intersection = np.zeros(
+        self.total_population_per_intersection = np.zeros(
             (args.grid_size, args.grid_size))
 
         self.throughput_history_per_intersection = np.zeros(
@@ -757,7 +764,7 @@ class SimulationMetrics:
         for intersection in self.grid.all_intersections:
             id = intersection.id
             x_cord, y_cord = map(int, id)
-            self.total_throughput_per_intersection[x_cord][y_cord] += intersection.get_num_of_cars_in_intersection()
+            self.total_population_per_intersection[x_cord][y_cord] += intersection.get_num_of_cars_in_intersection()
 
     def retrieve_end_of_simulation_metrics(self):
         """Retrieves the metrics at the end of the simulation"""
