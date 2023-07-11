@@ -11,9 +11,9 @@ module load Python/3.9.6-GCCcore-11.2.0
  
 source $HOME/.envs/cars/bin/activate
  
-congestion_rate=("0.1" "0.15" "0.2")
-intersection_reward_type=("time" "time_and_urgency")
-auction_modifier_type=("adaptive" "static")
+congestion_rate=("0.05")
+intersection_reward_type=("time" "time_and_urgency" "max_time_waited")
+auction_modifier_type=("bandit" "static")
 
 # Loop through congestion_rate
 for var1 in "${congestion_rate[@]}"
@@ -25,7 +25,7 @@ do
         for var3 in "${auction_modifier_type[@]}"
         do
             # Execute your command with the current parameters
-            command="python3 aatc.py run --num_of_simulations 500 --grid_size 7 --num_of_epochs 2000 --congestion_rate=$var1 --intersection_reward_type=$var2 --auction_modifier_type=$var3"
+            command="python3 aatc.py run --num_of_simulations 200 --only_winning_bid_moves --grid_size 5 --num_of_epochs 100000 --adaptive_auction_discretization 10 --congestion_rate=$var1 --intersection_reward_type=$var2 --auction_modifier_type=$var3"
             echo "Executing: $command"
             eval $command
         done

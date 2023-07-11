@@ -71,7 +71,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--grid_size",
-        default=7,
+        default=5,
         choices=range(2, 10),
         metavar="[2-100]",
         type=int,

@@ -248,13 +248,13 @@ class MasterKeeper:
                 scores_per_bidding_type[bidding_type] = [score]
         # The average is now calculated
         for bidding_type in scores_per_bidding_type:
-            last_epoch_average_satisfaction_score_per_bidding_type[bidding_type] = sum(
-                scores_per_bidding_type[bidding_type]) / len(scores_per_bidding_type[bidding_type])
+            last_epoch_average_satisfaction_score_per_bidding_type[bidding_type] = round(sum(
+                scores_per_bidding_type[bidding_type]) / len(scores_per_bidding_type[bidding_type]), 2)
         # Calculate the standard deviation
         last_epoch_average_satisfaction_score_per_bidding_type_std = {}
         for bidding_type in scores_per_bidding_type:
-            last_epoch_average_satisfaction_score_per_bidding_type_std[bidding_type] = np.std(
-                scores_per_bidding_type[bidding_type])
+            last_epoch_average_satisfaction_score_per_bidding_type_std[bidding_type] = round(np.std(
+                scores_per_bidding_type[bidding_type]), 2)
 
         # Export the results to a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
