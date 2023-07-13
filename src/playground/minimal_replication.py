@@ -1,11 +1,15 @@
 """In this file, a minimal replication of the Pardoe 2006 paper is attempted, excluding the meta-learning"""
 import numpy as np
+import random
+from math import exp
 from scipy.integrate import quad
+import matplotlib.pyplot as plt
+import numpy as np
 
 
-def plot_average_revenue_per_reserve(results):
-    import matplotlib.pyplot as plt
-    import numpy as np
+def plot_average_revenue_per_reserve(results, counts):
+    # Counts are divided by 2, so that the size is not too big
+    counts = [count/2 for count in counts]
 
     x = np.array([result[0] for result in results])
     y = np.array([result[1] for result in results])
@@ -13,8 +17,22 @@ def plot_average_revenue_per_reserve(results):
     # for each x, calculate the average y value
     x_unique = np.unique(x)
     y_unique = np.array([np.mean(y[x == i]) for i in x_unique])
-    plt.plot(x_unique, y_unique, 'o', color='black')
+    # the size of each marker is proportional to the number of times that reserve price was used
+    plt.scatter(x_unique, y_unique, s=counts, color='black')
     plt.xlabel("Reserve price")
+    plt.ylabel("Revenue")
+    plt.show()
+
+
+def plot_revenue_over_time(revenues):
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    x = np.arange(len(revenues))
+    y = np.array(revenues)
+
+    plt.plot(x, y, 'o', color='black')
+    plt.xlabel("Auction number")
     plt.ylabel("Revenue")
     plt.show()
 
@@ -26,23 +44,81 @@ def uniform_distribution_function(x, a, b):
 
 
 class AuctionModifier:
-    def __init__(self, reserve_min_max, discretization=13):
-        discretization = 13
+    def __init__(self, reserve_min_max, num_of_auctions, discretization=13, ):
+        self.num_of_auctions = num_of_auctions
+        self.discretization = 13
         # possible prices are between reserve_min_max[0] and reserve_min_max[1], spaced out evenly
-        self.reserve_prices = np.linspace(
-            reserve_min_max[0], reserve_min_max[1], discretization)
-        self.reserve_price = self.generate_reserve_price()
+        self.reserve_prices = list(np.linspace(
+            reserve_min_max[0], reserve_min_max[1], self.discretization))
+
+        self.bandit_params = {}   # Bandit adaptive parameters
+        self.init_bandit_params()
+
+    def get_counts(self):
+        return self.bandit_params['counts']
+
+    def init_bandit_params(self):
+        uninformed_score = 0.6
+        initial_temperature = 0.1
+        final_temperature = 0.01
+        # calculate the decay needed to reach the final temperature after num_of_auctions auctions
+        temperature_decay = (initial_temperature -
+                             final_temperature) / self.num_of_auctions
+        counts = [1] * len(self.reserve_prices)
+        average_scores = [uninformed_score] * len(self.reserve_prices)
+        boltzmann_probabilities = [0] * len(self.reserve_prices)
+
+        for prob_index, _ in enumerate(boltzmann_probabilities):
+            boltzmann_probabilities[prob_index] = round(exp(
+                average_scores[prob_index]/initial_temperature), 2)
+        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
+        for prob in boltzmann_probabilities:
+            prob = prob/sum_of_boltzmann_probabilities
+
+        self.bandit_params = {'possible_reserve_prices': self.reserve_prices,
+                              'temperature_decay': temperature_decay,
+                              'counts': counts,
+                              'average_scores': average_scores,
+                              'current_temperature': initial_temperature
+                              }
 
     def generate_reserve_price(self):
-        # placeholder: random choice in self.reserve_prices
-        return np.random.choice(self.reserve_prices)
+        """Returns the reserve price for the next auction, using the bandit adaptive algorithm."""
+        # First, reduce the temperature
+        self.bandit_params['current_temperature'] = self.bandit_params['current_temperature'] - \
+            self.bandit_params['temperature_decay']
 
-    def update_reserve_price(self):
+        # Then, calculate the Boltzmann probabilities.
+        boltzmann_probabilities = [
+            0] * len(self.bandit_params['possible_reserve_prices'])
+
+        for prob_index, _ in enumerate(boltzmann_probabilities):
+            try:
+                boltzmann_probabilities[prob_index] = exp(
+                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
+            except:
+                print(
+                    "ERROR: Error occured when trying to calculate the Boltzmann probabilities")
+                print("attempted to calc: exp(",
+                      self.bandit_params['average_scores'][prob_index], "/", self.bandit_params['current_temperature'])
+
+        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
+        for prob in boltzmann_probabilities:
+            prob = prob/sum_of_boltzmann_probabilities
+
+        # Last, choose a reserve price based on the Boltzmann probabilities.
+        chosen_reserve_price = random.choices(
+            self.bandit_params['possible_reserve_prices'], weights=boltzmann_probabilities)
+
+        return chosen_reserve_price[0]
+
+    def update_bandit_valuations(self, reserve_price, revenue):
         # placeholder: return random between 0 and 1
-        self.reserve_price = np.random.choice(self.reserve_prices)
-
-    def get_reserve_price(self):
-        return self.reserve_price
+        params_index = self.bandit_params['possible_reserve_prices'].index(
+            reserve_price)
+        self.bandit_params['counts'][params_index] += 1
+        self.bandit_params['average_scores'][params_index] = (self.bandit_params['average_scores'][params_index] * (
+            self.bandit_params['counts'][params_index]) + revenue) / (self.bandit_params['counts'][params_index] + 1)
 
 
 class Bidder:
@@ -141,13 +217,13 @@ class Auction:
 if __name__ == '__main__':
     increments = 0.001  # This is not defined in Pardoe 2006
     reserve_min_max = [0, 1]
-    number_of_auctions = 10000  # Pardoe uses 1000
+    number_of_auctions = 10000
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
-    
-    reserves_and_revenues = []  # Holds the auction results
-    auction_modifier = AuctionModifier(reserve_min_max)
 
+    reserves_and_revenues = []  # Holds the auction results
+    revenues_over_time = []  # Holds the revenue for each auction
+    auction_modifier = AuctionModifier(reserve_min_max, number_of_auctions)
 
     for i in range(number_of_auctions):
         # create gaussian distribution of valuations, with mean randomly picked between 0 and 1 and variance 10^x where x is randomly picked between -2 and 1
@@ -175,11 +251,16 @@ if __name__ == '__main__':
             v_bidder2, a_bidder, valuations_min_max)]
 
         auction = Auction(
-            auction_modifier.get_reserve_price(), bidders, increments)
+            auction_modifier.generate_reserve_price(), bidders, increments)
         auction.run_auction()
         reserves_and_revenues.append(auction.get_end_of_auction_stats())
+        revenues_over_time.append(auction.get_end_of_auction_stats()[1])
 
         # Update the reserve price for the next auction
-        auction_modifier.update_reserve_price()
+        auction_modifier.update_bandit_valuations(auction.get_end_of_auction_stats()[
+            0], auction.get_end_of_auction_stats()[1])
 
-    plot_average_revenue_per_reserve(reserves_and_revenues)
+    plot_average_revenue_per_reserve(
+        reserves_and_revenues, auction_modifier.get_counts())
+
+    plot_revenue_over_time(revenues_over_time)
