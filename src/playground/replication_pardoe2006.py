@@ -165,8 +165,6 @@ class Auction:
         self.winner = None
 
     def get_end_of_auction_stats(self):
-        # print("At a reserve price of", round(self.reserve_price, 3),
-        #       "the revenue is", round(self.revenue, 3))
         return self.reserve_price, self.revenue
 
     def run_auction(self):
