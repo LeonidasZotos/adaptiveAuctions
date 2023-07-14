@@ -5,6 +5,8 @@ from math import exp
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import numpy as np
+from tqdm import tqdm
+from multiprocessing import Pool
 
 
 def plot_average_revenue_per_reserve(results, counts):
@@ -28,8 +30,10 @@ def plot_revenue_over_time(revenues):
     import matplotlib.pyplot as plt
     import numpy as np
 
-    x = np.arange(len(revenues))
-    y = np.array(revenues)
+    # calculate the average revenue for each auction
+    x = np.array([i for i in range(len(revenues[0]))])
+    y = np.array([np.mean([revenues[i][j] for i in range(len(revenues))])
+                  for j in range(len(revenues[0]))])
 
     plt.plot(x, y, 'o', color='black')
     plt.xlabel("Auction number")
@@ -214,10 +218,11 @@ class Auction:
                 self.winner = highest_bid_holder
 
 
-if __name__ == '__main__':
+def run_simulation(id):
+    sim_id = id
     increments = 0.001  # This is not defined in Pardoe 2006
     reserve_min_max = [0, 1]
-    number_of_auctions = 10000
+    number_of_auctions = 6000
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
 
@@ -260,7 +265,28 @@ if __name__ == '__main__':
         auction_modifier.update_bandit_valuations(auction.get_end_of_auction_stats()[
             0], auction.get_end_of_auction_stats()[1])
 
-    plot_average_revenue_per_reserve(
-        reserves_and_revenues, auction_modifier.get_counts())
+    return reserves_and_revenues, revenues_over_time, auction_modifier
 
-    plot_revenue_over_time(revenues_over_time)
+
+if __name__ == '__main__':
+
+    revenues_over_time_all_sims = []
+    last_reserves_and_revenues = []
+    last_auction_modifier = None
+
+    pool = Pool()  # Default number of processes will be used
+
+    with tqdm(total=500) as pbar:
+        for results in pool.imap(run_simulation, range(500)):
+            last_reserves_and_revenues = results[0]
+            last_auction_modifier = results[2]
+            revenues_over_time_all_sims.append(results[1])
+            pbar.update()
+
+    pool.close()
+    pool.join()
+
+    plot_average_revenue_per_reserve(
+        last_reserves_and_revenues, last_auction_modifier.get_counts())
+
+    plot_revenue_over_time(revenues_over_time_all_sims)
