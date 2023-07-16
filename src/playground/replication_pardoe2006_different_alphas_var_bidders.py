@@ -12,32 +12,36 @@ from multiprocessing import Pool
 def plot_average_revenue_per_reserve(results, counts):
     # Counts are divided by 2, so that the size is not too big
     counts = [count/2 for count in counts]
-
     x = np.array([result[0] for result in results])
     y = np.array([result[1] for result in results])
 
     # for each x, calculate the average y value
     x_unique = np.unique(x)
     y_unique = np.array([np.mean(y[x == i]) for i in x_unique])
-    # the size of each marker is proportional to the number of times that reserve price was used
+
+    # The size of each marker is proportional to the number of times that reserve price was used
     plt.scatter(x_unique, y_unique, s=counts, color='black')
     plt.xlabel("Reserve price")
     plt.ylabel("Revenue")
     plt.show()
 
 
-def plot_revenue_over_time(revenues):
+def plot_revenue_over_time(revenues_adaptive, revenues_random):
     import matplotlib.pyplot as plt
     import numpy as np
 
     # calculate the average revenue for each auction
-    x = np.array([i for i in range(len(revenues[0]))])
-    y = np.array([np.mean([revenues[i][j] for i in range(len(revenues))])
-                  for j in range(len(revenues[0]))])
+    x = np.array([i for i in range(len(revenues_adaptive[0]))])
+    y_adaptive = np.array([np.mean([revenues_adaptive[i][j] for i in range(len(revenues_adaptive))])
+                           for j in range(len(revenues_adaptive[0]))])
+    y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
+                         for j in range(len(revenues_random[0]))])
 
-    plt.plot(x, y, 'o', color='black')
+    plt.plot(x, y_adaptive, label="adaptive")
+    plt.plot(x, y_random, label="random")
     plt.xlabel("Auction number")
     plt.ylabel("Revenue")
+    plt.legend()
     plt.show()
 
 
@@ -48,7 +52,7 @@ def uniform_distribution_function(x, a, b):
 
 
 class AuctionModifier:
-    def __init__(self, reserve_min_max, num_of_auctions, discretization=13, ):
+    def __init__(self, reserve_min_max, num_of_auctions):
         self.num_of_auctions = num_of_auctions
         self.discretization = 13
         # possible prices are between reserve_min_max[0] and reserve_min_max[1], spaced out evenly
@@ -111,6 +115,11 @@ class AuctionModifier:
         chosen_reserve_price = random.choices(
             self.bandit_params['possible_reserve_prices'], weights=boltzmann_probabilities)
 
+        # if there is a parameter with count 1, choose that one, so that we try it out.
+        if 1 in self.bandit_params['counts']:
+            chosen_reserve_price = [
+                self.bandit_params['possible_reserve_prices'][self.bandit_params['counts'].index(1)]]
+
         return chosen_reserve_price[0]
 
     def update_bandit_valuations(self, reserve_price, revenue):
@@ -130,34 +139,30 @@ class Bidder:
         self.aversion = loss_aversion
         self.valuations_min_max = valuations_min_max
 
-    def integral_equilibrium_function(self, v1):
-        return (self.valuation - (self.aversion * v1)) * uniform_distribution_function(v1, self.valuations_min_max[0], self.valuations_min_max[1])
-
-    def equilibrium_result_is_positive(self, reserve_price):
-        # Returns whether the equilibrium function is positive
-        return quad(self.integral_equilibrium_function, reserve_price, self.valuation)[0] > 0
-
     def will_participate_in_auction_as_first_bidder(self, reserve_price):
         # Returns whether the bidder will participate in the auction
         return self.valuation > reserve_price
 
-    def will_participate_in_auction_as_second_bidder(self, reserve_price):
-        # Returns whether the bidder will participate in the auction
-        return self.equilibrium_result_is_positive(reserve_price)
+    def will_participate_in_auction_not_as_first_bidder(self, current_price):
+        # Returns whether the bidder will participate in the auction. Can be included in the previous function but this is more readable
+        return self.valuation > current_price
 
     def bid_further(self, current_price):
         # This is only executed if the bidder is participating in the auction. Returns True if the bidder wants to stay in the auction, False if not.
-        if current_price < self.valuation * self.aversion:
+        if current_price < (self.valuation * self.aversion):
             return True
         return False
+
+    def submit_full_bid(self):
+        # Is this a valid shortcut to having to go through the whole increments? That will save computational time
+        return self.valuation * self.aversion
 
 
 class Auction:
     def __init__(self, reserve_price, bidders, increment):
-        self.bidder1 = bidders[0]
-        self.bidder2 = bidders[1]
-        self.increment = increment
         self.reserve_price = reserve_price
+        self.bidders = bidders
+        self.increment = increment
         self.revenue = 0
         self.winner = None
 
@@ -165,59 +170,58 @@ class Auction:
         return self.reserve_price, self.revenue
 
     def run_auction(self):
-        current_bid = 0
+        current_price = 0
         highest_bid_holder = None
-        # Randomly choose who bids first
-        first_bidder = np.random.choice([self.bidder1, self.bidder2])
-        second_bidder = self.bidder1 if first_bidder == self.bidder2 else self.bidder2
-        # If the 1st bidder participates in the auction:
-        if first_bidder.will_participate_in_auction_as_first_bidder(self.reserve_price):
-            current_bid = self.reserve_price
-            highest_bid_holder = first_bidder
-            if second_bidder.will_participate_in_auction_as_second_bidder(self.reserve_price):
-                current_bid += self.increment
-                highest_bid_holder = second_bidder
-                # Run auction with both bidders
-                while True:
-                    if first_bidder.bid_further(current_bid):
-                        current_bid += self.increment
-                        highest_bid_holder = first_bidder
-                    else:
-                        self.revenue = current_bid
-                        self.winner = highest_bid_holder
-                        break
+        # Randomly order the bidders
+        random.shuffle(self.bidders)
+        participating_bidders = []
+        for bidder in self.bidders:
+            if participating_bidders == [] and bidder.will_participate_in_auction_as_first_bidder(self.reserve_price):
+                participating_bidders.append(bidder)
+                current_price = self.reserve_price  # First bidder matches the reserve price
+                highest_bid_holder = bidder
+            if bidder.will_participate_in_auction_not_as_first_bidder(current_price):
+                participating_bidders.append(bidder)
+                # Subsequent bidders match the current price and increase it by the minimum increment
+                current_price += self.increment
+                highest_bid_holder = bidder
+        # At this stage, we know who is willing to participate in the auction, and all participating bidders become less-averse, as they at some point had the highest bid
+        if len(participating_bidders) == 0:  # No one participates
+            self.revenue = 0
+            self.winner = None
+            # this clause is redundant?
+        elif len(participating_bidders) == 1:
+            # If there is only one bidder, they pay the reserve price
+            self.revenue = self.reserve_price
+            self.winner = participating_bidders[0]
+        elif len(participating_bidders) > 1:
+            bids = [bidder.submit_full_bid()
+                    for bidder in participating_bidders]
+            # order bids and bidders by bid. Bids are in decreasing order
+            bids, participating_bidders = zip(
+                *sorted(zip(bids, participating_bidders), reverse=True))
+            current_price = bids[0]
+            highest_bid_holder = participating_bidders[0]
+            second_highest_bid = bids[1]
+            # At this stage, there is only one bidder left, and they are the winner
+            self.revenue = second_highest_bid + self.increment
+            self.winner = highest_bid_holder
+            # The commented code below is the original code, which does the same but is slower.
+            # The above is a shortcut, where the bidder pays the 2nd highest bid as that's when the last competing bidder dropped out.
+            # while len(participating_bidders) > 1:
+            #     # The bidders bid in the same order. If a bidder does not bid further, they are removed from the list of participating bidders
+            #     for bidder in participating_bidders:
+            #         if bidder.bid_further(current_price):
+            #             current_price += self.increment
+            #             highest_bid_holder = bidder
+            #         else:
+            #             participating_bidders.remove(bidder)
 
-                    if second_bidder.bid_further(current_bid):
-                        current_bid += self.increment
-                        highest_bid_holder = second_bidder
-                    else:
-                        self.revenue = current_bid
-                        self.winner = highest_bid_holder
-                        break
 
-            else:
-                # The 2nd bidder does not participate, so the auction is over
-                self.revenue = current_bid
-                self.winner = highest_bid_holder
-
-        else:
-            # If the 1st bidder does not participate in the auction:
-            if second_bidder.will_participate_in_auction_as_first_bidder(self.reserve_price):
-                current_bid = self.reserve_price
-                highest_bid_holder = second_bidder
-                # Here, the 1st bidder does not participate, and only second_bidder participates, so the auction is over
-                self.revenue = current_bid
-            else:
-                # Here, neither bidder participates, so the auction is over. Returns 0 as revenue and None as winner
-                self.revenue = current_bid
-                self.winner = highest_bid_holder
-
-
-def run_simulation(id):
-    sim_id = id
+def run_simulation(reserve):
     increments = 0.001  # This is not defined in Pardoe 2006
     reserve_min_max = [0, 1]
-    number_of_auctions = 1000
+    number_of_auctions = 3000
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
 
@@ -226,6 +230,7 @@ def run_simulation(id):
     auction_modifier = AuctionModifier(reserve_min_max, number_of_auctions)
 
     for i in range(number_of_auctions):
+        num_of_bidders = random.randint(2, 3)
         # create gaussian distribution of valuations, with mean randomly picked between 0 and 1 and variance 10^x where x is randomly picked between -2 and 1
         # create gaussian distribution of loss aversions, with mean randomly picked between 1 and 2.5 and variance 10^x where x is randomly picked between -2 and 1
         mu_v, sigma_v = np.random.uniform(
@@ -233,28 +238,29 @@ def run_simulation(id):
         mu_a, sigma_a = np.random.uniform(
             aversions_min_max[0], aversions_min_max[1]), 10**np.random.uniform(-2, 1)
 
-        v_bidder1 = np.random.normal(mu_v, sigma_v)
-        v_bidder2 = np.random.normal(mu_v, sigma_v)
-        # Different loss_aversions for both bidders, not as in Pardoe 2006
-        a_bidder1 = np.random.normal(mu_a, sigma_a)
-        a_bidder2 = np.random.normal(mu_a, sigma_a)
+        v_bidders = [np.random.normal(mu_v, sigma_v)
+                     for i in range(num_of_bidders)]
+        a_bidders = [np.random.normal(mu_a, sigma_a) for i in range(
+            num_of_bidders)]  # different aversions per bidder
 
-        # Redraw if valuation is outside of the accepted range.
-        while v_bidder1 < valuations_min_max[0] or v_bidder1 > valuations_min_max[1]:
-            v_bidder1 = np.random.normal(mu_v, sigma_v)
-        while v_bidder2 < valuations_min_max[0] or v_bidder2 > valuations_min_max[1]:
-            v_bidder2 = np.random.normal(mu_v, sigma_v)
-        while a_bidder1 < aversions_min_max[0] or a_bidder1 > aversions_min_max[1]:
-            a_bidder1 = np.random.normal(mu_a, sigma_a)
-        while a_bidder2 < aversions_min_max[0] or a_bidder2 > aversions_min_max[1]:
-            a_bidder2 = np.random.normal(mu_a, sigma_a)
+        for i in range(num_of_bidders):
+            # Redraw if valuation or aversion is outside of the accepted range.
+            while v_bidders[i] < valuations_min_max[0] or v_bidders[i] > valuations_min_max[1]:
+                v_bidders[i] = np.random.normal(mu_v, sigma_v)
+            while a_bidders[i] < aversions_min_max[0] or a_bidders[i] > aversions_min_max[1]:
+                a_bidders[i] = np.random.normal(mu_a, sigma_a)
 
-        # Create the two bidders that will participate in the auction
-        bidders = [Bidder(v_bidder1, a_bidder1, valuations_min_max), Bidder(
-            v_bidder2, a_bidder2, valuations_min_max)]
+        bidders = [Bidder(v_bidder, a_bidder, valuations_min_max)
+                   for v_bidder, a_bidder in zip(v_bidders, a_bidders)]
 
-        auction = Auction(
-            auction_modifier.generate_reserve_price(), bidders, increments)
+        reserve_price = 0
+        if reserve == 'adaptive':
+            reserve_price = auction_modifier.generate_reserve_price()
+        elif reserve == 'random':
+            reserve_price = random.choices(list(np.linspace(
+                reserve_min_max[0], reserve_min_max[1], 13)))[0]  # randomly pick a reserve price
+
+        auction = Auction(reserve_price, bidders, increments)
         auction.run_auction()
         reserves_and_revenues.append(auction.get_end_of_auction_stats())
         revenues_over_time.append(auction.get_end_of_auction_stats()[1])
@@ -267,24 +273,31 @@ def run_simulation(id):
 
 
 if __name__ == '__main__':
-
-    revenues_over_time_all_sims = []
+    revenues_over_time_all_sims_adaptive = []
+    revenues_over_time_all_sims_random = []
     last_reserves_and_revenues = []
     last_auction_modifier = None
+    num_of_sims = 1000
 
     pool = Pool()  # Default number of processes will be used
 
-    with tqdm(total=500) as pbar:
-        for results in pool.imap(run_simulation, range(500)):
+    with tqdm(total=num_of_sims) as pbar:
+        for results in pool.imap(run_simulation, ["adaptive"] * num_of_sims):
             last_reserves_and_revenues = results[0]
             last_auction_modifier = results[2]
-            revenues_over_time_all_sims.append(results[1])
+            revenues_over_time_all_sims_adaptive.append(results[1])
+            pbar.update()
+
+    with tqdm(total=num_of_sims) as pbar:
+        for results in pool.imap(run_simulation, ["random"] * num_of_sims):
+            last_reserves_and_revenues = results[0]
+            last_auction_modifier = results[2]
+            revenues_over_time_all_sims_random.append(results[1])
             pbar.update()
 
     pool.close()
     pool.join()
-
     plot_average_revenue_per_reserve(
         last_reserves_and_revenues, last_auction_modifier.get_counts())
-
-    plot_revenue_over_time(revenues_over_time_all_sims)
+    plot_revenue_over_time(
+        revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)

@@ -1,6 +1,6 @@
 """This module contains the AuctionModifier class, which contains the modofier that is used to modify the auction parameters"""
 import random
-from math import exp
+from math import exp, inf
 
 
 class AuctionModifier:
@@ -143,13 +143,10 @@ class AuctionModifier:
 
         for prob_index, _ in enumerate(boltzmann_probabilities):
             try:
-                boltzmann_probabilities[prob_index] = round(exp(
-                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature']), 2)
-            except:
-                print(
-                    "ERROR: Error occured when trying to calculate the Boltzmann probabilities")
-                print("attempted to calc: exp(",
-                      self.bandit_params['average_scores'][prob_index], "/", self.bandit_params['current_temperature'])
+                boltzmann_probabilities[prob_index] = exp(
+                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
+            except OverflowError:
+                boltzmann_probabilities[prob_index] = inf
 
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
         for prob in boltzmann_probabilities:

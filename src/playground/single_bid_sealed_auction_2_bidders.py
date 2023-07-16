@@ -1,7 +1,7 @@
 """In this file, a minimal replication of the Pardoe 2006 paper is attempted, excluding the meta-learning"""
 import numpy as np
 import random
-from math import exp
+from math import exp, inf
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import numpy as np
@@ -98,11 +98,8 @@ class AuctionModifier:
             try:
                 boltzmann_probabilities[prob_index] = exp(
                     self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
-            except:
-                print(
-                    "ERROR: Error occured when trying to calculate the Boltzmann probabilities")
-                print("attempted to calc: exp(",
-                      self.bandit_params['average_scores'][prob_index], "/", self.bandit_params['current_temperature'])
+            except OverflowError:
+                boltzmann_probabilities[prob_index] = inf
 
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
         for prob in boltzmann_probabilities:
@@ -202,51 +199,60 @@ class Auction:
             auction_winner.win_auction()
             self.revenue = winning_bid
             self.winner = auction_winner
-            print("participation", winning_bid, "(reserve price: ", self.reserve_price,
-                  ", winner aversion: ", self.winner.aversion, ", winner: ", self.winner, ")")
+            # print("participation", winning_bid, "(reserve price: ", self.reserve_price,
+            #       ", winner aversion: ", self.winner.aversion, ", winner: ", self.winner, ")")
         if auction_winner is None:
             # If no one bids above the reserve price/participates, the revenue is 0
             self.revenue = 0
-            print("no participation", "(reserve price: ", self.reserve_price, ")")
+            # print("no participation", "(reserve price: ", self.reserve_price, ")")
 
 
 def run_simulation(reserve):
     reserve_min_max = [0, 1]
-    number_of_auctions = 100
+    total_number_of_auctions = 1000
+    number_of_auctions_per_set_of_bidders = 10
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
 
     reserves_and_revenues = []  # Holds the auction results
     revenues_over_time = []  # Holds the revenue for each auction
-    auction_modifier = AuctionModifier(reserve_min_max, number_of_auctions)
+    auction_modifier = AuctionModifier(
+        reserve_min_max, total_number_of_auctions)
 
-    # create gaussian distribution of valuations, with mean randomly picked between 0 and 1 and variance 10^x where x is randomly picked between -2 and 1
-    # create gaussian distribution of loss aversions, with mean randomly picked between 1 and 2.5 and variance 10^x where x is randomly picked between -2 and 1
+    # These are initialised here so that they can be used in the while loop. They change every number_of_auctions_per_set_of_bidders auctions
+    mu_v, sigma_v = 0, 0
+    mu_a, sigma_a = 0, 0
+    v_bidder1, v_bidder2, a_bidder1, a_bidder2 = 0, 0, 0, 0
     mu_v, sigma_v = np.random.uniform(
         valuations_min_max[0], valuations_min_max[1]), 10**np.random.uniform(-2, 1)
     mu_a, sigma_a = np.random.uniform(
         aversions_min_max[0], aversions_min_max[1]), 10**np.random.uniform(-2, 1)
+    bidders = []
 
-    v_bidder1 = np.random.normal(mu_v, sigma_v)
-    v_bidder2 = np.random.normal(mu_v, sigma_v)
-    # Different loss_aversions for both bidders, not as in Pardoe 2006
-    a_bidder1 = np.random.normal(mu_a, sigma_a)
-    a_bidder2 = np.random.normal(mu_a, sigma_a)
+    for auction in range(total_number_of_auctions):
+        # create gaussian distribution of valuations, with mean randomly picked between 0 and 1 and variance 10^x where x is randomly picked between -2 and 1
+        # create gaussian distribution of loss aversions, with mean randomly picked between 1 and 2.5 and variance 10^x where x is randomly picked between -2 and 1
 
-    # Redraw if valuation is outside of the accepted range.
-    while v_bidder1 < valuations_min_max[0] or v_bidder1 > valuations_min_max[1]:
-        v_bidder1 = np.random.normal(mu_v, sigma_v)
-    while v_bidder2 < valuations_min_max[0] or v_bidder2 > valuations_min_max[1]:
-        v_bidder2 = np.random.normal(mu_v, sigma_v)
-    while a_bidder1 < aversions_min_max[0] or a_bidder1 > aversions_min_max[1]:
-        a_bidder1 = np.random.normal(mu_a, sigma_a)
-    while a_bidder2 < aversions_min_max[0] or a_bidder2 > aversions_min_max[1]:
-        a_bidder2 = np.random.normal(mu_a, sigma_a)
-    # Create the two bidders that will participate in the auction
-    bidders = [Bidder(v_bidder1, a_bidder1, valuations_min_max, aversions_min_max, mu_a, sigma_a), Bidder(
-        v_bidder2, a_bidder2, valuations_min_max, aversions_min_max, mu_a, sigma_a)]
+        if (auction % number_of_auctions_per_set_of_bidders == 0):
+            v_bidder1 = np.random.normal(mu_v, sigma_v)
+            v_bidder2 = np.random.normal(mu_v, sigma_v)
+            # Different loss_aversions for both bidders, not as in Pardoe 2006
+            a_bidder1 = np.random.normal(mu_a, sigma_a)
+            a_bidder2 = np.random.normal(mu_a, sigma_a)
 
-    for i in range(number_of_auctions):
+            # Redraw if valuation is outside of the accepted range.
+            while v_bidder1 < valuations_min_max[0] or v_bidder1 > valuations_min_max[1]:
+                v_bidder1 = np.random.normal(mu_v, sigma_v)
+            while v_bidder2 < valuations_min_max[0] or v_bidder2 > valuations_min_max[1]:
+                v_bidder2 = np.random.normal(mu_v, sigma_v)
+            while a_bidder1 < aversions_min_max[0] or a_bidder1 > aversions_min_max[1]:
+                a_bidder1 = np.random.normal(mu_a, sigma_a)
+            while a_bidder2 < aversions_min_max[0] or a_bidder2 > aversions_min_max[1]:
+                a_bidder2 = np.random.normal(mu_a, sigma_a)
+            # Create the two bidders that will participate in the auction
+            bidders = [Bidder(v_bidder1, a_bidder1, valuations_min_max, aversions_min_max, mu_a, sigma_a), Bidder(
+                v_bidder2, a_bidder2, valuations_min_max, aversions_min_max, mu_a, sigma_a)]
+
         reserve_price = 0
         if reserve == 'adaptive':
             reserve_price = auction_modifier.generate_reserve_price()
@@ -270,18 +276,19 @@ if __name__ == '__main__':
     revenues_over_time_all_sims_random = []
     last_reserves_and_revenues = []
     last_auction_modifier = None
+    num_of_sims = 500
 
     pool = Pool()  # Default number of processes will be used
 
-    with tqdm(total=100) as pbar:
-        for results in pool.imap(run_simulation, ["adaptive"] * 100):
+    with tqdm(total=num_of_sims) as pbar:
+        for results in pool.imap(run_simulation, ["adaptive"] * num_of_sims):
             last_reserves_and_revenues = results[0]
             last_auction_modifier = results[2]
             revenues_over_time_all_sims_adaptive.append(results[1])
             pbar.update()
 
-    with tqdm(total=100) as pbar:
-        for results in pool.imap(run_simulation, ["random"] * 100):
+    with tqdm(total=num_of_sims) as pbar:
+        for results in pool.imap(run_simulation, ["random"] * num_of_sims):
             last_reserves_and_revenues = results[0]
             last_auction_modifier = results[2]
             revenues_over_time_all_sims_random.append(results[1])

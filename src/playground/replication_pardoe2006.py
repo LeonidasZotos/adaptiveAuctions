@@ -1,7 +1,7 @@
 """In this file, a minimal replication of the Pardoe 2006 paper is attempted, excluding the meta-learning"""
 import numpy as np
 import random
-from math import exp
+from math import exp, inf
 from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import numpy as np
@@ -12,32 +12,36 @@ from multiprocessing import Pool
 def plot_average_revenue_per_reserve(results, counts):
     # Counts are divided by 2, so that the size is not too big
     counts = [count/2 for count in counts]
-
     x = np.array([result[0] for result in results])
     y = np.array([result[1] for result in results])
 
     # for each x, calculate the average y value
     x_unique = np.unique(x)
     y_unique = np.array([np.mean(y[x == i]) for i in x_unique])
-    # the size of each marker is proportional to the number of times that reserve price was used
+
+    # The size of each marker is proportional to the number of times that reserve price was used
     plt.scatter(x_unique, y_unique, s=counts, color='black')
     plt.xlabel("Reserve price")
     plt.ylabel("Revenue")
     plt.show()
 
 
-def plot_revenue_over_time(revenues):
+def plot_revenue_over_time(revenues_adaptive, revenues_random):
     import matplotlib.pyplot as plt
     import numpy as np
 
     # calculate the average revenue for each auction
-    x = np.array([i for i in range(len(revenues[0]))])
-    y = np.array([np.mean([revenues[i][j] for i in range(len(revenues))])
-                  for j in range(len(revenues[0]))])
+    x = np.array([i for i in range(len(revenues_adaptive[0]))])
+    y_adaptive = np.array([np.mean([revenues_adaptive[i][j] for i in range(len(revenues_adaptive))])
+                           for j in range(len(revenues_adaptive[0]))])
+    y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
+                         for j in range(len(revenues_random[0]))])
 
-    plt.plot(x, y, 'o', color='black')
+    plt.plot(x, y_adaptive, label="adaptive")
+    plt.plot(x, y_random, label="random")
     plt.xlabel("Auction number")
     plt.ylabel("Revenue")
+    plt.legend()
     plt.show()
 
 
@@ -100,11 +104,8 @@ class AuctionModifier:
             try:
                 boltzmann_probabilities[prob_index] = exp(
                     self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
-            except:
-                print(
-                    "ERROR: Error occured when trying to calculate the Boltzmann probabilities")
-                print("attempted to calc: exp(",
-                      self.bandit_params['average_scores'][prob_index], "/", self.bandit_params['current_temperature'])
+            except OverflowError:
+                boltzmann_probabilities[prob_index] = inf
 
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
         for prob in boltzmann_probabilities:
@@ -216,11 +217,10 @@ class Auction:
                 self.winner = highest_bid_holder
 
 
-def run_simulation(id):
-    sim_id = id
+def run_simulation(reserve):
     increments = 0.001  # This is not defined in Pardoe 2006
     reserve_min_max = [0, 1]
-    number_of_auctions = 6000
+    number_of_auctions = 1000
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
 
@@ -253,8 +253,14 @@ def run_simulation(id):
         bidders = [Bidder(v_bidder1, a_bidder, valuations_min_max), Bidder(
             v_bidder2, a_bidder, valuations_min_max)]
 
-        auction = Auction(
-            auction_modifier.generate_reserve_price(), bidders, increments)
+        reserve_price = 0
+        if reserve == 'adaptive':
+            reserve_price = auction_modifier.generate_reserve_price()
+        elif reserve == 'random':
+            reserve_price = random.choices(list(np.linspace(
+                reserve_min_max[0], reserve_min_max[1], 13)))[0]  # randomly pick a reserve price
+
+        auction = Auction(reserve_price, bidders, increments)
         auction.run_auction()
         reserves_and_revenues.append(auction.get_end_of_auction_stats())
         revenues_over_time.append(auction.get_end_of_auction_stats()[1])
@@ -267,24 +273,31 @@ def run_simulation(id):
 
 
 if __name__ == '__main__':
-
-    revenues_over_time_all_sims = []
+    revenues_over_time_all_sims_adaptive = []
+    revenues_over_time_all_sims_random = []
     last_reserves_and_revenues = []
     last_auction_modifier = None
+    num_of_sims = 1000
 
     pool = Pool()  # Default number of processes will be used
 
-    with tqdm(total=500) as pbar:
-        for results in pool.imap(run_simulation, range(500)):
+    with tqdm(total=num_of_sims) as pbar:
+        for results in pool.imap(run_simulation, ["adaptive"] * num_of_sims):
             last_reserves_and_revenues = results[0]
             last_auction_modifier = results[2]
-            revenues_over_time_all_sims.append(results[1])
+            revenues_over_time_all_sims_adaptive.append(results[1])
+            pbar.update()
+
+    with tqdm(total=num_of_sims) as pbar:
+        for results in pool.imap(run_simulation, ["random"] * num_of_sims):
+            last_reserves_and_revenues = results[0]
+            last_auction_modifier = results[2]
+            revenues_over_time_all_sims_random.append(results[1])
             pbar.update()
 
     pool.close()
     pool.join()
-
     plot_average_revenue_per_reserve(
         last_reserves_and_revenues, last_auction_modifier.get_counts())
-
-    plot_revenue_over_time(revenues_over_time_all_sims)
+    plot_revenue_over_time(
+        revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
