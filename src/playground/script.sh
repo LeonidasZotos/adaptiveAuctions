@@ -1,0 +1,7 @@
+#!/bin/bash
+
+pyenv activate cars
+python 03replication_pardoe2006_different_alphas_var_bidders.py
+python 04repeating_auctions.py
+python 09asingle_bid_sealed_auction_2_bidders.py
+python 09bsingle_bid_sealed_auction_4_bidders.py

@@ -1,4 +1,5 @@
 """In this file, a minimal replication of the Pardoe 2006 paper is attempted, excluding the meta-learning"""
+import os
 import numpy as np
 import random
 from math import exp, inf
@@ -9,7 +10,7 @@ from tqdm import tqdm
 from multiprocessing import Pool
 
 
-def plot_average_revenue_per_reserve(results, counts):
+def plot_average_revenue_per_reserve(results_folder_name, results, counts):
     # Counts are divided by 2, so that the size is not too big
     counts = [count/2 for count in counts]
     x = np.array([result[0] for result in results])
@@ -23,10 +24,14 @@ def plot_average_revenue_per_reserve(results, counts):
     plt.scatter(x_unique, y_unique, s=counts, color='black')
     plt.xlabel("Reserve price")
     plt.ylabel("Revenue")
-    plt.show()
+
+    if not os.path.exists(results_folder_name):
+        os.makedirs(results_folder_name)
+    plt.savefig(results_folder_name + '/average_revenue_per_reserve.png')
+    plt.close()
 
 
-def plot_revenue_over_time(revenues_adaptive, revenues_random):
+def plot_revenue_over_time(results_folder_name, revenues_adaptive, revenues_random):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -42,7 +47,11 @@ def plot_revenue_over_time(revenues_adaptive, revenues_random):
     plt.xlabel("Auction number")
     plt.ylabel("Revenue")
     plt.legend()
-    plt.show()
+
+    if not os.path.exists(results_folder_name):
+        os.makedirs(results_folder_name)
+    plt.savefig(results_folder_name + '/revenue_over_time.png')
+    plt.close()
 
 
 def uniform_distribution_function(x, a, b):
@@ -220,7 +229,7 @@ class Auction:
 def run_simulation(reserve):
     increments = 0.001  # This is not defined in Pardoe 2006
     reserve_min_max = [0, 1]
-    number_of_auctions = 1000
+    number_of_auctions = 2000
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
 
@@ -273,11 +282,13 @@ def run_simulation(reserve):
 
 
 if __name__ == '__main__':
+    results_folder_name = str(os.path.basename(__file__))
+    results_folder_name = results_folder_name[:-3]
     revenues_over_time_all_sims_adaptive = []
     revenues_over_time_all_sims_random = []
     last_reserves_and_revenues = []
     last_auction_modifier = None
-    num_of_sims = 1000
+    num_of_sims = 2000
 
     pool = Pool()  # Default number of processes will be used
 
@@ -297,7 +308,7 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
-    plot_average_revenue_per_reserve(
-        last_reserves_and_revenues, last_auction_modifier.get_counts())
-    plot_revenue_over_time(
-        revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
+    plot_average_revenue_per_reserve(results_folder_name,
+                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
+    plot_revenue_over_time(results_folder_name,
+                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)

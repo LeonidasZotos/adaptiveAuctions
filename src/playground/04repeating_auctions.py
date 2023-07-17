@@ -1,4 +1,5 @@
-"""In this file, a minimal replication of the Pardoe 2006 paper is attempted, excluding the meta-learning"""
+"""In this file, 03 is expanded with bidders that participate in multiple auctions, instead of changing bidders every auction."""
+import os
 import numpy as np
 import random
 from math import exp, inf
@@ -8,7 +9,7 @@ from tqdm import tqdm
 from multiprocessing import Pool
 
 
-def plot_average_revenue_per_reserve(results, counts):
+def plot_average_revenue_per_reserve(results_folder_name, results, counts):
     # Counts are divided by 2, so that the size is not too big
     counts = [count/2 for count in counts]
     x = np.array([result[0] for result in results])
@@ -22,10 +23,14 @@ def plot_average_revenue_per_reserve(results, counts):
     plt.scatter(x_unique, y_unique, s=counts, color='black')
     plt.xlabel("Reserve price")
     plt.ylabel("Revenue")
-    plt.show()
+
+    if not os.path.exists(results_folder_name):
+        os.makedirs(results_folder_name)
+    plt.savefig(results_folder_name + '/average_revenue_per_reserve.png')
+    plt.close()
 
 
-def plot_revenue_over_time(revenues_adaptive, revenues_random):
+def plot_revenue_over_time(results_folder_name, revenues_adaptive, revenues_random):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -41,7 +46,11 @@ def plot_revenue_over_time(revenues_adaptive, revenues_random):
     plt.xlabel("Auction number")
     plt.ylabel("Revenue")
     plt.legend()
-    plt.show()
+
+    if not os.path.exists(results_folder_name):
+        os.makedirs(results_folder_name)
+    plt.savefig(results_folder_name + '/revenue_over_time.png')
+    plt.close()
 
 
 def uniform_distribution_function(x, a, b):
@@ -131,12 +140,11 @@ class AuctionModifier:
 
 
 class Bidder:
-    def __init__(self, valuation, loss_aversion, valuations_min_max):
+    def __init__(self, valuation, loss_aversion):
         # Will be different for the competitor, as in Pardoe 2006
         self.valuation = valuation
         # Will be the same for the competitor, as in Pardoe 2006
         self.aversion = loss_aversion
-        self.valuations_min_max = valuations_min_max
 
     def will_participate_in_auction_as_first_bidder(self, reserve_price):
         # Returns whether the bidder will participate in the auction
@@ -217,40 +225,52 @@ class Auction:
             #             participating_bidders.remove(bidder)
 
 
+def create_bidders(num_of_bidders, valuations_min_max, aversions_min_max):
+    # create gaussian distribution of valuations, with mean randomly picked between 0 and 1 and variance 10^x where x is randomly picked between -2 and 1
+    # create gaussian distribution of loss aversions, with mean randomly picked between 1 and 2.5 and variance 10^x where x is randomly picked between -2 and 1
+    mu_v, sigma_v = np.random.uniform(
+        valuations_min_max[0], valuations_min_max[1]), 10**np.random.uniform(-2, 1)
+    mu_a, sigma_a = np.random.uniform(
+        aversions_min_max[0], aversions_min_max[1]), 10**np.random.uniform(-2, 1)
+
+    v_bidders = [np.random.normal(mu_v, sigma_v)
+                 for i in range(num_of_bidders)]
+    a_bidders = [np.random.normal(mu_a, sigma_a) for i in range(
+        num_of_bidders)]  # different aversions per bidder
+
+    for i in range(num_of_bidders):
+        # Redraw if valuation or aversion is outside of the accepted range.
+        while v_bidders[i] < valuations_min_max[0] or v_bidders[i] > valuations_min_max[1]:
+            v_bidders[i] = np.random.normal(mu_v, sigma_v)
+        while a_bidders[i] < aversions_min_max[0] or a_bidders[i] > aversions_min_max[1]:
+            a_bidders[i] = np.random.normal(mu_a, sigma_a)
+
+    bidders = [Bidder(v_bidder, a_bidder)
+               for v_bidder, a_bidder in zip(v_bidders, a_bidders)]
+
+    return bidders
+
+
 def run_simulation(reserve):
     increments = 0.001  # This is not defined in Pardoe 2006
     reserve_min_max = [0, 1]
-    number_of_auctions = 3000
+    total_number_of_auctions = 2000
+    number_of_auctions_per_set_of_bidders = 20
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
-
     reserves_and_revenues = []  # Holds the auction results
     revenues_over_time = []  # Holds the revenue for each auction
-    auction_modifier = AuctionModifier(reserve_min_max, number_of_auctions)
+    auction_modifier = AuctionModifier(
+        reserve_min_max, total_number_of_auctions)
 
-    for i in range(number_of_auctions):
-        num_of_bidders = random.randint(2, 3)
-        # create gaussian distribution of valuations, with mean randomly picked between 0 and 1 and variance 10^x where x is randomly picked between -2 and 1
-        # create gaussian distribution of loss aversions, with mean randomly picked between 1 and 2.5 and variance 10^x where x is randomly picked between -2 and 1
-        mu_v, sigma_v = np.random.uniform(
-            valuations_min_max[0], valuations_min_max[1]), 10**np.random.uniform(-2, 1)
-        mu_a, sigma_a = np.random.uniform(
-            aversions_min_max[0], aversions_min_max[1]), 10**np.random.uniform(-2, 1)
-
-        v_bidders = [np.random.normal(mu_v, sigma_v)
-                     for i in range(num_of_bidders)]
-        a_bidders = [np.random.normal(mu_a, sigma_a) for i in range(
-            num_of_bidders)]  # different aversions per bidder
-
-        for i in range(num_of_bidders):
-            # Redraw if valuation or aversion is outside of the accepted range.
-            while v_bidders[i] < valuations_min_max[0] or v_bidders[i] > valuations_min_max[1]:
-                v_bidders[i] = np.random.normal(mu_v, sigma_v)
-            while a_bidders[i] < aversions_min_max[0] or a_bidders[i] > aversions_min_max[1]:
-                a_bidders[i] = np.random.normal(mu_a, sigma_a)
-
-        bidders = [Bidder(v_bidder, a_bidder, valuations_min_max)
-                   for v_bidder, a_bidder in zip(v_bidders, a_bidders)]
+    bidders = []
+    for auction in range(total_number_of_auctions):
+        if auction % number_of_auctions_per_set_of_bidders == 0:
+            # Create new bidders every number_of_auctions_per_set_of_bidders auctions
+            # If number_of_auctions_per_set_of_bidders is 1, we end up with the same experiment as 03
+            # They are drawn from an entirely new population
+            bidders = create_bidders(random.randint(
+                2, 3), valuations_min_max, aversions_min_max)
 
         reserve_price = 0
         if reserve == 'adaptive':
@@ -272,11 +292,13 @@ def run_simulation(reserve):
 
 
 if __name__ == '__main__':
+    results_folder_name = str(os.path.basename(__file__))
+    results_folder_name = results_folder_name[:-3]
     revenues_over_time_all_sims_adaptive = []
     revenues_over_time_all_sims_random = []
     last_reserves_and_revenues = []
     last_auction_modifier = None
-    num_of_sims = 1000
+    num_of_sims = 2000
 
     pool = Pool()  # Default number of processes will be used
 
@@ -296,7 +318,7 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
-    plot_average_revenue_per_reserve(
-        last_reserves_and_revenues, last_auction_modifier.get_counts())
-    plot_revenue_over_time(
-        revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
+    plot_average_revenue_per_reserve(results_folder_name,
+                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
+    plot_revenue_over_time(results_folder_name,
+                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
