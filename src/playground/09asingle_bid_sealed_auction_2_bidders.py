@@ -2,7 +2,6 @@
 import numpy as np
 import random
 from math import exp, inf
-from scipy.integrate import quad
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
