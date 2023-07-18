@@ -1,7 +1,13 @@
 #!/bin/bash
 
-pyenv activate cars
+python 01replication_pardoe2006.py
+python 02replication_pardoe2006_different_alphas.py
 python 03replication_pardoe2006_different_alphas_var_bidders.py
 python 04repeating_auctions.py
-python 09asingle_bid_sealed_auction_2_bidders.py
-python 09bsingle_bid_sealed_auction_4_bidders.py
+python 05measuring_max_time_waited.py
+python 06max_time_waited_train_on_max_time.py
+python 07zero_reserve_price.py
+python 08only_valuation.py
+python 09variable_population.py
+python 10inactivity_boost.py
+python 11mixed_metric.py

@@ -313,4 +313,4 @@ if __name__ == '__main__':
     pool.join()
 
     plot_metric_over_time(results_folder_name,
-                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
+                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")

@@ -29,9 +29,7 @@ def plot_average_revenue_per_reserve(results_folder_name, results, counts):
     plt.close()
 
 
-def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x = 20):
-    import matplotlib.pyplot as plt
-    import numpy as np
+def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x=20):
 
     # Calculate the average revenue for each auction
     x = np.array([i for i in range(len(revenues_adaptive[0]))])
@@ -55,7 +53,6 @@ def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_rando
     plt.savefig(results_folder_name + '/' +
                 str(variable_name) + '_over_time.png')
     plt.close()
-
 
 
 def uniform_distribution_function(x, a, b):
@@ -307,5 +304,5 @@ if __name__ == '__main__':
     pool.close()
     pool.join()
 
-    plot_metric_over_time(results_folder_name,
-                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
+    plot_metric_over_time(results_folder_name, revenues_over_time_all_sims_adaptive,
+                          revenues_over_time_all_sims_random, "Revenue")
