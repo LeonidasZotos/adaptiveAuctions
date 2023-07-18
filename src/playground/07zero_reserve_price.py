@@ -10,16 +10,17 @@ from tqdm import tqdm
 from multiprocessing import Pool
 
 
-def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name):
-    import matplotlib.pyplot as plt
-    import numpy as np
-
+def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x=20):
     # Calculate the average revenue for each auction
     x = np.array([i for i in range(len(revenues_adaptive[0]))])
     y_adaptive = np.array([np.mean([revenues_adaptive[i][j] for i in range(len(revenues_adaptive))])
                            for j in range(len(revenues_adaptive[0]))])
     y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
                          for j in range(len(revenues_random[0]))])
+    # Exclude the first x auctions, as they are not representative
+    x = x[exclude_first_x:]
+    y_adaptive = y_adaptive[exclude_first_x:]
+    y_random = y_random[exclude_first_x:]
 
     plt.plot(x, y_adaptive, label="adaptive")
     plt.plot(x, y_random, label="random")
@@ -201,10 +202,6 @@ if __name__ == '__main__':
             max_time_waited_over_time_all_sims_adaptive.append(results[2])
             pbar.update()
 
-    # First, we plot the revenues over time
-    plot_metric_over_time(results_folder_name,
-                          revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")
-
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["random"] * num_of_sims):
             last_reserves_and_revenues = results[0]
@@ -214,6 +211,10 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
+
+    # First, we plot the revenues over time
+    plot_metric_over_time(results_folder_name,
+                          revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")
 
     # Then, we plot the 1/(1+max_time_waited) over time
     plot_metric_over_time(results_folder_name,

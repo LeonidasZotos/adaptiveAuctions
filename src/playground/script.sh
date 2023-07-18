@@ -11,3 +11,5 @@ python 08only_valuation.py
 python 09variable_population.py
 python 10inactivity_boost.py
 python 11mixed_metric.py
+python 99asingle_bid_sealed_auction_2_bidders.py
+python 99bsingle_bid_sealed_auction_4_bidders.py
