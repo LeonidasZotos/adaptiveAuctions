@@ -76,14 +76,6 @@ class AuctionModifier:
                              final_temperature) / self.num_of_auctions
         counts = [1] * len(self.reserve_prices)
         average_scores = [uninformed_score] * len(self.reserve_prices)
-        boltzmann_probabilities = [0] * len(self.reserve_prices)
-
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = round(exp(
-                average_scores[prob_index]/initial_temperature), 2)
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
 
         self.bandit_params = {'possible_reserve_prices': self.reserve_prices,
                               'temperature_decay': temperature_decay,
@@ -297,6 +289,8 @@ if __name__ == '__main__':
             revenues_over_time_all_sims_adaptive.append(results[1])
             pbar.update()
 
+    plot_average_revenue_per_reserve(results_folder_name,
+                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["random"] * num_of_sims):
             last_reserves_and_revenues = results[0]
@@ -306,7 +300,6 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
-    plot_average_revenue_per_reserve(results_folder_name,
-                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
+    
     plot_revenue_over_time(results_folder_name,
                            revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)

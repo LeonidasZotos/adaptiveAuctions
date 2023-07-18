@@ -31,16 +31,20 @@ def plot_average_revenue_per_reserve(results_folder_name, results, counts):
     plt.close()
 
 
-def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name):
+def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x = 20):
     import matplotlib.pyplot as plt
     import numpy as np
 
-    # calculate the average revenue for each auction
+    # Calculate the average revenue for each auction
     x = np.array([i for i in range(len(revenues_adaptive[0]))])
     y_adaptive = np.array([np.mean([revenues_adaptive[i][j] for i in range(len(revenues_adaptive))])
                            for j in range(len(revenues_adaptive[0]))])
     y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
                          for j in range(len(revenues_random[0]))])
+    # Exclude the first x auctions, as they are not representative
+    x = x[exclude_first_x:]
+    y_adaptive = y_adaptive[exclude_first_x:]
+    y_random = y_random[exclude_first_x:]
 
     plt.plot(x, y_adaptive, label="adaptive")
     plt.plot(x, y_random, label="random")
@@ -54,11 +58,6 @@ def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_rando
                 str(variable_name) + '_over_time.png')
     plt.close()
 
-
-def uniform_distribution_function(x, a, b):
-    if x < a or x > b:
-        return 0
-    return 1 / (b - a)
 
 
 class AuctionModifier:
@@ -84,14 +83,6 @@ class AuctionModifier:
                              final_temperature) / self.num_of_auctions
         counts = [1] * len(self.reserve_prices)
         average_scores = [uninformed_score] * len(self.reserve_prices)
-        boltzmann_probabilities = [0] * len(self.reserve_prices)
-
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = round(exp(
-                average_scores[prob_index]/initial_temperature), 2)
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
 
         self.bandit_params = {'possible_reserve_prices': self.reserve_prices,
                               'temperature_decay': temperature_decay,
@@ -118,8 +109,8 @@ class AuctionModifier:
                 boltzmann_probabilities[prob_index] = inf
 
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
+        for prob_index, _ in enumerate(boltzmann_probabilities):
+            boltzmann_probabilities[prob_index] /= sum_of_boltzmann_probabilities
 
         # Last, choose a reserve price based on the Boltzmann probabilities.
         chosen_reserve_price = random.choices(
@@ -272,7 +263,7 @@ def run_simulation(reserve):
             # If number_of_auctions_per_set_of_bidders is 1, we end up with the same experiment as 03
             # They are drawn from an entirely new population
             bidders = create_bidders(random.randint(
-                2, 3), valuations_min_max, aversions_min_max)
+                2, 4), valuations_min_max, aversions_min_max)
 
         reserve_price = 0
         if reserve == 'adaptive':
@@ -314,6 +305,8 @@ if __name__ == '__main__':
             revenues_over_time_all_sims_adaptive.append(results[1])
             max_time_waited_over_time_all_sims_adaptive.append(results[2])
             pbar.update()
+    plot_average_revenue_per_reserve(results_folder_name,
+                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
 
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["random"] * num_of_sims):
@@ -325,8 +318,6 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
-    plot_average_revenue_per_reserve(results_folder_name,
-                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
 
     # First, we plot the revenues over time
     plot_metric_over_time(results_folder_name,

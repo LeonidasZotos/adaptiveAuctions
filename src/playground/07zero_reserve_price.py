@@ -1,4 +1,5 @@
-"""In this file, 03 is expanded with bidders that participate in multiple auctions, instead of changing bidders every auction."""
+"""This file expands on 5, but has a constant reserve price of 0. No adaptive auctions are used. 
+This is a step towards 10, where we will use the adaptive auction with a zero reserve price (adapting a boost parameter)."""
 import os
 import numpy as np
 import random
@@ -9,28 +10,7 @@ from tqdm import tqdm
 from multiprocessing import Pool
 
 
-def plot_average_revenue_per_reserve(results_folder_name, results, counts):
-    # Counts are divided by 2, so that the size is not too big
-    counts = [count/2 for count in counts]
-    x = np.array([result[0] for result in results])
-    y = np.array([result[1] for result in results])
-
-    # for each x, calculate the average y value
-    x_unique = np.unique(x)
-    y_unique = np.array([np.mean(y[x == i]) for i in x_unique])
-
-    # The size of each marker is proportional to the number of times that reserve price was used
-    plt.scatter(x_unique, y_unique, s=counts, color='black')
-    plt.xlabel("Reserve price")
-    plt.ylabel("Revenue")
-
-    if not os.path.exists(results_folder_name):
-        os.makedirs(results_folder_name)
-    plt.savefig(results_folder_name + '/average_revenue_per_reserve.png')
-    plt.close()
-
-
-def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x = 20):
+def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -40,10 +20,6 @@ def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_rando
                            for j in range(len(revenues_adaptive[0]))])
     y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
                          for j in range(len(revenues_random[0]))])
-    # Exclude the first x auctions, as they are not representative
-    x = x[exclude_first_x:]
-    y_adaptive = y_adaptive[exclude_first_x:]
-    y_random = y_random[exclude_first_x:]
 
     plt.plot(x, y_adaptive, label="adaptive")
     plt.plot(x, y_random, label="random")
@@ -58,84 +34,13 @@ def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_rando
     plt.close()
 
 
-class AuctionModifier:
-    def __init__(self, reserve_min_max, num_of_auctions):
-        self.num_of_auctions = num_of_auctions
-        self.discretization = 13
-        # possible prices are between reserve_min_max[0] and reserve_min_max[1], spaced out evenly
-        self.reserve_prices = list(np.linspace(
-            reserve_min_max[0], reserve_min_max[1], self.discretization))
-
-        self.bandit_params = {}   # Bandit adaptive parameters
-        self.init_bandit_params()
-
-    def get_counts(self):
-        return self.bandit_params['counts']
-
-    def init_bandit_params(self):
-        uninformed_score = 0.6
-        initial_temperature = 0.1
-        final_temperature = 0.01
-        # calculate the decay needed to reach the final temperature after num_of_auctions auctions
-        temperature_decay = (initial_temperature -
-                             final_temperature) / self.num_of_auctions
-        counts = [1] * len(self.reserve_prices)
-        average_scores = [uninformed_score] * len(self.reserve_prices)
-
-        self.bandit_params = {'possible_reserve_prices': self.reserve_prices,
-                              'temperature_decay': temperature_decay,
-                              'counts': counts,
-                              'average_scores': average_scores,
-                              'current_temperature': initial_temperature
-                              }
-
-    def generate_reserve_price(self):
-        """Returns the reserve price for the next auction, using the bandit adaptive algorithm."""
-        # First, reduce the temperature
-        self.bandit_params['current_temperature'] = self.bandit_params['current_temperature'] - \
-            self.bandit_params['temperature_decay']
-
-        # Then, calculate the Boltzmann probabilities.
-        boltzmann_probabilities = [
-            0] * len(self.bandit_params['possible_reserve_prices'])
-
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            try:
-                boltzmann_probabilities[prob_index] = exp(
-                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
-            except OverflowError:
-                boltzmann_probabilities[prob_index] = inf
-
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] /= sum_of_boltzmann_probabilities
-
-        # Last, choose a reserve price based on the Boltzmann probabilities.
-        chosen_reserve_price = random.choices(
-            self.bandit_params['possible_reserve_prices'], weights=boltzmann_probabilities)
-
-        # if there is a parameter with count 1, choose that one, so that we try it out.
-        if 1 in self.bandit_params['counts']:
-            chosen_reserve_price = [
-                self.bandit_params['possible_reserve_prices'][self.bandit_params['counts'].index(1)]]
-
-        return chosen_reserve_price[0]
-
-    def update_bandit_valuations(self, reserve_price, revenue):
-        # placeholder: return random between 0 and 1
-        params_index = self.bandit_params['possible_reserve_prices'].index(
-            reserve_price)
-        self.bandit_params['counts'][params_index] += 1
-        self.bandit_params['average_scores'][params_index] = (self.bandit_params['average_scores'][params_index] * (
-            self.bandit_params['counts'][params_index]) + revenue) / (self.bandit_params['counts'][params_index] + 1)
-
-
 class Bidder:
     def __init__(self, valuation, loss_aversion):
         # Will be different for the competitor, as in Pardoe 2006
         self.valuation = valuation
         # Will be the same for the competitor, as in Pardoe 2006
         self.aversion = loss_aversion
+        self.time_since_last_win = 0
 
     def will_participate_in_auction_as_first_bidder(self, reserve_price):
         # Returns whether the bidder will participate in the auction
@@ -165,7 +70,9 @@ class Auction:
         self.winner = None
 
     def get_end_of_auction_stats(self):
-        return self.reserve_price, self.revenue
+        max_time_waited = 1 / \
+            (1 + max([bidder.time_since_last_win for bidder in self.bidders]))
+        return self.reserve_price, self.revenue, max_time_waited
 
     def run_auction(self):
         current_price = 0
@@ -204,16 +111,12 @@ class Auction:
             # At this stage, there is only one bidder left, and they are the winner
             self.revenue = second_highest_bid + self.increment
             self.winner = highest_bid_holder
-            # The commented code below is the original code, which does the same but is slower.
-            # The above is a shortcut, where the bidder pays the 2nd highest bid as that's when the last competing bidder dropped out.
-            # while len(participating_bidders) > 1:
-            #     # The bidders bid in the same order. If a bidder does not bid further, they are removed from the list of participating bidders
-            #     for bidder in participating_bidders:
-            #         if bidder.bid_further(current_price):
-            #             current_price += self.increment
-            #             highest_bid_holder = bidder
-            #         else:
-            #             participating_bidders.remove(bidder)
+
+        self.winner.time_since_last_win = 0
+
+        for bidder in self.bidders:
+            # Increase time waited since last win.
+            bidder.time_since_last_win += 1
 
 
 def create_bidders(num_of_bidders, valuations_min_max, aversions_min_max):
@@ -249,10 +152,9 @@ def run_simulation(reserve):
     number_of_auctions_per_set_of_bidders = 20
     valuations_min_max = [0, 1]
     aversions_min_max = [1, 2.5]
-    reserves_and_revenues = []  # Holds the auction results
+    reserves_revenues_times = []  # Holds the auction results
     revenues_over_time = []  # Holds the revenue for each auction
-    auction_modifier = AuctionModifier(
-        reserve_min_max, total_number_of_auctions)
+    max_time_waited_over_time = []
 
     bidders = []
     for auction in range(total_number_of_auctions):
@@ -265,28 +167,27 @@ def run_simulation(reserve):
 
         reserve_price = 0
         if reserve == 'adaptive':
-            reserve_price = auction_modifier.generate_reserve_price()
+            reserve_price = 0
         elif reserve == 'random':
             reserve_price = random.choices(list(np.linspace(
                 reserve_min_max[0], reserve_min_max[1], 13)))[0]  # randomly pick a reserve price
 
         auction = Auction(reserve_price, bidders, increments)
         auction.run_auction()
-        reserves_and_revenues.append(auction.get_end_of_auction_stats())
+        reserves_revenues_times.append(auction.get_end_of_auction_stats())
         revenues_over_time.append(auction.get_end_of_auction_stats()[1])
+        max_time_waited_over_time.append(auction.get_end_of_auction_stats()[2])
 
-        # Update the reserve price for the next auction
-        auction_modifier.update_bandit_valuations(auction.get_end_of_auction_stats()[
-            0], auction.get_end_of_auction_stats()[1])
-
-    return reserves_and_revenues, revenues_over_time, auction_modifier
+    return reserves_revenues_times, revenues_over_time, max_time_waited_over_time
 
 
 if __name__ == '__main__':
     results_folder_name = str(os.path.basename(__file__))
     results_folder_name = results_folder_name[:-3]
     revenues_over_time_all_sims_adaptive = []
+    max_time_waited_over_time_all_sims_adaptive = []
     revenues_over_time_all_sims_random = []
+    max_time_waited_over_time_all_sims_random = []
     last_reserves_and_revenues = []
     last_auction_modifier = None
     num_of_sims = 2000
@@ -296,21 +197,24 @@ if __name__ == '__main__':
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["adaptive"] * num_of_sims):
             last_reserves_and_revenues = results[0]
-            last_auction_modifier = results[2]
             revenues_over_time_all_sims_adaptive.append(results[1])
+            max_time_waited_over_time_all_sims_adaptive.append(results[2])
             pbar.update()
-    plot_average_revenue_per_reserve(
-        results_folder_name, last_reserves_and_revenues, last_auction_modifier.get_counts())
+
+    # First, we plot the revenues over time
+    plot_metric_over_time(results_folder_name,
+                          revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")
 
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["random"] * num_of_sims):
             last_reserves_and_revenues = results[0]
-            last_auction_modifier = results[2]
             revenues_over_time_all_sims_random.append(results[1])
+            max_time_waited_over_time_all_sims_random.append(results[2])
             pbar.update()
 
     pool.close()
     pool.join()
 
+    # Then, we plot the 1/(1+max_time_waited) over time
     plot_metric_over_time(results_folder_name,
-                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
+                          max_time_waited_over_time_all_sims_adaptive, max_time_waited_over_time_all_sims_random, "1over1+max_time_waited")

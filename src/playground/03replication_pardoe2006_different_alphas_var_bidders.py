@@ -30,33 +30,32 @@ def plot_average_revenue_per_reserve(results_folder_name, results, counts):
     plt.close()
 
 
-def plot_revenue_over_time(results_folder_name, revenues_adaptive, revenues_random):
+def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x = 20):
     import matplotlib.pyplot as plt
     import numpy as np
 
-    # calculate the average revenue for each auction
+    # Calculate the average revenue for each auction
     x = np.array([i for i in range(len(revenues_adaptive[0]))])
     y_adaptive = np.array([np.mean([revenues_adaptive[i][j] for i in range(len(revenues_adaptive))])
                            for j in range(len(revenues_adaptive[0]))])
     y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
                          for j in range(len(revenues_random[0]))])
+    # Exclude the first x auctions, as they are not representative
+    x = x[exclude_first_x:]
+    y_adaptive = y_adaptive[exclude_first_x:]
+    y_random = y_random[exclude_first_x:]
 
     plt.plot(x, y_adaptive, label="adaptive")
     plt.plot(x, y_random, label="random")
     plt.xlabel("Auction number")
-    plt.ylabel("Revenue")
+    plt.ylabel(variable_name)
     plt.legend()
 
     if not os.path.exists(results_folder_name):
         os.makedirs(results_folder_name)
-    plt.savefig(results_folder_name + '/revenue_over_time.png')
+    plt.savefig(results_folder_name + '/' +
+                str(variable_name) + '_over_time.png')
     plt.close()
-
-
-def uniform_distribution_function(x, a, b):
-    if x < a or x > b:
-        return 0
-    return 1 / (b - a)
 
 
 class AuctionModifier:
@@ -82,14 +81,6 @@ class AuctionModifier:
                              final_temperature) / self.num_of_auctions
         counts = [1] * len(self.reserve_prices)
         average_scores = [uninformed_score] * len(self.reserve_prices)
-        boltzmann_probabilities = [0] * len(self.reserve_prices)
-
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = round(exp(
-                average_scores[prob_index]/initial_temperature), 2)
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
 
         self.bandit_params = {'possible_reserve_prices': self.reserve_prices,
                               'temperature_decay': temperature_decay,
@@ -296,6 +287,8 @@ if __name__ == '__main__':
             last_auction_modifier = results[2]
             revenues_over_time_all_sims_adaptive.append(results[1])
             pbar.update()
+    plot_average_revenue_per_reserve(
+        results_folder_name, last_reserves_and_revenues, last_auction_modifier.get_counts())
 
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["random"] * num_of_sims):
@@ -306,7 +299,6 @@ if __name__ == '__main__':
 
     pool.close()
     pool.join()
-    plot_average_revenue_per_reserve(results_folder_name,
-                                     last_reserves_and_revenues, last_auction_modifier.get_counts())
-    plot_revenue_over_time(results_folder_name,
+
+    plot_metric_over_time(results_folder_name,
                            revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random)
