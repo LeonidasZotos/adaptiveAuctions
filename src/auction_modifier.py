@@ -115,15 +115,6 @@ class AuctionModifier:
         counts = [0] * len(possible_param_combs)
         average_scores = [uninformed_score] * len(possible_param_combs)
 
-        # Calculate the Boltzmann probabilities.
-        boltzmann_probabilities = [0] * len(possible_param_combs)
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] = round(exp(
-                average_scores[prob_index]/initial_temperature), 2)
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
-
         self.bandit_params = {'possible_param_combs': possible_param_combs,
                               'temperature_decay': temperature_decay,
                               'counts': counts,
@@ -149,8 +140,8 @@ class AuctionModifier:
                 boltzmann_probabilities[prob_index] = inf
 
         sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob in boltzmann_probabilities:
-            prob = prob/sum_of_boltzmann_probabilities
+        for prob_index, _ in enumerate(boltzmann_probabilities):
+            boltzmann_probabilities[prob_index] /= sum_of_boltzmann_probabilities
 
         # Last, choose a parameter combination based on the Boltzmann probabilities.
         chosen_params = random.choices(

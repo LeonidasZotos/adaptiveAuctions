@@ -9,11 +9,24 @@ from tqdm import tqdm
 from multiprocessing import Pool
 
 
-def plot_bandit_valuations(auctionModifier):
-    params = auctionModifier.bandit_params["possible_boosts"]
-    valuations = auctionModifier.bandit_params["average_scores"]
-    counts = auctionModifier.bandit_params["counts"]
-    plt.scatter(params, valuations, s=counts, color='black')
+def plot_average_bandit_valuations(auction_modifiers):
+    num_of_modifiers = len(auction_modifiers)
+    params = auction_modifiers[0].bandit_params["possible_boosts"]
+    average_valuations_per_boost = [0] * len(params)
+    counts = [0] * len(params)
+
+    for modifier in auction_modifiers:
+        for index, param in enumerate(params):
+            average_valuations_per_boost[index] += modifier.bandit_params["average_scores"][index]
+            counts[index] += modifier.bandit_params["counts"][index]
+
+    for index, _ in enumerate(average_valuations_per_boost):
+        average_valuations_per_boost[index] /= num_of_modifiers
+
+    # Counts are divided by num_of_modifiers, so that we take the average
+    counts = [count/num_of_modifiers for count in counts]
+
+    plt.scatter(params, average_valuations_per_boost, s=counts, color='black')
     plt.xlabel("Inactivity boost")
     plt.ylabel("Average bandit valuation")
 
@@ -23,42 +36,31 @@ def plot_bandit_valuations(auctionModifier):
     plt.close()
 
 
-def plot_average_max_time_waited_per_boost(results_folder_name, results, counts):
-    # Counts are divided by 2, so that the size is not too big
-    x = np.array([result[0] for result in results])
-    y = np.array([result[1] for result in results])
+def plot_metric_over_time(results_folder_name, metrics_adaptive, metrics_random, variable_name, exclude_first_x=13):
+    # Calculate the average metric value for each auction
+    x = list(range(len(metrics_adaptive[0])))
+    y_adaptive = [0] * len(metrics_adaptive[0])
+    y_random = [0] * len(metrics_random[0])
 
-    # for each x, calculate the average y value
-    x_unique = np.unique(x)
-    y_unique = np.array([np.mean(y[x == i]) for i in x_unique])
-    # The size of each marker is proportional to the number of times that boost was used
-    plt.scatter(x_unique, y_unique, s=counts, color='black')
-    plt.xlabel("Inactivity boost")
-    plt.ylabel("1/max_time_waited")
+    for sim in metrics_adaptive:
+        for epoch in range(len(sim)):
+            y_adaptive[epoch] += sim[epoch][1]
 
-    if not os.path.exists(results_folder_name):
-        os.makedirs(results_folder_name)
-    plt.savefig(results_folder_name + '/average_revenue_per_boost.png')
-    plt.close()
+    y_adaptive = [metric/len(metrics_adaptive) for metric in y_adaptive]
 
+    for sim in metrics_random:
+        for epoch in range(len(sim)):
+            y_random[epoch] += sim[epoch][1]
 
-def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x = 20):
-    import matplotlib.pyplot as plt
-    import numpy as np
+    y_random = [metric/len(metrics_random) for metric in y_random]
 
-    # Calculate the average revenue for each auction
-    x = np.array([i for i in range(len(revenues_adaptive[0]))])
-    y_adaptive = np.array([np.mean([revenues_adaptive[i][j] for i in range(len(revenues_adaptive))])
-                           for j in range(len(revenues_adaptive[0]))])
-    y_random = np.array([np.mean([revenues_random[i][j] for i in range(len(revenues_random))])
-                         for j in range(len(revenues_random[0]))])
     # Exclude the first x auctions, as they are not representative
     x = x[exclude_first_x:]
     y_adaptive = y_adaptive[exclude_first_x:]
     y_random = y_random[exclude_first_x:]
 
-    plt.plot(x, y_adaptive, label="adaptive")
-    plt.plot(x, y_random, label="random")
+    plt.plot(x, y_adaptive, label="Adaptive")
+    plt.plot(x, y_random, label="Random")
     plt.xlabel("Auction number")
     plt.ylabel(variable_name)
     plt.legend()
@@ -68,7 +70,6 @@ def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_rando
     plt.savefig(results_folder_name + '/' +
                 str(variable_name) + '_over_time.png')
     plt.close()
-
 
 
 class AuctionModifier:
@@ -87,8 +88,8 @@ class AuctionModifier:
 
     def init_bandit_params(self):
         uninformed_score = 0
-        initial_temperature = 0.2 # was 0.1
-        final_temperature = 0.05 # was 0.01
+        initial_temperature = 0.2  # was 0.1
+        final_temperature = 0.05  # was 0.01
         # calculate the decay needed to reach the final temperature after num_of_auctions auctions
         temperature_decay = (initial_temperature -
                              final_temperature) / self.num_of_auctions
@@ -147,20 +148,33 @@ class Bidder:
     def __init__(self, valuation):
         # Will be different for the competitor, as in Pardoe 2006
         self.valuation = valuation
-        # This is set when the bidder enters an auction and is affected by their time since the last win
-        self.boosted_valuation = 0
+        # Time since the last win
         self.time_since_last_win = 0
 
-    def set_boosted_valuation(self, inactivity_boost):
-        self.boosted_valuation = self.valuation + \
-            (self.time_since_last_win * inactivity_boost)
+        # Auction-dependent parameters. Set at the start of each auction.
+        self.boosted_bid = 0
+        self.inact_rank = 0
 
-    def get_native_valuation(self):
+    def get_valuation(self):
         return self.valuation
 
-    def get_full_boosted_bid(self):
-        # Is this a valid shortcut to having to go through the whole increments? That will save computational time
-        return self.boosted_valuation
+    def get_time_since_last_win(self):
+        return self.time_since_last_win
+
+    def increase_time_since_last_win(self):
+        self.time_since_last_win += 1
+
+    def set_boosted_bid(self, boosted_bid):
+        self.boosted_bid = boosted_bid
+
+    def get_boosted_bid(self):
+        return self.boosted_bid
+
+    def set_inact_rank(self, rank):
+        self.inact_rank = rank
+
+    def get_inact_rank(self):
+        return self.inact_rank
 
 
 class Auction:
@@ -172,38 +186,53 @@ class Auction:
         self.winner = None
 
     def get_end_of_auction_stats(self):
-        max_time_waited = 1 / \
-            (max([bidder.time_since_last_win for bidder in self.bidders]))
-        return self.inactivity_boost, self.revenue, max_time_waited
+        winner_time_rank = self.winner.get_inact_rank()
+        return self.inactivity_boost, winner_time_rank
 
     def get_winner(self):
         return self.winner
 
-    def run_auction(self):
-        highest_bid_holder = None
-        # Randomly order the bidders
-        # Everyone participates since the reserve price is 0
-        random.shuffle(self.bidders)
-        for bidder in self.bidders:
-            bidder.set_boosted_valuation(self.inactivity_boost)
+    def set_inact_ranks(self):
+        # Order bidders by time since last win.
+        num_of_bidders = len(self.bidders)
+        self.bidders = sorted(
+            self.bidders, key=lambda bidder: bidder.get_time_since_last_win())
+        for index, bidder in enumerate(self.bidders):
+            bidder.set_inact_rank(index / num_of_bidders)
 
-        # Gather all (boosted) bids. # This is a shortcut. Instead of going through all the increments, we know that the winner will pay the 2nd highest bid + 0.01
-        boosted_bids = [bidder.get_full_boosted_bid()
-                        for bidder in self.bidders]
-        # Order bids and bidders by bid. Bids are in decreasing order
-        boosted_bids, self.bidders = zip(
-            *sorted(zip(boosted_bids, self.bidders), reverse=True))
+        # If they are equal, give them the same rank.
+        for index, bidder in enumerate(self.bidders):
+            if index != 0 and bidder.get_time_since_last_win() == self.bidders[index-1].get_time_since_last_win():
+                bidder.set_inact_rank(self.bidders[index-1].get_inact_rank())
+
+    def run_auction(self, debug=False):
+        highest_bid_holder = None
+        # First, set the inactivity ranks
+        self.set_inact_ranks()
+        # Then, set the boosted bids
+        for bidder in self.bidders:
+            bidder.set_boosted_bid(
+                bidder.get_valuation() + (bidder.get_inact_rank() * self.inactivity_boost))
+            if debug:
+                print("Bidder with valuation ", str(round(bidder.get_valuation(), 2)), "and inactivity, ", str(bidder.get_time_since_last_win(
+                )), "has rank ", str(round(bidder.get_inact_rank(), 2)), "and boosted bid ", str(round(bidder.get_boosted_bid(), 2)), "[boost=", str(round(self.inactivity_boost, 2)), "]")
+
+        # Then, randomly order the bidders. Everyone participates since the reserve price is 0
+        random.shuffle(self.bidders)
+
+        # This is a shortcut. Instead of going through all the increments, we know that the winner will pay the 2nd highest bid + 0.0
+        # Order bidders by their bids
+        self.bidders = sorted(
+            self.bidders, key=lambda bidder: bidder.get_boosted_bid(), reverse=True)
         highest_bid_holder = self.bidders[0]
-        second_highest_bid = self.bidders[1].get_full_boosted_bid()
+        second_highest_bid = self.bidders[1].get_boosted_bid()
         # At this stage, there is only one bidder left, and they are the winner
         self.revenue = second_highest_bid + 0.01
         self.winner = highest_bid_holder
 
-        self.winner.time_since_last_win = 0
-
         for bidder in self.bidders:
             # Increase time waited since last win.
-            bidder.time_since_last_win += 1
+            bidder.increase_time_since_last_win()
 
 
 def create_bidders(num_of_bidders, valuations_min_max):
@@ -227,14 +256,14 @@ def run_simulation(reserve):
     inactivity_boost_min_max = [0, 10]
     total_number_of_auctions = 2000
     valuations_min_max = [0, 1]
-    boosts_revenues_times = []  # Holds the auction results
-    revenues_over_time = []  # Holds the revenue for each auction
-    max_time_waited_over_time = []
+    # Holds the auction results, tuples: boosts, revenues, max_time_waited
+    time_rank_per_boost_per_auction = []
     auction_modifier = AuctionModifier(
         inactivity_boost_min_max, total_number_of_auctions)
 
     bidders = create_bidders(random.randint(2, 4), valuations_min_max)
     for auction_id in range(total_number_of_auctions):
+        # print("Auction ", auction_id)
         inactivity_boost = 0
         if reserve == 'adaptive':
             inactivity_boost = auction_modifier.generate_inactivity_boost()
@@ -244,13 +273,12 @@ def run_simulation(reserve):
 
         auction = Auction(inactivity_boost, bidders)
         auction.run_auction()
-        boosts_revenues_times.append(auction.get_end_of_auction_stats())
-        revenues_over_time.append(auction.get_end_of_auction_stats()[1])
-        max_time_waited_over_time.append(auction.get_end_of_auction_stats()[2])
+        time_rank_per_boost_per_auction.append(
+            auction.get_end_of_auction_stats())
 
-        # Update the reserve price for the next auction
+        # Update the bandit valuations for next auction
         auction_modifier.update_bandit_valuations(auction.get_end_of_auction_stats()[
-            0], auction.get_end_of_auction_stats()[2])  # We train on max_time_waited
+            0], auction.get_end_of_auction_stats()[1])  # We train on time_waited_rank, this  [1]
 
         # Remove winner and potentially add new bidders
         bidders.remove(auction.get_winner())
@@ -264,50 +292,36 @@ def run_simulation(reserve):
 
         bidders.extend(new_bidders)
 
-    return boosts_revenues_times, revenues_over_time, max_time_waited_over_time, auction_modifier
+    return time_rank_per_boost_per_auction, auction_modifier
 
 
 if __name__ == '__main__':
     results_folder_name = str(os.path.basename(__file__))
     results_folder_name = results_folder_name[:-3]
-    revenues_over_time_all_sims_adaptive = []
-    max_time_waited_over_time_all_sims_adaptive = []
-    revenues_over_time_all_sims_random = []
-    max_time_waited_over_time_all_sims_random = []
-    last_sim_boosts_and_revenues = []
-    last_auction_modifier = None
+    # Evaluations are now the time_waited rankings. Higher is better, bidder that waited most received priority. (0 to 1).
+    evaluations_over_time_all_sims_adaptive = []
+    evaluations_over_time_all_sims_random = []
+    auction_modifiers = []
     num_of_sims = 2000
 
     pool = Pool()  # Default number of processes will be used
 
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["adaptive"] * num_of_sims):
-            last_sim_boosts_and_revenues = results[0]
-            last_auction_modifier = results[3]
-            revenues_over_time_all_sims_adaptive.append(results[1])
-            max_time_waited_over_time_all_sims_adaptive.append(results[2])
+            evaluations_over_time_all_sims_adaptive.append(results[0])
+            auction_modifiers.append(results[1])
             pbar.update()
 
-    plot_bandit_valuations(last_auction_modifier)
-
-    plot_average_max_time_waited_per_boost(results_folder_name,
-                                           last_sim_boosts_and_revenues, last_auction_modifier.get_counts())
+    plot_average_bandit_valuations(auction_modifiers)
 
     with tqdm(total=num_of_sims) as pbar:
         for results in pool.imap(run_simulation, ["random"] * num_of_sims):
-            last_sim_boosts_and_revenues = results[0]
-            last_auction_modifier = results[3]
-            revenues_over_time_all_sims_random.append(results[1])
-            max_time_waited_over_time_all_sims_random.append(results[2])
+            evaluations_over_time_all_sims_random.append(results[0])
             pbar.update()
 
     pool.close()
     pool.join()
 
-    # First, we plot the revenues over time
+    # Here we plot the evaluations over time
     plot_metric_over_time(results_folder_name,
-                          revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")
-
-    # Then, we plot the 1/(max_time_waited) over time
-    plot_metric_over_time(results_folder_name,
-                          max_time_waited_over_time_all_sims_adaptive, max_time_waited_over_time_all_sims_random, "1over1+max_time_waited")
+                          evaluations_over_time_all_sims_adaptive, evaluations_over_time_all_sims_random, "Time Waited Rank\n Higher better")
