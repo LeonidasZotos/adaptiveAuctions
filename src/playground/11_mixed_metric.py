@@ -37,7 +37,6 @@ def plot_average_bandit_valuations(auction_modifiers):
 
 
 def plot_metric_over_time(results_folder_name, metrics_adaptive, metrics_random, variable_name, exclude_first_x=13):
-    # We exclude the first x trials because during that time, the bandit algorithm is just trying out all x options for the 1st time.
     # Calculate the average metric value for each auction
     x = list(range(len(metrics_adaptive[0])))
     y_adaptive = [0] * len(metrics_adaptive[0])
@@ -89,8 +88,8 @@ class AuctionModifier:
 
     def init_bandit_params(self):
         uninformed_score = 0
-        initial_temperature = 0.1  # was 0.1
-        final_temperature = 0.01  # was 0.01
+        initial_temperature = 0.2  # was 0.1
+        final_temperature = 0.05  # was 0.01
         # calculate the decay needed to reach the final temperature after num_of_auctions auctions
         temperature_decay = (initial_temperature -
                              final_temperature) / self.num_of_auctions
