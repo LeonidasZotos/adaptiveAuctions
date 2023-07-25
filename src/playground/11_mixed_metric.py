@@ -1,4 +1,4 @@
-"""This builds on 8 and introduces adaptive auctions again. Auctions train on max_time_waited, and bids are boosted by an inactivity factor that the auction determines."""
+"""This builds on 10 and introduces a mixed metric that considers both the time waited and the valuation of the bidder. The adaptive mechanism still only adapts the inact. boost."""
 import os
 import numpy as np
 import random
@@ -7,6 +7,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 from multiprocessing import Pool
+
+degree_of_discretisation = 13
 
 
 def plot_average_bandit_valuations(auction_modifiers):
@@ -24,7 +26,7 @@ def plot_average_bandit_valuations(auction_modifiers):
         average_valuations_per_boost[index] /= num_of_modifiers
 
     # Counts are divided by num_of_modifiers, so that we take the average
-    counts = [count/num_of_modifiers for count in counts]
+    counts = [count/(num_of_modifiers) for count in counts]
 
     plt.scatter(params, average_valuations_per_boost, s=counts, color='black')
     plt.xlabel("Inactivity boost")
@@ -36,7 +38,7 @@ def plot_average_bandit_valuations(auction_modifiers):
     plt.close()
 
 
-def plot_metric_over_time(results_folder_name, metrics_adaptive, metrics_random, variable_name, exclude_first_x=13):
+def plot_metric_over_time(results_folder_name, metrics_adaptive, metrics_random, variable_name, exclude_first_x=degree_of_discretisation):
     # Calculate the average metric value for each auction
     x = list(range(len(metrics_adaptive[0])))
     y_adaptive = [0] * len(metrics_adaptive[0])
@@ -75,7 +77,7 @@ def plot_metric_over_time(results_folder_name, metrics_adaptive, metrics_random,
 class AuctionModifier:
     def __init__(self, inactivity_boost_min_max, num_of_auctions):
         self.num_of_auctions = num_of_auctions
-        self.discretization = 13
+        self.discretization = degree_of_discretisation
         # possible inactivity_boosts are between inactivity_boost_min_max[0] and inactivity_boost_min_max[1], spaced out evenly
         self.inactivity_boosts = list(np.linspace(
             inactivity_boost_min_max[0], inactivity_boost_min_max[1], self.discretization))
@@ -88,8 +90,8 @@ class AuctionModifier:
 
     def init_bandit_params(self):
         uninformed_score = 0
-        initial_temperature = 0.2  # was 0.1
-        final_temperature = 0.05  # was 0.01
+        initial_temperature = 0.05  # was 0.1
+        final_temperature = 0.0004  # was 0.01
         # calculate the decay needed to reach the final temperature after num_of_auctions auctions
         temperature_decay = (initial_temperature -
                              final_temperature) / self.num_of_auctions
@@ -116,7 +118,7 @@ class AuctionModifier:
         for prob_index, _ in enumerate(boltzmann_probabilities):
             try:
                 boltzmann_probabilities[prob_index] = exp(
-                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
+                    self.bandit_params['average_scores'][prob_index]/(self.bandit_params['current_temperature']))
             except OverflowError:
                 boltzmann_probabilities[prob_index] = inf
 
@@ -153,7 +155,9 @@ class Bidder:
 
         # Auction-dependent parameters. Set at the start of each auction.
         self.boosted_bid = 0
-        self.inact_rank = 0
+        self.inact_rank = 0  # This is the rank of the inactivity.
+        # This is the rank of the native valuation, before boosts.
+        self.val_rank = 0
 
     def get_valuation(self):
         return self.valuation
@@ -176,6 +180,12 @@ class Bidder:
     def get_inact_rank(self):
         return self.inact_rank
 
+    def set_val_rank(self, rank):
+        self.val_rank = rank
+
+    def get_val_rank(self):
+        return self.val_rank
+
 
 class Auction:
     def __init__(self, inactivity_boost, bidders):
@@ -187,7 +197,9 @@ class Auction:
 
     def get_end_of_auction_stats(self):
         winner_time_rank = self.winner.get_inact_rank()
-        return self.inactivity_boost, winner_time_rank
+        winner_val_rank = self.winner.get_val_rank()
+        mixed_metric_value = (winner_time_rank + winner_val_rank)/4
+        return self.inactivity_boost, mixed_metric_value
 
     def get_winner(self):
         return self.winner
@@ -205,17 +217,31 @@ class Auction:
             if index != 0 and bidder.get_time_since_last_win() == self.bidders[index-1].get_time_since_last_win():
                 bidder.set_inact_rank(self.bidders[index-1].get_inact_rank())
 
+    def set_valuation_ranks(self):
+        # Order bidders by their valuations
+        num_of_bidders = len(self.bidders)
+        self.bidders = sorted(
+            self.bidders, key=lambda bidder: bidder.get_valuation())
+        for index, bidder in enumerate(self.bidders):
+            bidder.set_val_rank(index / num_of_bidders)
+
+        # If they are equal, give them the same rank.
+        for index, bidder in enumerate(self.bidders):
+            if index != 0 and bidder.get_valuation() == self.bidders[index-1].get_valuation():
+                bidder.set_val_rank(self.bidders[index-1].get_val_rank())
+
     def run_auction(self, debug=False):
         highest_bid_holder = None
-        # First, set the inactivity ranks
+        # First, set the inactivity and valuation ranks
         self.set_inact_ranks()
+        self.set_valuation_ranks()
         # Then, set the boosted bids
         for bidder in self.bidders:
             bidder.set_boosted_bid(
                 bidder.get_valuation() + (bidder.get_inact_rank() * self.inactivity_boost))
             if debug:
                 print("Bidder with valuation ", str(round(bidder.get_valuation(), 2)), "and inactivity, ", str(bidder.get_time_since_last_win(
-                )), "has rank ", str(round(bidder.get_inact_rank(), 2)), "and boosted bid ", str(round(bidder.get_boosted_bid(), 2)), "[boost=", str(round(self.inactivity_boost, 2)), "]")
+                )), "has inact. rank: ", str(round(bidder.get_inact_rank(), 2)), "val_rank:", str(round(bidder.get_val_rank(), 2)), "and boosted bid ", str(round(bidder.get_boosted_bid(), 2)), "[boost=", str(round(self.inactivity_boost, 2)), "]")
 
         # Then, randomly order the bidders. Everyone participates since the reserve price is 0
         random.shuffle(self.bidders)
@@ -253,7 +279,7 @@ def create_bidders(num_of_bidders, valuations_min_max):
 
 
 def run_simulation(reserve):
-    inactivity_boost_min_max = [0, 10]
+    inactivity_boost_min_max = [0, 5]
     total_number_of_auctions = 2000
     valuations_min_max = [0, 1]
     # Holds the auction results, tuples: boosts, revenues, max_time_waited
@@ -269,7 +295,7 @@ def run_simulation(reserve):
             inactivity_boost = auction_modifier.generate_inactivity_boost()
         elif reserve == 'random':
             inactivity_boost = random.choices(list(np.linspace(
-                inactivity_boost_min_max[0], inactivity_boost_min_max[1], 13)))[0]  # randomly pick a inactivity_boost
+                inactivity_boost_min_max[0], inactivity_boost_min_max[1], degree_of_discretisation)))[0]  # randomly pick a inactivity_boost
 
         auction = Auction(inactivity_boost, bidders)
         auction.run_auction()
@@ -324,4 +350,4 @@ if __name__ == '__main__':
 
     # Here we plot the evaluations over time
     plot_metric_over_time(results_folder_name,
-                          evaluations_over_time_all_sims_adaptive, evaluations_over_time_all_sims_random, "Time Waited Rank\n Higher better")
+                          evaluations_over_time_all_sims_adaptive, evaluations_over_time_all_sims_random, "Mixed Metric\n Higher better")

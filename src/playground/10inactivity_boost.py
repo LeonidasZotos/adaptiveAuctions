@@ -1,4 +1,4 @@
-"""This builds on 8 and introduces adaptive auctions again. Auctions train on max_time_waited, and bids are boosted by an inactivity factor that the auction determines."""
+"""This builds on 9 and introduces adaptive auctions again. Auctions train on inact_rank, and bids are boosted by an inactivity factor that the auction determines."""
 import os
 import numpy as np
 import random
@@ -254,7 +254,7 @@ def create_bidders(num_of_bidders, valuations_min_max):
 
 
 def run_simulation(reserve):
-    inactivity_boost_min_max = [0, 10]
+    inactivity_boost_min_max = [0, 5]
     total_number_of_auctions = 2000
     valuations_min_max = [0, 1]
     # Holds the auction results, tuples: boosts, revenues, max_time_waited
