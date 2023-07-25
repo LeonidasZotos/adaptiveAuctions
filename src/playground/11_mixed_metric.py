@@ -26,7 +26,7 @@ def plot_average_bandit_valuations(auction_modifiers):
         average_valuations_per_boost[index] /= num_of_modifiers
 
     # Counts are divided by num_of_modifiers, so that we take the average
-    counts = [count/(num_of_modifiers) for count in counts]
+    counts = [count/num_of_modifiers for count in counts]
 
     plt.scatter(params, average_valuations_per_boost, s=counts, color='black')
     plt.xlabel("Inactivity boost")
