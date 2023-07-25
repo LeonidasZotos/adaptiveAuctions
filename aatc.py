@@ -2,6 +2,7 @@
 
 import argparse
 from datetime import datetime
+from math import inf
 
 from src import run_simulations, clean
 
@@ -95,18 +96,18 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--credit_balance",
-        default=50,
-        type=float_range(1, 1000),
-        help="Initial & Renewal credit balance for each car. Defaults to 50. Must be a float between 1 and 1000."
+        default=inf,
+        type=float_range(1, inf),
+        help="Initial & Renewal credit balance for each car. Defaults to infinity. Must be a float between 1 and infinity."
     )
 
     run_parser.add_argument(
         "--wage_time",
-        default=50,
+        default=1,
         choices=range(1, 101),
         metavar="[1-100]",
         type=int,
-        help="Number of epochs between wage distributions. Defaults to 20. Must be an integer between 1 and 5000."
+        help="Number of epochs between wage distributions. Defaults to 1. Must be an integer between 1 and 100."
     )
 
     run_parser.add_argument(
@@ -125,7 +126,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--adaptive_auction_discretization",
-        default=5,
+        default=13,
         choices=range(1, 101),
         metavar="[1-100]",
         type=int,
@@ -155,7 +156,7 @@ if __name__ == '__main__':
     run_parser.add_argument(
         '--bidders_proportion',
         nargs=4,
-        default=[1, 1, 1, 0],
+        default=[1, 0, 0, 0],
         type=int,
         help="""Proportion for the types of bidders to use, should be a list of integers.
             Order: [static, random, free-riders & RL]
@@ -164,7 +165,6 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--results_folder",
-        # include time and date in the folder name
         default="results/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         type=str,
         help="Path to the Results Folder. Defaults to 'results'."

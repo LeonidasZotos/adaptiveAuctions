@@ -15,7 +15,6 @@ class BidGenerator:
         generate_bid(bidding_strategy, balance, urgency): Returns a bid, based on the bidding strategy
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
-    static_bid = 5  # This needs to be adjusted manually.
 
     def __init__(self, args):
         """Initialize the BidGenerator object.
@@ -28,13 +27,13 @@ class BidGenerator:
         return f'Bid Generator'
 
     def generate_static_bid(self, urgency):
-        """Returns a static bid, multiplied by the urgency
+        """Returns a static bid, which is the urgency
         Args:
             urgency (float): The urgency of the car.
         Returns:
-            float: A static bid, multiplied by the urgency
+            float: A static bid which is the urgency
         """
-        return self.static_bid * urgency
+        return urgency
 
     def generate_random_bid(self, balance):
         """Returns a random bid between 0 and the total balance of the car.
