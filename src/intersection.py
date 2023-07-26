@@ -24,7 +24,7 @@ class Intersection:
         get_intersection_description: Returns a string describing the intersection and everything in it.
         get_car_queues: Returns the car queues that are part of this intersection
         get_auction_fee: Returns the fee that should be paid.
-        get_intersection_reward_type: Returns the type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+        get_intersection_reward_type: Returns the type of reward for the intersection.
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
         get_num_of_cars_in_intersection: Returns the number of cars in the intersection
@@ -90,12 +90,14 @@ class Intersection:
         Returns:
             float: The fee that should be paid
         """
+        if len(self.auction_fees) == 0: # This can happen if we use 2nd price and we have removed fees due to not-possible movements.
+            return 0
         return self.auction_fees[0]
 
     def get_intersection_reward_type(self):
-        """Returns the type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+        """Returns the type of reward for the intersection. 
         Returns:
-            str: The type of reward for the intersection. Can be 'time' or 'time_and_urgency'
+            str: The type of reward for the intersection.
         """
         return self.args.intersection_reward_type
 
@@ -189,47 +191,67 @@ class Intersection:
             """
         return self.auction_modifier.get_parameters_and_valuations()
 
-    def hold_auction(self, second_price=False):
+    def calc_inact_rank(self):
+        ordered_queues = []
+        for queue in self.carQueues:
+            # Only collect bids from non-empty queues.
+            if not queue.is_empty():
+                ordered_queues.append(queue)
+
+        num_of_queues = len(ordered_queues)
+        ordered_queues = sorted(
+            ordered_queues, key=lambda queue: queue.get_time_inactive())
+        for index, queue in enumerate(ordered_queues):
+            queue.set_time_waited_rank(index / num_of_queues)
+
+        # If they are equal, give them the same rank.
+        for index, queue in enumerate(ordered_queues):
+            if index != 0 and queue.get_time_inactive() == ordered_queues[index-1].get_time_inactive():
+                queue.set_time_waited_rank(
+                    ordered_queues[index-1].get_time_waited_rank())
+                
+    def calc_bid_rank(self):
+        ordered_queues = []
+        for queue in self.carQueues:
+            # Only collect bids from non-empty queues.
+            if not queue.is_empty():
+                ordered_queues.append(queue)
+
+        num_of_queues = len(ordered_queues)
+        ordered_queues = sorted(
+            ordered_queues, key=lambda queue: queue.get_time_inactive())
+        for index, queue in enumerate(ordered_queues):
+            queue.set_time_waited_rank(index / num_of_queues)
+
+        # If they are equal, give them the same rank.
+        for index, queue in enumerate(ordered_queues):
+            if index != 0 and queue.get_time_inactive() == ordered_queues[index-1].get_time_inactive():
+                queue.set_time_waited_rank(
+                    ordered_queues[index-1].get_time_waited_rank())
+
+    def hold_auction(self):
         """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
-        Args:
-            second_price (bool): Whether to use the second price auction mechanism, instead of first-price. Defaults to False.
         Returns:
             tuple: A tuple containing two arrays. The first array contains the IDs of the winning queues, and the second 
                 array contains the destinations of the first car in each queue.
         """
-        def renormalize(n, range1, range2):
-            """Normalise a value n from range1 to range2. Nested function as it is only used to normalise the bid modifier boost
-            Args:
-                n (float): The value to be normalised
-                range1 (list): The range of the value n
-                range2 (list): The range to normalise to
-            Returns:
-                float: The normalised value
-            """
-            delta1 = max(range1) - min(range1)
-            if delta1 == 0:
-                delta1 = 0.0001  # Avoid division by zero
-            delta2 = max(range2) - min(range2)
-            return (delta2 * (n - min(range1)) / delta1) + min(range2)
-
         collected_bids = {}
         queue_waiting_times = {}
         queue_lengths = {}
-        # modification_boost_max_limit contains the max value of the final boost (e.g. max of 2 implies a boost of 2x, i.e.
-        # bid is doubled. The min limit is always 1)
-        modification_boost_max_limit = 3  # Maximum multiplier of the bid modifier boost
-        queue_delay_boost, queue_length_boost = self.auction_modifier.generate_auction_parameters()
-        self.last_tried_auction_params = [
-            queue_delay_boost, queue_length_boost]
+        queue_delay_boost = self.auction_modifier.generate_auction_parameters()
+        self.last_tried_auction_params = [queue_delay_boost]
 
         for queue in self.carQueues:
-            if not queue.is_empty():  # Only collect bids from non-empty queues
-                collected_bids[queue.id] = queue.collect_bids()
+            # Only collect bids from non-empty queues.
+            if not queue.is_empty():
+                # Only collect the first car's bid.
+                collected_bids[queue.id] = queue.collect_bids(
+                    only_collect_first=True)
                 queue_waiting_times[queue.id] = queue.get_time_inactive()
                 queue_lengths[queue.id] = queue.get_num_of_cars()
         # If there is only one entry:
         if len(collected_bids) == 1:
-            # We return the only queue, and its destination, and give no charge.
+            # We return the only queue, and its destination, and do not charge a fee.
             winning_queue = utils.get_car_queue_from_intersection(
                 self, list(collected_bids.keys())[0])
             destination = winning_queue.get_destination_of_first_car()
@@ -241,24 +263,14 @@ class Intersection:
         for key in collected_bids.keys():
             summed_bids[key] = sum(collected_bids[key].values())
 
-        # First calculate the initial modifications of all queues, before normalising them.
-        # We need to calculate them all first, as we need the min/max value for normalisation.
-        initial_modifications = {}
-        for key in summed_bids.keys():  # One modified/final bid per queue
-            initial_modification = queue_waiting_times[key] * \
-                queue_delay_boost + queue_lengths[key] * queue_length_boost
-            initial_modifications[key] = initial_modification
-
-        # Then normalise the modifications based on the min/max values of all modifications, and the given modification_boost_max_limit
+        # Calculate the final boosted bids
         final_bids = {}
+        # One modified/final bid per queue. Small noise is added to avoid ties.
         for key in summed_bids.keys():
-            normalised_modification = renormalize(
-                initial_modifications[key], initial_modifications.values(), [1, modification_boost_max_limit])
+            final_bids[key] = (summed_bids[key] + (queue_waiting_times[key]
+                               * queue_delay_boost)) + random.uniform(0, 0.01)
 
-            final_bids[key] = (1 + random.uniform(0, 0.01) +
-                               summed_bids[key]) * normalised_modification
-
-        # Winning queue is the queue with the highest bid, regardless of 1st/2nd price.
+        # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.
         final_bids = {k: v for k, v in sorted(
             final_bids.items(), key=lambda item: item[1], reverse=True)}
@@ -269,8 +281,11 @@ class Intersection:
         self.auction_fees = [summed_bids[queue.id]
                              for queue in queues_in_order]
 
-        if second_price:
-            self.auction_fees.pop(0)  # Remove the highest bid
+        # Calculate the inactivity and bid ranks, which will later be used for the reward
+        self.calc_inact_rank()
+
+        # Remove the highest bid as we have a 2nd price auction
+        self.remove_top_fee()
 
         destinations = [queue.get_destination_of_first_car()
                         for queue in queues_in_order]

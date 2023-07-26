@@ -72,7 +72,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--grid_size",
-        default=5,
+        default=4,
         choices=range(2, 10),
         metavar="[2-100]",
         type=int,
@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--auction_modifier_type",
-        default="static",
+        default="bandit",
         choices=["random", "static", "bandit"],
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'bandit'."
@@ -142,8 +142,8 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--intersection_reward_type",
-        default="time",
-        choices=["time", "time_and_urgency", "max_time_waited"],
+        default="time_waited_rank",
+        choices=["time", "time_and_urgency", "max_time_waited", "time_waited_rank"],
         type=str,
         help="Type of reward for the intersection. Defaults to 'max_time_waited'. Must be one of 'time', 'time_and_urgency' or 'max_time_waited' ."
     )

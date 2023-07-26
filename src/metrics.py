@@ -10,6 +10,8 @@ from itertools import zip_longest
 
 import src.utils as utils
 
+num_of_adaptive_params = 1
+
 
 class MasterKeeper:
     """
@@ -85,7 +87,7 @@ class MasterKeeper:
 
         # Sum of auction parameters valuations per intersection
         self.sum_auction_parameters_valuations_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, 2)))
+            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, num_of_adaptive_params)))
 
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
@@ -678,31 +680,57 @@ class MasterKeeper:
                                               '/average_max_time_waited_per_intersection_history.csv', index=False)
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
-        """Creates a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set."""
-        # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
-        average_reward_per_parameter_set_per_intersection = np.divide(
-            self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
+        """Creates a plot of subplots for each intersection. Each subplot is a 2 or 3d subplot of the evaluation per parameter set."""
 
-        parameter_space_2d = np.reshape(
-            self.auction_parameters_space, (self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization, 2))
-        rewards_2d = np.reshape(
-            average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization))
+        if num_of_adaptive_params == 1:
+            # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
+            average_reward_per_parameter_set_per_intersection = np.divide(
+                self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
 
-        # Create a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set.
-        fig = plt.figure(figsize=(20, 20))
-        for i in range(self.args.grid_size):
-            for j in range(self.args.grid_size):
-                ax = fig.add_subplot(self.args.grid_size, self.args.grid_size, i *
-                                     self.args.grid_size + j + 1, projection='3d')
-                ax.set_title('[' + str(i) + str(j) + ']')
-                ax.set_xlabel('Delay Boost')
-                ax.set_ylabel('QueueLength Boost')
-                ax.set_zlabel('Average Reward')
-                ax.plot_surface(parameter_space_2d[:, :, 0], parameter_space_2d[:, :, 1],
-                                rewards_2d[i, j, :, :], cmap='viridis', edgecolor='none')
-        plt.savefig(self.args.results_folder +
-                    '/average_reward_per_parameter_set_per_intersection.png')
-        plt.clf()
+            parameter_space_1d = np.reshape(
+                self.auction_parameters_space, (self.args.adaptive_auction_discretization, num_of_adaptive_params))
+            rewards_1d = np.reshape(
+                average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization))
+
+            # Create a plot of subplots for each intersection. Each subplot is a 2d subplot of the evaluation per parameter set.
+            fig, axs = plt.subplots(
+                self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
+            for i in range(self.args.grid_size):
+                for j in range(self.args.grid_size):
+                    axs[i, j].plot(parameter_space_1d[:, 0],
+                                   rewards_1d[i, j, :])
+                    axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                    axs[i, j].set_xlabel('Delay Boost')
+                    axs[i, j].set_ylabel('Average Reward')
+            plt.savefig(self.args.results_folder +
+                        '/average_reward_per_parameter_set_per_intersection.png')
+            plt.clf()
+
+        elif num_of_adaptive_params == 2:
+            # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
+            average_reward_per_parameter_set_per_intersection = np.divide(
+                self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
+
+            parameter_space_2d = np.reshape(
+                self.auction_parameters_space, (self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization, num_of_adaptive_params))
+            rewards_2d = np.reshape(
+                average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization))
+
+            # Create a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set.
+            fig = plt.figure(figsize=(20, 20))
+            for i in range(self.args.grid_size):
+                for j in range(self.args.grid_size):
+                    ax = fig.add_subplot(self.args.grid_size, self.args.grid_size, i *
+                                         self.args.grid_size + j + 1, projection='3d')
+                    ax.set_title('[' + str(i) + str(j) + ']')
+                    ax.set_xlabel('Delay Boost')
+                    ax.set_ylabel('QueueLength Boost')
+                    ax.set_zlabel('Average Reward')
+                    ax.plot_surface(parameter_space_2d[:, :, 0], parameter_space_2d[:, :, 1],
+                                    rewards_2d[i, j, :, :], cmap='viridis', edgecolor='none')
+            plt.savefig(self.args.results_folder +
+                        '/average_reward_per_parameter_set_per_intersection.png')
+            plt.clf()
 
 
 class SimulationMetrics:
@@ -752,7 +780,7 @@ class SimulationMetrics:
         # If discretisation is adaptive_auction_discretization and there are 2 parameters,
         # then there are adaptive_auction_discretization^2 possible combinations of parameters
         self.auction_parameters_space = np.zeros(
-            (pow(args.adaptive_auction_discretization, 2), 2))
+            (pow(args.adaptive_auction_discretization, num_of_adaptive_params), num_of_adaptive_params))
 
         self.auction_parameters_valuations_per_intersection = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]

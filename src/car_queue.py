@@ -47,6 +47,9 @@ class CarQueue:
         self.parent_intersection = parent_intersection
         self.time_inactive = 0
         self.bids = {}
+        self.bid_rank = 0  #  The rank of the bid compared to other queues of the intersection. Reset after every auction
+        #  The rank of the time waited compared to other queues of the intersection. Reset after every auction
+        self.time_waited_rank = 0
 
     def __str__(self):
         # Create list of all IDs of cars in the queue
@@ -120,6 +123,34 @@ class CarQueue:
             Intersection: The intersection that the queue belongs to
         """
         return self.parent_intersection
+
+    def set_bid_rank(self, rank):
+        """Sets the bid rank of the queue
+        Args:
+            rank (float): The rank of the queue
+        """
+        self.bid_rank = rank
+
+    def get_bid_rank(self):
+        """Returns the bid rank of the queue
+        Returns:
+            float: The bid rank of the queue
+        """
+        return self.bid_rank
+
+    def set_time_waited_rank(self, rank):
+        """Sets the time waited rank of the queue
+        Args:
+            rank (float): The rank of the queue
+        """
+        self.time_waited_rank = rank
+
+    def get_time_waited_rank(self):
+        """Returns the time waited rank of the queue
+        Returns:
+            float: The time waited rank of the queue
+        """
+        return self.time_waited_rank
 
 ### Queue Manipulation Functions ###
     def add_car(self, car):
@@ -226,6 +257,8 @@ class CarQueue:
                  * self.cars[0].get_urgency())
         elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
             reward = 1/(1+self.parent_intersection.get_max_time_waited())
+        elif self.parent_intersection.get_intersection_reward_type() == "time_waited_rank":
+            reward = self.get_time_waited_rank()
 
         self.parent_intersection.update_mechanism(reward)
         self.parent_intersection.add_reward_to_history(reward)
@@ -241,9 +274,12 @@ class CarQueue:
             1) Resetting the bids,
             2) Updating the number of cars in the queue, 
             3) Updating the inactivity time of the queue.
+            4) Reset the time waited rank of the queue and the bid rank of the queue
         """
         self.reset_bids()
         self.num_of_cars = self.get_num_of_cars()
         if not self.is_empty():
             # Inactivity time only increases if there are cars there.
             self.time_inactive += 1
+        self.bid_rank = 0
+        self.time_waited_rank = 0
