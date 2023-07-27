@@ -85,8 +85,8 @@ class AuctionModifier:
         # number of values to try for each parameter
         level_of_discretization = self.args.adaptive_auction_discretization
         uninformed_score = 0
-        initial_temperature = 0.1
-        temperature_decay = 0.99
+        initial_temperature = 1
+        temperature_decay = 1 # 1-> no decay.
 
         # Create all possible parameter combinations based on the level of discretization.
         queue_delay_min_limit = 0

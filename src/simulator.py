@@ -1,4 +1,5 @@
 """This module contains the Simulator class, which is responsible for running a single simulation."""
+from math import inf
 
 from src.metrics import SimulationMetrics
 from src.grid import Grid
@@ -49,13 +50,14 @@ class Simulator:
             # Every wage_time epochs, give credit to all cars
             if self.args.print_grid:
                 self.grid.print_grid(epoch)
-            if epoch % self.args.wage_time == 0:
-                # Give credit to all cars
-                if self.all_cars == []:
-                    raise Exception("ERROR: No Cars in Simulation.")
-                else:
-                    for car in self.all_cars:
-                        car.set_balance(self.args.credit_balance)
+            if self.args.credit_balance != inf: # Only do this in case it's not inf, to save computation.
+                if epoch % self.args.wage_time == 0:
+                    # Give credit to all cars
+                    if self.all_cars == []:
+                        raise Exception("ERROR: No Cars in Simulation.")
+                    else:
+                        for car in self.all_cars:
+                            car.set_balance(self.args.credit_balance)
             # Now that the credit has been given, run the epoch
             self.run_single_epoch(epoch)
         self.metrics_keeper.retrieve_end_of_simulation_metrics()
