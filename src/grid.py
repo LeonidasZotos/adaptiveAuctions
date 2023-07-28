@@ -104,7 +104,76 @@ class Grid:
             print(car)
         print("=======End of Cars=======")
 
+
+### Car spawning functions ###
+
+    def spawn_cars(self):
+        """Spawns cars in the grid with the given congestion rate. This should only be exectuted at the start of the simulation
+        Returns:
+            cars (list): A list of all cars that have been spawned. This is used by the simulator to keep track of all cars.
+        """
+        # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
+        total_spots = self.args.grid_size * \
+            self.args.grid_size * 4 * self.args.queue_capacity
+        number_of_spawns = int(total_spots * self.args.congestion_rate)
+        # Create a default BidGenerator object, which will be used if shared_bid_generator is True
+        bid_generator = BidGenerator(self.args)
+
+        # As long as spots need to be filled in, spawn cars
+        while number_of_spawns > 0:
+            # Pick a random intersection and queue
+            # We need two randoms as we have a 2D array
+            random_intersection = random.choice(self.all_intersections)
+            random_queue = random.choice(random_intersection.get_car_queues())
+            # If the queue has capacity, spawn a car
+            if random_queue.has_capacity():
+                # If shared_bid_generator is False, create a new BidGenerator object for each car
+                if not self.args.shared_bid_generator:
+                    bid_generator = BidGenerator(self.args)
+                bidding_type = random.choices(
+                    ['static', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
+                # Create a new car, number_of_spawns is actually the ID.
+                car = Car(self.args, number_of_spawns,
+                          random_queue, bidding_type, bid_generator)
+                # Add the car to the queue
+                random_queue.add_car(car)
+                # Add the car to the list of all cars
+                self.all_cars.append(car)
+                # Decrease the number of spawns left
+                number_of_spawns -= 1
+        print("spawned cars")
+        return self.all_cars
+
+    def respawn_cars(self):
+        """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, urgency)
+        Args:
+            grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
+        Returns:
+            satisfaction_scores (list): A list of small car copies and scores in the form of tuples, that represent
+                how well the trip went (based on time spent & urgency). Metric used for evaluation.
+        """
+        satisfaction_scores = []
+        for car in self.all_cars:
+            if car.is_at_destination():
+                # The time in traffic_network must increase now, as the car has reached its destination and will not go through the 'ready for new epoch' function
+                car.time_in_traffic_network += 1
+                # If the car is at its destination, remove it from the queue and spawn it somewhere else
+                utils.get_car_queue(self.all_car_queues,
+                                    car.car_queue_id).remove_car(car)
+                # Pick a random queue that has capacity
+                random_queue = random.choice(
+                    [queue for queue in self.all_car_queues if queue.has_capacity()])
+                # Append copy of car and satisfaction score to list
+                satisfaction_scores.append(car.calculate_satisfaction_score())
+                # Reset the car (new destination, new queue, new balance)
+                car.reset_car(random_queue.id)
+
+                random_queue.add_car(car)
+        return satisfaction_scores
+
+
 ### Movement functions ###
+
     def move_cars(self):
         """ Moves all cars in the grid based on the epoch_movements"""
         # First, calculate all movements that need to be made
@@ -172,71 +241,6 @@ class Grid:
         destination_queue.add_car(car_to_move)
         # Let the car know of its new queue
         car_to_move.set_car_queue_id(destination_queue_id)
-
-### Car spawning functions ###
-    def spawn_cars(self):
-        """Spawns cars in the grid with the given congestion rate. This should only be exectuted at the start of the simulation
-        Returns:
-            cars (list): A list of all cars that have been spawned. This is used by the simulator to keep track of all cars.
-        """
-        # Total spots: Number of Intersections * Number of Queues per intersection (4) * Capacity per queue
-        total_spots = self.args.grid_size * \
-            self.args.grid_size * 4 * self.args.queue_capacity
-        number_of_spawns = int(total_spots * self.args.congestion_rate)
-        # Create a default BidGenerator object, which will be used if shared_bid_generator is True
-        bid_generator = BidGenerator(self.args)
-
-        # As long as spots need to be filled in, spawn cars
-        while number_of_spawns > 0:
-            # Pick a random intersection and queue
-            # We need two randoms as we have a 2D array
-            random_intersection = random.choice(self.all_intersections)
-            random_queue = random.choice(random_intersection.get_car_queues())
-            # If the queue has capacity, spawn a car
-            if random_queue.has_capacity():
-                # If shared_bid_generator is False, create a new BidGenerator object for each car
-                if not self.args.shared_bid_generator:
-                    bid_generator = BidGenerator(self.args)
-                bidding_type = random.choices(
-                    ['static', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
-                # Create a new car, number_of_spawns is actually the ID.
-                car = Car(self.args, number_of_spawns,
-                          random_queue, bidding_type, bid_generator)
-                # Add the car to the queue
-                random_queue.add_car(car)
-                # Add the car to the list of all cars
-                self.all_cars.append(car)
-                # Decrease the number of spawns left
-                number_of_spawns -= 1
-
-        return self.all_cars
-
-    def respawn_cars(self):
-        """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, urgency)
-        Args:
-            grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
-        Returns:
-            satisfaction_scores (list): A list of small car copies and scores in the form of tuples, that represent
-                how well the trip went (based on time spent & urgency). Metric used for evaluation.
-        """
-        satisfaction_scores = []
-        for car in self.all_cars:
-            if car.is_at_destination():
-                # The time in traffic_network must increase now, as the car has reached its destination and will not go through the 'ready for new epoch' function
-                car.time_in_traffic_network += 1
-                # If the car is at its destination, remove it from the queue and spawn it somewhere else
-                utils.get_car_queue(self.all_car_queues,
-                                    car.car_queue_id).remove_car(car)
-                # Pick a random queue that has capacity
-                random_queue = random.choice(
-                    [queue for queue in self.all_car_queues if queue.has_capacity()])
-                # Append copy of car and satisfaction score to list
-                satisfaction_scores.append(car.calculate_satisfaction_score())
-                # Reset the car (new destination, new queue, new balance)
-                car.reset_car(random_queue.id)
-
-                random_queue.add_car(car)
-        return satisfaction_scores
 
 ### Epoch functions ###
     def ready_for_new_epoch(self):
