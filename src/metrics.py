@@ -279,7 +279,7 @@ class MasterKeeper:
             f.write('Last-epoch average satisfaction score per bidding type, over all simulations: ' +
                     str(last_epoch_average_satisfaction_score_per_bidding_type) + " (SD: " + str(last_epoch_average_satisfaction_score_per_bidding_type_std) + ')\n')
 
-    def plot_satisfaction_scores_overall_average(self, warmp_up_epochs=30):
+    def plot_satisfaction_scores_overall_average(self):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations."""
 
         def remove_car_copies_from_dict(dict):
@@ -316,9 +316,9 @@ class MasterKeeper:
                 np.std(all_results_dict[epoch]))
 
         # Remove the first 30 epochs, which are the warm-up epochs
-        epochs = epochs[warmp_up_epochs:]
-        average_satisfaction_scores = average_satisfaction_scores[warmp_up_epochs:]
-        standard_deviations = standard_deviations[warmp_up_epochs:]
+        epochs = epochs[WARMUP_EPOCHS:]
+        average_satisfaction_scores = average_satisfaction_scores[WARMUP_EPOCHS:]
+        standard_deviations = standard_deviations[WARMUP_EPOCHS:]
 
         # # Plot the average satisfaction score per epoch, with error bars
         # plt.errorbar(epochs, average_satisfaction_scores,
@@ -334,7 +334,7 @@ class MasterKeeper:
                     '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=True, warmp_up_epochs=30):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -496,19 +496,19 @@ class MasterKeeper:
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
 
         # Remove the first 30 epochs, which are the warm-up epochs
-        epochs = epochs[warmp_up_epochs:]
+        epochs = epochs[WARMUP_EPOCHS:]
         static_bidding_average_satisfaction_scores = static_bidding_average_satisfaction_scores[
-            warmp_up_epochs:]
-        static_bidding_sd = static_bidding_sd[warmp_up_epochs:]
+            WARMUP_EPOCHS:]
+        static_bidding_sd = static_bidding_sd[WARMUP_EPOCHS:]
         random_bidding_average_satisfaction_scores = random_bidding_average_satisfaction_scores[
-            warmp_up_epochs:]
-        random_bidding_sd = random_bidding_sd[warmp_up_epochs:]
+            WARMUP_EPOCHS:]
+        random_bidding_sd = random_bidding_sd[WARMUP_EPOCHS:]
         free_rider_bidding_average_satisfaction_scores = free_rider_bidding_average_satisfaction_scores[
-            warmp_up_epochs:]
-        free_rider_bidding_sd = free_rider_bidding_sd[warmp_up_epochs:]
+            WARMUP_EPOCHS:]
+        free_rider_bidding_sd = free_rider_bidding_sd[WARMUP_EPOCHS:]
         RL_bidder_average_satisfaction_scores = RL_bidder_average_satisfaction_scores[
-            warmp_up_epochs:]
-        RL_bidder_sd = RL_bidder_sd[warmp_up_epochs:]
+            WARMUP_EPOCHS:]
+        RL_bidder_sd = RL_bidder_sd[WARMUP_EPOCHS:]
 
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
@@ -626,7 +626,7 @@ class MasterKeeper:
             np.savetxt(self.args.results_folder + '/average_congestion_per_intersection.csv',
                        average_congestion_per_intersection, delimiter=",")
 
-    def plot_throughput_per_intersection_history(self, export_results=True, warmp_up_epochs=30):
+    def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
@@ -639,7 +639,7 @@ class MasterKeeper:
         for i in range(average_throughput_per_intersection.shape[0]):
             for j in range(average_throughput_per_intersection.shape[1]):
                 axs[i, j].plot(
-                    average_throughput_per_intersection[i, j, warmp_up_epochs:], 'o', markersize=1.5)
+                    average_throughput_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Throughput')
@@ -656,7 +656,7 @@ class MasterKeeper:
             throughput_history_df.to_csv(self.args.results_folder +
                                          '/average_throughput_per_intersection_history.csv', index=False)
 
-    def plot_reward_per_intersection_history(self, export_results=True, warmp_up_epochs=30):
+    def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
             self.reward_history_per_simulation_all_sims, axis=0)
@@ -668,7 +668,7 @@ class MasterKeeper:
         for i in range(average_reward_per_intersection.shape[0]):
             for j in range(average_reward_per_intersection.shape[1]):
                 axs[i, j].plot(
-                    average_reward_per_intersection[i, j, warmp_up_epochs:], 'o', markersize=1.5)
+                    average_reward_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Auction Reward')
@@ -685,7 +685,7 @@ class MasterKeeper:
             rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_reward_per_intersection_history.csv', index=False)
 
-    def plot_max_time_waited_per_intersection_history(self, export_results=True, warmp_up_epochs=30):
+    def plot_max_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
@@ -698,7 +698,7 @@ class MasterKeeper:
         for i in range(average_max_time_waited_per_intersection.shape[0]):
             for j in range(average_max_time_waited_per_intersection.shape[1]):
                 axs[i, j].plot(
-                    average_max_time_waited_per_intersection[i, j, warmp_up_epochs:], 'o', markersize=1.5)
+                    average_max_time_waited_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Max Time Waited')
