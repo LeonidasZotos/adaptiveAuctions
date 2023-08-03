@@ -13,7 +13,7 @@ class AuctionModifier:
         grid (Grid): The grid object that contains all intersections and car queues
         bandit_params (dict): The parameters used for the bandit adaptive algorithm, if used.
     Functions:
-        get_parameters_and_valuations: Returns the parameters and valuations for the adaptive algorithm
+        get_parameters_and_valuations_and_counts: Returns the parameters, valuations and counts for the adaptive algorithm
         init_bandit_params: Initializes the bandit parameters for the bandit adaptive algorithm
         generate_random_parameters: Generates random parameters for the next auction
         generate_static_parameters: Generates static parameters for the next auction
@@ -43,14 +43,14 @@ class AuctionModifier:
     def __str__(self):
         return f'Auction Modifier (intersection {self.intersection_id})'
 
-    def get_parameters_and_valuations(self):
-        """Returns the parameters and valuations for the adaptive algorithm
+    def get_parameters_and_valuations_and_counts(self):
+        """Returns the parameters, valuations and counts for the adaptive algorithm
         Returns:
             None or
-            tuple: A tuple containing the parameters and valuations for the adaptive algorithm
+            tuple: A tuple containing the parameters, valuations and counts for the adaptive algorithm
         """
         if self.args.auction_modifier_type == 'bandit':
-            return self.bandit_params["possible_param_combs"], self.bandit_params["average_scores"]
+            return self.bandit_params["possible_param_combs"], self.bandit_params["average_scores"], self.bandit_params["counts"]
         return None
 
 # Random and static adaptive algorithm functions
@@ -85,12 +85,12 @@ class AuctionModifier:
         # number of values to try for each parameter
         level_of_discretization = self.args.adaptive_auction_discretization
         uninformed_score = 0
-        initial_temperature = 0.05
-        temperature_decay = 0.999 # 1-> no decay.
+        initial_temperature = 1
+        temperature_decay = 1 # 1-> no decay.
 
         # Create all possible parameter combinations based on the level of discretization.
         queue_delay_min_limit = 0
-        queue_delay_max_limit = 5
+        queue_delay_max_limit = 4
 
         possible_queue_delay_boosts = []
 

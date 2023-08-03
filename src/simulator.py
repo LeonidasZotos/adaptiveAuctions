@@ -50,7 +50,8 @@ class Simulator:
             # Every wage_time epochs, give credit to all cars
             if self.args.print_grid:
                 self.grid.print_grid(epoch)
-            if self.args.credit_balance != inf: # Only do this in case it's not inf, to save computation.
+            # Only do this in case it's not inf, to save computation. Still need to give inf balance in the 1st epoch
+            if self.args.credit_balance != inf or epoch == 1:
                 if epoch % self.args.wage_time == 0:
                     # Give credit to all cars
                     if self.all_cars == []:

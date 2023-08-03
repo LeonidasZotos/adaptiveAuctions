@@ -141,7 +141,6 @@ class Grid:
                 self.all_cars.append(car)
                 # Decrease the number of spawns left
                 number_of_spawns -= 1
-        print("spawned cars")
         return self.all_cars
 
     def respawn_cars(self):

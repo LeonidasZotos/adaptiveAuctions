@@ -34,6 +34,7 @@ class MasterKeeper:
         auction_parameters_space (np.array): A 2d array of the auction parameters space. The first index is the delay boost, the second is the queue length boost.
         sum_auction_parameters_valuations_per_intersection (np.array): A 3d array of the sum of the valuations of the auction parameters of each intersection.
             The first index is the x coordinate, the second is the y coordinate, the third is the parameter space. The value is the sum of the valuations.
+        sum_auction_parameters_counts_per_intersection (np.array): A 3d array of the sum of the counts of the trials for each parameter comb. of each intersection.
     Functions:
         store_simulation_results(sim_metrics_keeper): Stores the results of a single simulation
         produce_results(): Produces all the evaluation results of all simulations
@@ -89,6 +90,10 @@ class MasterKeeper:
         self.sum_auction_parameters_valuations_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, num_of_adaptive_params)))
 
+        # Count of auction parameters trials per intersection
+        self.sum_auction_parameters_counts_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, num_of_adaptive_params)))
+
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
         Args:
@@ -119,6 +124,7 @@ class MasterKeeper:
             self.auction_parameters_space = sim_metrics_keeper.auction_parameters_space
 
             self.sum_auction_parameters_valuations_per_intersection += sim_metrics_keeper.auction_parameters_valuations_per_intersection
+            self.sum_auction_parameters_counts_per_intersection += sim_metrics_keeper.auction_parameters_counts_per_intersection
 
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
@@ -687,18 +693,28 @@ class MasterKeeper:
             average_reward_per_parameter_set_per_intersection = np.divide(
                 self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
 
+            average_count_per_parameter_set_per_intersection = np.divide(
+                self.sum_auction_parameters_counts_per_intersection, self.args.num_of_simulations)
+
             parameter_space_1d = np.reshape(
                 self.auction_parameters_space, (self.args.adaptive_auction_discretization, num_of_adaptive_params))
             rewards_1d = np.reshape(
                 average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization))
+            counts_1d = np.reshape(
+                average_count_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization))
 
             # Create a plot of subplots for each intersection. Each subplot is a 2d subplot of the evaluation per parameter set.
             fig, axs = plt.subplots(
                 self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
             for i in range(self.args.grid_size):
                 for j in range(self.args.grid_size):
-                    axs[i, j].plot(parameter_space_1d[:, 0],
-                                   rewards_1d[i, j, :])
+
+                    # TODO: REMOVE THIS
+                    if i == 1 and j == 1:
+                        print("counts: ", counts_1d[i, j, :])
+
+                    axs[i, j].scatter(
+                        parameter_space_1d[:, 0], rewards_1d[i, j, :], s=counts_1d[i, j, :], marker="o")
                     axs[i, j].set_title('[' + str(i) + str(j) + ']')
                     axs[i, j].set_xlabel('Delay Boost')
                     axs[i, j].set_ylabel('Average Reward')
@@ -749,6 +765,11 @@ class SimulationMetrics:
             the second is the y coordinate, the third is the epoch. The value is the reward.
         max_time_waited_history_per_intersection (np.array): A 3d array of the max time waited history of each intersection. The first index is the x coordinate,
             the second is the y coordinate, the third is the epoch. The value is the max time waited for that intersection at that epoch.
+        auction_parameters_space (np.array): A 2d array of the auction parameters space. The first index is the parameter set, the second is the parameter.
+        auction_parameters_valuations_per_intersection (list): A 2d list of the valuations of each parameter set for each intersection. The first index is the x coordinate,
+            the second is the y coordinate. The value is a list of the valuations of each parameter set for that intersection.
+        auction_parameters_counts_per_intersection (list): A 2d list of the counts of each parameter set for each intersection. The first index is the x coordinate,
+            the second is the y coordinate. The value is a list of the counts (number of trials) of each parameter set for that intersection.
     Functions:
         add_satisfaction_scores(epoch, satisfaction_scores): Adds the satisfaction scores of the cars that completed a trip.
             If there was no car that completed a trip in an epoch, there is no entry for that epoch.
@@ -783,6 +804,8 @@ class SimulationMetrics:
             (pow(args.adaptive_auction_discretization, num_of_adaptive_params), num_of_adaptive_params))
 
         self.auction_parameters_valuations_per_intersection = [
+            [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
+        self.auction_parameters_counts_per_intersection = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
@@ -821,5 +844,5 @@ class SimulationMetrics:
 
             if self.args.auction_modifier_type == "bandit":  # Only if adaptive auction is used
                 # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
-                self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations(
+                self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord], self.auction_parameters_counts_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations_and_counts(
                 )

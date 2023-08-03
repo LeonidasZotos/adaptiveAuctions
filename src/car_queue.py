@@ -1,6 +1,7 @@
 """This module contains the CarQueue class, which is used to represent a queue of cars at an intersection.
 This class is also responsible for gathering bids from the queue and making the cars pay their individual fees.
 Lastly, it also keeps track of how long the queue has been inactive (i.e. no cars have left the queue)."""
+from math import nan
 
 
 class CarQueue:
@@ -249,21 +250,25 @@ class CarQueue:
         self.time_inactive = 0
 
         reward = 0
-        if self.parent_intersection.get_intersection_reward_type() == "time":
-            reward = 1/(1+self.cars[0].get_time_at_intersection())
-        elif self.parent_intersection.get_intersection_reward_type() == "time_and_urgency":
-            reward = 1 / \
-                (1+self.cars[0].get_time_at_intersection()
-                 * self.cars[0].get_urgency())
-        elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
-            reward = 1/(1+self.parent_intersection.get_max_time_waited())
-        elif self.parent_intersection.get_intersection_reward_type() == "time_waited_rank":
-            reward = self.get_time_waited_rank()
-        elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
-            reward = (self.get_time_waited_rank() + self.get_bid_rank()) / 2
-
-        self.parent_intersection.update_mechanism(reward)
-        self.parent_intersection.add_reward_to_history(reward)
+        if self.parent_intersection.get_num_of_non_empty_queues() > 1:
+            # Only calculate a reward/update mechanism if there was an auction
+            if self.parent_intersection.get_intersection_reward_type() == "time":
+                reward = 1/(1+self.cars[0].get_time_at_intersection())
+            elif self.parent_intersection.get_intersection_reward_type() == "time_and_urgency":
+                reward = 1 / \
+                    (1+self.cars[0].get_time_at_intersection()
+                     * self.cars[0].get_urgency())
+            elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
+                reward = 1/(1+self.parent_intersection.get_max_time_waited())
+            elif self.parent_intersection.get_intersection_reward_type() == "time_waited_rank":
+                reward = self.get_time_waited_rank()
+            elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
+                reward = (self.get_time_waited_rank() +
+                          self.get_bid_rank()) / 2
+            self.parent_intersection.update_mechanism(reward)
+            self.parent_intersection.add_reward_to_history(reward)
+        else:
+            self.parent_intersection.add_reward_to_history(nan)
 
     def reset_bids(self):
         """Resets the bids submitted by the cars in the queue, so that the next auction can be run."""
@@ -272,9 +277,9 @@ class CarQueue:
 
 ### Epoch Functions ###
     def ready_for_new_epoch(self):
-        """Prepares the queue for the next epoch. This involved: 
+        """Prepares the queue for the next epoch. This involved:
             1) Resetting the bids,
-            2) Updating the number of cars in the queue, 
+            2) Updating the number of cars in the queue,
             3) Updating the inactivity time of the queue.
             4) Reset the time waited rank of the queue and the bid rank of the queue
         """

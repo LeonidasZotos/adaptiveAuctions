@@ -8,7 +8,7 @@ class BidGenerator:
     Attributes:
         args (argparse.Namespace): Arguments parsed from the command line
     Functions:
-        generate_static_bid(urgency): Returns a static bid, multiplied by the urgency
+        generate_static_bid(urgency): Returns a static bid which is the urgency
         generate_random_bid(balance): Returns a random bid between 0 and the total balance of the car
         generate_free_rider_bid(): Returns a bid of 0 (free-riding)
         generate_RL_bid(balance, urgency): TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
@@ -70,7 +70,8 @@ class BidGenerator:
         """
 
         if bidding_strategy == 'static':
-            return self.generate_static_bid(urgency)
+            bid = self.generate_static_bid(urgency)
+            return bid
         if bidding_strategy == 'random':
             return self.generate_random_bid(balance)
         if bidding_strategy == 'free-rider':

@@ -28,6 +28,7 @@ class Intersection:
         remove_top_fee: Removes the top/highest fee from the list of fees.
         is_empty: Checks whether all car queues are empty in this intersection
         get_num_of_cars_in_intersection: Returns the number of cars in the intersection
+        get_num_of_non_empty_queues: Returns the number of non-empty queues in the intersection
         get_max_time_waited: Returns the maximum time waited by a car_queue in the intersection
         get_last_reward: Returns the last reward of the intersection
         add_reward_to_history: Adds a reward to the reward history
@@ -35,7 +36,7 @@ class Intersection:
         get_auction_reward_history: Returns the reward history of the auction modifier
         get_auction_throughput_history: Returns the throughput history of the auction modifier
         get_max_time_waited_history: Returns the maximum time waited history of the auction modifier
-        get_auction_parameters_and_valuations: Returns the parameters and their valuations of the auction
+        get_auction_parameters_and_valuations_and_counts: Returns the parameters, their valuations and counts of the auction
         calc_inact_rank: Calculates the inactivity rank of each queue, and sets it.
         calc_bid_rank: Calculates the bid rank of each queue, and sets it.
         hold_auction(second_price=False): Holds an auction between the car queues in this intersection. 
@@ -59,7 +60,7 @@ class Intersection:
                           CarQueue(args, self, str(id + 'S')),
                           CarQueue(args, self, str(id + 'W'))]
         self.auction_fees = []
-        self.last_tried_auction_params = [-1, -1, -1]
+        self.last_tried_auction_params = [-1]
         self.reward_history = []
         # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
@@ -127,6 +128,13 @@ class Intersection:
         """
         return sum([queue.get_num_of_cars() for queue in self.carQueues])
 
+    def get_num_of_non_empty_queues(self):
+        """Returns the number of non-empty queues in the intersection
+        Returns:
+            int: The number of non-empty queues in the intersection
+        """
+        return sum([not queue.is_empty() for queue in self.carQueues])
+
     def get_max_time_waited(self):
         """Returns the maximum time waited by a car_queue in the intersection
         Returns:
@@ -185,13 +193,13 @@ class Intersection:
         """
         return self.max_time_waited_history
 
-    def get_auction_parameters_and_valuations(self):
-        """Returns the parameters and their valuations of the auction
+    def get_auction_parameters_and_valuations_and_counts(self):
+        """Returns the parameters, their valuations and counts of the auction
             Returns:
                 None or
-                tuple: A tuple containing the parameters and their valuations of the auction  
+                tuple: A tuple containing the parameters, their valuations and counts of the auction  
             """
-        return self.auction_modifier.get_parameters_and_valuations()
+        return self.auction_modifier.get_parameters_and_valuations_and_counts()
 
     def calc_inact_rank(self):
         """This function calculates the inactivity rank of each queue, and sets it.
@@ -271,13 +279,14 @@ class Intersection:
         # Calculate the inactivity and bid ranks, which will later be used for the reward
         self.calc_inact_rank()
         self.calc_bid_rank(summed_bids)
-        
+
         # Calculate the final boosted bids
         final_bids = {}
         # One modified/final bid per queue. Small noise is added to avoid ties.
         for key in summed_bids.keys():
             queue = utils.get_car_queue_from_intersection(self, key)
-            final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank() * queue_delay_boost)) + random.uniform(0, 0.001)
+            final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
+                               * queue_delay_boost)) + random.uniform(0, 0.001)
 
         # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.
@@ -289,7 +298,6 @@ class Intersection:
 
         self.auction_fees = [summed_bids[queue.id]
                              for queue in queues_in_order]
-
 
         # Remove the highest bid as we have a 2nd price auction
         self.remove_top_fee()

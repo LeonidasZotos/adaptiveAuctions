@@ -72,11 +72,11 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--grid_size",
-        default=4,
+        default=3,
         choices=range(2, 10),
-        metavar="[2-100]",
+        metavar="[2-9]",
         type=int,
-        help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 10."
+        help="Size of the traffic grid. Defaults to 3 (9 intersections). Must be an integer between 1 and 9."
     )
     run_parser.add_argument(
         "--queue_capacity",
@@ -143,7 +143,8 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--intersection_reward_type",
         default="mixed_metric_rank",
-        choices=["time", "time_and_urgency", "max_time_waited", "time_waited_rank", "mixed_metric_rank"],
+        choices=["time", "time_and_urgency", "max_time_waited",
+                 "time_waited_rank", "mixed_metric_rank"],
         type=str,
         help="Type of reward for the intersection. Defaults to 'max_time_waited'. Must be one of 'time', 'time_and_urgency' or 'max_time_waited' ."
     )
