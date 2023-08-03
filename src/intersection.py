@@ -222,9 +222,24 @@ class Intersection:
             if index != 0 and queue.get_time_inactive() == ordered_queues[index-1].get_time_inactive():
                 queue.set_time_waited_rank(
                     ordered_queues[index-1].get_time_waited_rank())
+        # Normalise between 0 and 1
+        max_time_waited_rank = max(
+            [queue.get_time_waited_rank() for queue in ordered_queues])
+        min_time_waited_rank = min(
+            [queue.get_time_waited_rank() for queue in ordered_queues])
+
+        if max_time_waited_rank == min_time_waited_rank:
+            # If all times are equal, we set all ranks to 0.5
+            for queue in ordered_queues:
+                queue.set_time_waited_rank(0.5)
+        else:
+            for queue in ordered_queues:
+                queue.set_time_waited_rank(
+                    (queue.get_time_waited_rank() - min_time_waited_rank) / (max_time_waited_rank - min_time_waited_rank))
 
     def calc_bid_rank(self, summed_bids):
-        """This function calculates the bid rank of each queue, and sets it. The rank is relative to the bid of the other queues, higher->better->bigger boost
+        """This function calculates the bid rank of each queue, and sets it. The rank is relative to the bid of the other queues,
+        higher->better->bigger boost. 
         """
         queue_ids = list(summed_bids.keys())
         num_of_queues = len(queue_ids)
@@ -241,6 +256,18 @@ class Intersection:
             if index != 0 and summed_bids[queue.id] == summed_bids[ordered_queues[index-1].id]:
                 queue.set_bid_rank(
                     ordered_queues[index-1].get_bid_rank())
+
+        # Normalise them between 0 and 1
+        max_bid_rank = max([queue.get_bid_rank() for queue in ordered_queues])
+        min_bid_rank = min([queue.get_bid_rank() for queue in ordered_queues])
+        if max_bid_rank == min_bid_rank:
+            # If all bids are equal, we set all ranks to 0.5
+            for queue in ordered_queues:
+                queue.set_bid_rank(0.5)
+        else:
+            for queue in ordered_queues:
+                queue.set_bid_rank(
+                    (queue.get_bid_rank() - min_bid_rank) / (max_bid_rank - min_bid_rank))
 
     def hold_auction(self):
         """Holds an auction between the car queues in this intersection. Modifies self.auction_fees. 
