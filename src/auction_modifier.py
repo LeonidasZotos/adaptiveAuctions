@@ -85,12 +85,12 @@ class AuctionModifier:
         # number of values to try for each parameter
         level_of_discretization = self.args.adaptive_auction_discretization
         uninformed_score = 0
-        initial_temperature = 1
-        temperature_decay = 1 # 1-> no decay.
+        initial_temperature = 0.5
+        temperature_decay = 0.99  # 1-> no decay.
 
         # Create all possible parameter combinations based on the level of discretization.
         queue_delay_min_limit = 0
-        queue_delay_max_limit = 4
+        queue_delay_max_limit = 3
 
         possible_queue_delay_boosts = []
 
@@ -111,14 +111,19 @@ class AuctionModifier:
                               'temperature_decay': temperature_decay,
                               'counts': counts,
                               'average_scores': average_scores,
-                              'current_temperature': initial_temperature
+                              'current_temperature': initial_temperature,
+                              'number_of_auctions': 0
                               }
 
     def generate_bandit_parameters(self):
         """Returns the auction parameters for the next auction, using the bandit adaptive algorithm."""
         # First, reduce the temperature based on the decay.
+        self.bandit_params['number_of_auctions'] += 1
         self.bandit_params['current_temperature'] = self.bandit_params['current_temperature'] * \
             self.bandit_params['temperature_decay']
+        if self.bandit_params['number_of_auctions'] == 1000:
+            print("[", self.intersection_id, "] Current temperature: ",
+                  self.bandit_params['current_temperature'])
 
         # Then, calculate the Boltzmann probabilities.
         boltzmann_probabilities = [

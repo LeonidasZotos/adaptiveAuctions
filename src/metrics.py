@@ -10,7 +10,8 @@ from itertools import zip_longest
 
 import src.utils as utils
 
-num_of_adaptive_params = 1
+NUM_OF_ADAPT_PARAMS = 1
+WARMUP_EPOCHS = 30
 
 
 class MasterKeeper:
@@ -88,11 +89,11 @@ class MasterKeeper:
 
         # Sum of auction parameters valuations per intersection
         self.sum_auction_parameters_valuations_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, num_of_adaptive_params)))
+            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS)))
 
         # Count of auction parameters trials per intersection
         self.sum_auction_parameters_counts_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, num_of_adaptive_params)))
+            (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS)))
 
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
@@ -278,7 +279,7 @@ class MasterKeeper:
             f.write('Last-epoch average satisfaction score per bidding type, over all simulations: ' +
                     str(last_epoch_average_satisfaction_score_per_bidding_type) + " (SD: " + str(last_epoch_average_satisfaction_score_per_bidding_type_std) + ')\n')
 
-    def plot_satisfaction_scores_overall_average(self):
+    def plot_satisfaction_scores_overall_average(self, warmp_up_epochs=30):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations."""
 
         def remove_car_copies_from_dict(dict):
@@ -314,9 +315,18 @@ class MasterKeeper:
             standard_deviations.append(
                 np.std(all_results_dict[epoch]))
 
-        # Plot the average satisfaction score per epoch, with error bars
-        plt.errorbar(epochs, average_satisfaction_scores,
-                     yerr=standard_deviations, fmt='o')
+        # Remove the first 30 epochs, which are the warm-up epochs
+        epochs = epochs[warmp_up_epochs:]
+        average_satisfaction_scores = average_satisfaction_scores[warmp_up_epochs:]
+        standard_deviations = standard_deviations[warmp_up_epochs:]
+
+        # # Plot the average satisfaction score per epoch, with error bars
+        # plt.errorbar(epochs, average_satisfaction_scores,
+        #              yerr=standard_deviations, fmt='o', ls='none')
+
+        # Plot the average satisfaction score per epoch, without error bars
+        plt.plot(epochs, average_satisfaction_scores,
+                 'o', ls='none', markersize=1.5)
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')
@@ -324,7 +334,7 @@ class MasterKeeper:
                     '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=True):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=True, warmp_up_epochs=30):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -485,6 +495,21 @@ class MasterKeeper:
                 plt.plot(
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
 
+        # Remove the first 30 epochs, which are the warm-up epochs
+        epochs = epochs[warmp_up_epochs:]
+        static_bidding_average_satisfaction_scores = static_bidding_average_satisfaction_scores[
+            warmp_up_epochs:]
+        static_bidding_sd = static_bidding_sd[warmp_up_epochs:]
+        random_bidding_average_satisfaction_scores = random_bidding_average_satisfaction_scores[
+            warmp_up_epochs:]
+        random_bidding_sd = random_bidding_sd[warmp_up_epochs:]
+        free_rider_bidding_average_satisfaction_scores = free_rider_bidding_average_satisfaction_scores[
+            warmp_up_epochs:]
+        free_rider_bidding_sd = free_rider_bidding_sd[warmp_up_epochs:]
+        RL_bidder_average_satisfaction_scores = RL_bidder_average_satisfaction_scores[
+            warmp_up_epochs:]
+        RL_bidder_sd = RL_bidder_sd[warmp_up_epochs:]
+
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')
@@ -601,18 +626,20 @@ class MasterKeeper:
             np.savetxt(self.args.results_folder + '/average_congestion_per_intersection.csv',
                        average_congestion_per_intersection, delimiter=",")
 
-    def plot_throughput_per_intersection_history(self, export_results=True):
+    def plot_throughput_per_intersection_history(self, export_results=True, warmp_up_epochs=30):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
         average_throughput_per_intersection = np.divide(
             total_throughput_history_summed_sims, self.args.num_of_simulations)
+        # Remove the first x epochs from the history, because they are part of the warm-up period
         # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_throughput_per_intersection.shape[0]):
             for j in range(average_throughput_per_intersection.shape[1]):
-                axs[i, j].plot(average_throughput_per_intersection[i, j])
+                axs[i, j].plot(
+                    average_throughput_per_intersection[i, j, warmp_up_epochs:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Throughput')
@@ -629,7 +656,7 @@ class MasterKeeper:
             throughput_history_df.to_csv(self.args.results_folder +
                                          '/average_throughput_per_intersection_history.csv', index=False)
 
-    def plot_reward_per_intersection_history(self, export_results=True):
+    def plot_reward_per_intersection_history(self, export_results=True, warmp_up_epochs=30):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
             self.reward_history_per_simulation_all_sims, axis=0)
@@ -640,7 +667,8 @@ class MasterKeeper:
             average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_reward_per_intersection.shape[0]):
             for j in range(average_reward_per_intersection.shape[1]):
-                axs[i, j].plot(average_reward_per_intersection[i, j])
+                axs[i, j].plot(
+                    average_reward_per_intersection[i, j, warmp_up_epochs:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Auction Reward')
@@ -657,7 +685,8 @@ class MasterKeeper:
             rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_reward_per_intersection_history.csv', index=False)
 
-    def plot_max_time_waited_per_intersection_history(self, export_results=True):
+    def plot_max_time_waited_per_intersection_history(self, export_results=True, warmp_up_epochs=30):
+        # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
             self.max_time_waited_history_per_intersection_all_sims, axis=0)
@@ -668,7 +697,8 @@ class MasterKeeper:
             average_max_time_waited_per_intersection.shape[0], average_max_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_max_time_waited_per_intersection.shape[0]):
             for j in range(average_max_time_waited_per_intersection.shape[1]):
-                axs[i, j].plot(average_max_time_waited_per_intersection[i, j])
+                axs[i, j].plot(
+                    average_max_time_waited_per_intersection[i, j, warmp_up_epochs:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Max Time Waited')
@@ -688,7 +718,7 @@ class MasterKeeper:
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
         """Creates a plot of subplots for each intersection. Each subplot is a 2 or 3d subplot of the evaluation per parameter set."""
 
-        if num_of_adaptive_params == 1:
+        if NUM_OF_ADAPT_PARAMS == 1:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
                 self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
@@ -697,7 +727,7 @@ class MasterKeeper:
                 self.sum_auction_parameters_counts_per_intersection, self.args.num_of_simulations)
 
             parameter_space_1d = np.reshape(
-                self.auction_parameters_space, (self.args.adaptive_auction_discretization, num_of_adaptive_params))
+                self.auction_parameters_space, (self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS))
             rewards_1d = np.reshape(
                 average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization))
             counts_1d = np.reshape(
@@ -722,13 +752,13 @@ class MasterKeeper:
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
 
-        elif num_of_adaptive_params == 2:
+        elif NUM_OF_ADAPT_PARAMS == 2:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
                 self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
 
             parameter_space_2d = np.reshape(
-                self.auction_parameters_space, (self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization, num_of_adaptive_params))
+                self.auction_parameters_space, (self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS))
             rewards_2d = np.reshape(
                 average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization))
 
@@ -801,7 +831,7 @@ class SimulationMetrics:
         # If discretisation is adaptive_auction_discretization and there are 2 parameters,
         # then there are adaptive_auction_discretization^2 possible combinations of parameters
         self.auction_parameters_space = np.zeros(
-            (pow(args.adaptive_auction_discretization, num_of_adaptive_params), num_of_adaptive_params))
+            (pow(args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS), NUM_OF_ADAPT_PARAMS))
 
         self.auction_parameters_valuations_per_intersection = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
