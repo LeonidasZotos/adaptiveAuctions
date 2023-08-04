@@ -117,7 +117,7 @@ class AuctionModifier:
                               'number_of_auctions': 0
                               }
 
-    def generate_bandit_parameters(self, action_selection='boltzmann'):
+    def generate_bandit_parameters(self):
         """Returns the auction parameters for the next auction, using the bandit adaptive algorithm.
             Args:
                 action_selection (str): The action selection method to use. Can be 'boltzmann' or 'e-greedy-decay's
@@ -133,7 +133,7 @@ class AuctionModifier:
             self.bandit_params['temperature_decay'] = 0
 
         probabilities = [1] * len(self.bandit_params['possible_param_combs'])
-        if action_selection == 'boltzmann':
+        if self.args.auction_modifier_type_action_selection == 'boltzmann':
             # Calculate the Boltzmann probabilities.
             boltzmann_probabilities = [
                 0] * len(self.bandit_params['possible_param_combs'])
@@ -143,7 +143,6 @@ class AuctionModifier:
                     boltzmann_probabilities[prob_index] = exp(
                         self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
                 except OverflowError:
-                    print("inf!")
                     boltzmann_probabilities[prob_index] = inf
 
             sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
@@ -156,7 +155,7 @@ class AuctionModifier:
                     boltzmann_probabilities[prob_index] = 1e-100
             probabilities = boltzmann_probabilities
 
-        elif action_selection == 'e-greedy-decay':
+        elif self.args.auction_modifier_type_action_selection == 'e-greedy-decay':
             epsilon = self.bandit_params['current_temperature']
             # Calculate the e-greedy probabilities.
             e_greedy_probabilities = [
