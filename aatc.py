@@ -125,6 +125,14 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
+        "--auction_modifier_type_action_selection",
+        default="e-greedy_decay",
+        choices=["e-greedy-decay", "boltzmann"],
+        type=str,
+        help="Type of auction modifier action selection. Defaults to 'e-greedy-decay'. Must be one of 'e-greedy-decay' or 'boltzmann'."
+    )
+
+    run_parser.add_argument(
         "--adaptive_auction_discretization",
         default=20,
         choices=range(1, 101),

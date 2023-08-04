@@ -334,7 +334,7 @@ class MasterKeeper:
                     '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=True):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=False, filter_outliers=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -526,7 +526,7 @@ class MasterKeeper:
                 RL_bidder_average_satisfaction_scores, RL_bidder_sd
             ]).T, delimiter=",", header="Epoch, Static bidding Score, Static bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
 
-    def histogram_satisfaction_scores_by_bidding_type(self, export_results=True, filter_outliers=True):
+    def histogram_satisfaction_scores_by_bidding_type(self, export_results=False, filter_outliers=True):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -599,7 +599,7 @@ class MasterKeeper:
                 for values in zip_longest(*[all_static_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
                     writer.writerow(values)
 
-    def plot_congestion_heatmap_average(self, export_results=True):
+    def plot_congestion_heatmap_average(self, export_results=False):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -626,7 +626,7 @@ class MasterKeeper:
             np.savetxt(self.args.results_folder + '/average_congestion_per_intersection.csv',
                        average_congestion_per_intersection, delimiter=",")
 
-    def plot_throughput_per_intersection_history(self, export_results=True):
+    def plot_throughput_per_intersection_history(self, export_results=False):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
@@ -656,7 +656,7 @@ class MasterKeeper:
             throughput_history_df.to_csv(self.args.results_folder +
                                          '/average_throughput_per_intersection_history.csv', index=False)
 
-    def plot_reward_per_intersection_history(self, export_results=True):
+    def plot_reward_per_intersection_history(self, export_results=False):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
             self.reward_history_per_simulation_all_sims, axis=0)
@@ -685,7 +685,7 @@ class MasterKeeper:
             rewards_history_df.to_csv(self.args.results_folder +
                                       '/average_reward_per_intersection_history.csv', index=False)
 
-    def plot_max_time_waited_per_intersection_history(self, export_results=True):
+    def plot_max_time_waited_per_intersection_history(self, export_results=False):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(

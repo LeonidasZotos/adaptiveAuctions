@@ -17,7 +17,7 @@ class AuctionModifier:
         init_bandit_params: Initializes the bandit parameters for the bandit adaptive algorithm
         generate_random_parameters: Generates random parameters for the next auction
         generate_static_parameters: Generates static parameters for the next auction
-        generate_bandit_parameters: Generates the auction parameters for the next auction, using the bandit adaptive algorithm
+        generate_bandit_parameters(action_selection): Returns the auction parameters for the next auction, using the bandit adaptive algorithm.
         update_bandit_params (last_tried_auction_params, reward): Updates the bandit parameters for the bandit adaptive algorithm, based on the reward received
         generate_auction_parameters (last_reward): Calls the appropriate function to generate the auction parameters
         ready_for_new_epoch: Prepares the modifier for the next epoch
@@ -74,7 +74,7 @@ class AuctionModifier:
 # Bandit adaptive algorithm functions
 
     def init_bandit_params(self):
-        """Initializes the bandit parameters for the bandit adaptive algorithm. 
+        """Initializes the bandit parameters for the bandit adaptive algorithm.
         The param is for now: queue delay boost.
         There are some metaparametrers that are also used:
         uninformed_score: The initial score for each parameter combination.
@@ -85,8 +85,10 @@ class AuctionModifier:
         # number of values to try for each parameter
         level_of_discretization = self.args.adaptive_auction_discretization
         uninformed_score = 0
-        initial_temperature = 0.5
-        temperature_decay = 0.99  # 1-> no decay.
+        initial_temperature = 0.1
+        number_of_exploration_epochs = 1000
+        # Calcualte the decay so that it is 0 after 1000 epochs
+        temperature_decay = initial_temperature / number_of_exploration_epochs
 
         # Create all possible parameter combinations based on the level of discretization.
         queue_delay_min_limit = 0
@@ -115,39 +117,69 @@ class AuctionModifier:
                               'number_of_auctions': 0
                               }
 
-    def generate_bandit_parameters(self):
-        """Returns the auction parameters for the next auction, using the bandit adaptive algorithm."""
-        # First, reduce the temperature based on the decay.
+    def generate_bandit_parameters(self, action_selection='boltzmann'):
+        """Returns the auction parameters for the next auction, using the bandit adaptive algorithm.
+            Args:
+                action_selection (str): The action selection method to use. Can be 'boltzmann' or 'e-greedy-decay's
+        """
+        # First, reduce the temperature based on the decay. Once the temperature is equal to 0, stop decreasing it.
+        # It can't get lower than 0.000001, to avoid division by 0.
         self.bandit_params['number_of_auctions'] += 1
-        self.bandit_params['current_temperature'] = self.bandit_params['current_temperature'] * \
-            self.bandit_params['temperature_decay']
-        if self.bandit_params['number_of_auctions'] == 1000:
-            print("[", self.intersection_id, "] Current temperature: ",
-                  self.bandit_params['current_temperature'])
+        if (self.bandit_params['current_temperature'] > 0.000001):
+            self.bandit_params['current_temperature'] -= self.bandit_params['temperature_decay']
 
-        # Then, calculate the Boltzmann probabilities.
-        boltzmann_probabilities = [
-            0] * len(self.bandit_params['possible_param_combs'])
+        if (self.bandit_params['current_temperature'] <= 0):
+            self.bandit_params['current_temperature'] = 0.000001
+            self.bandit_params['temperature_decay'] = 0
 
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            try:
-                boltzmann_probabilities[prob_index] = exp(
-                    self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
-            except OverflowError:
-                boltzmann_probabilities[prob_index] = inf
+        probabilities = [1] * len(self.bandit_params['possible_param_combs'])
+        if action_selection == 'boltzmann':
+            # Calculate the Boltzmann probabilities.
+            boltzmann_probabilities = [
+                0] * len(self.bandit_params['possible_param_combs'])
 
-        sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            boltzmann_probabilities[prob_index] /= sum_of_boltzmann_probabilities
+            for prob_index, _ in enumerate(boltzmann_probabilities):
+                try:
+                    boltzmann_probabilities[prob_index] = exp(
+                        self.bandit_params['average_scores'][prob_index]/self.bandit_params['current_temperature'])
+                except OverflowError:
+                    print("inf!")
+                    boltzmann_probabilities[prob_index] = inf
 
-        # If any probability is 0, set it to extremely low value, so that we can still generate a random choice.
-        for prob_index, _ in enumerate(boltzmann_probabilities):
-            if boltzmann_probabilities[prob_index] == 0:
-                boltzmann_probabilities[prob_index] = 1e-100
+            sum_of_boltzmann_probabilities = sum(boltzmann_probabilities)
+            for prob_index, _ in enumerate(boltzmann_probabilities):
+                boltzmann_probabilities[prob_index] /= sum_of_boltzmann_probabilities
 
-        # Last, choose a parameter combination based on the Boltzmann probabilities.
+            # If any probability is 0, set it to extremely low value, so that we can still generate a random choice.
+            for prob_index, _ in enumerate(boltzmann_probabilities):
+                if boltzmann_probabilities[prob_index] == 0:
+                    boltzmann_probabilities[prob_index] = 1e-100
+            probabilities = boltzmann_probabilities
+
+        elif action_selection == 'e-greedy-decay':
+            epsilon = self.bandit_params['current_temperature']
+            # Calculate the e-greedy probabilities.
+            e_greedy_probabilities = [
+                0] * len(self.bandit_params['possible_param_combs'])
+
+            # Find the best parameter combination.
+            best_param_comb_index = self.bandit_params['average_scores'].index(
+                max(self.bandit_params['average_scores']))
+
+            # Set the probability of the best parameter combination to 1 - epsilon.
+            e_greedy_probabilities[best_param_comb_index] = 1 - epsilon
+
+            # Set the probability of the rest of the parameter combinations to epsilon.
+            for prob_index, _ in enumerate(e_greedy_probabilities):
+                if prob_index != best_param_comb_index:
+                    e_greedy_probabilities[prob_index] = epsilon / \
+                        (len(e_greedy_probabilities) - 1)
+
+            probabilities = e_greedy_probabilities
+
+        # Last, choose a parameter set based on the calculated probabilities.
         chosen_params = random.choices(
-            self.bandit_params['possible_param_combs'], weights=boltzmann_probabilities)
+            self.bandit_params['possible_param_combs'], weights=probabilities)
 
         return chosen_params[0][0]
 
@@ -160,9 +192,11 @@ class AuctionModifier:
         # Update the counts, average scores and Boltzmann probabilities
         params_index = self.bandit_params['possible_param_combs'].index(
             last_tried_auction_params)
+        self.bandit_params['average_scores'][params_index] = ((self.bandit_params['average_scores'][params_index] *
+                                                               self.bandit_params['counts'][params_index]) + reward) / (self.bandit_params['counts'][params_index] + 1)
+        # print("calculating: (", str(self.bandit_params['average_scores'][params_index]), "*", str(
+        #     self.bandit_params['counts'][params_index]), "+", str(reward), ")/", str(self.bandit_params['counts'][params_index]), "+1=", str(self.bandit_params['average_scores'][params_index]))
         self.bandit_params['counts'][params_index] += 1
-        self.bandit_params['average_scores'][params_index] = (self.bandit_params['average_scores'][params_index] * (
-            self.bandit_params['counts'][params_index]) + reward) / (self.bandit_params['counts'][params_index] + 1)
 
 # General functions
     def generate_auction_parameters(self):
