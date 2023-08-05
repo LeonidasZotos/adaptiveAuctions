@@ -119,7 +119,7 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--auction_modifier_type",
         default="bandit",
-        choices=["random", "static", "bandit"],
+        choices=["random", "static", "bandit", "svr"],
         type=str,
         help="Type of auction modifier. Defaults to 'static'. Must be one of 'random', 'static' or 'bandit'."
     )

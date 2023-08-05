@@ -263,8 +263,8 @@ class CarQueue:
             elif self.parent_intersection.get_intersection_reward_type() == "time_waited_rank":
                 reward = self.get_time_waited_rank()
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
-                reward = (self.get_time_waited_rank() +
-                          self.get_bid_rank()) / 2
+                reward = (0.5 * self.get_time_waited_rank() +
+                          0.5 * self.get_bid_rank())
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)
         else:

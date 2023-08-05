@@ -106,7 +106,7 @@ class AuctionModifier:
 
         # Create all possible parameter combinations based on the level of discretization.
         queue_delay_min_limit = 0
-        queue_delay_max_limit = 2
+        queue_delay_max_limit = 5
 
         possible_queue_delay_boosts = []
 
