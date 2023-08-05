@@ -206,6 +206,30 @@ class MasterKeeper:
                 total_reward_per_intersection_last_epoch_dict[str(i) + str(j)] = str(
                     str(round(total_reward_only_last_epoch_all_sims_avg[i, j], 2)) + " (SD: " + str(round(last_epoch_average_total_reward_std[i, j], 2)) + ")")
 
+        # 3rd: Calculate the average total reward of each intersection
+        average_epoch_reward_per_intersection_all_sims = []
+        for sim in self.reward_history_per_simulation_all_sims:
+            average_epoch_reward_per_intersection_all_sims.append(
+                np.sum(sim, axis=2))
+        average_epoch_reward_per_intersection_all_sims = np.array(
+            average_epoch_reward_per_intersection_all_sims)
+        average_epoch_reward_per_intersection_all_sims = np.divide(
+            average_epoch_reward_per_intersection_all_sims, self.args.num_of_epochs)
+        average_epoch_reward_per_intersection_all_sims_std = np.std(
+            average_epoch_reward_per_intersection_all_sims, axis=0)
+        average_epoch_reward_per_intersection_all_sims = np.sum(
+            average_epoch_reward_per_intersection_all_sims, axis=0)
+        average_epoch_reward_per_intersection_all_sims = np.divide(
+            average_epoch_reward_per_intersection_all_sims, self.args.num_of_simulations)
+
+        average_epoch_reward_per_intersection_dic = {}
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                average_epoch_reward_per_intersection_dic[str(i) + str(j)] = str(
+                    str(round(average_epoch_reward_per_intersection_all_sims[i, j], 4)) + " (SD: " + str(round(average_epoch_reward_per_intersection_all_sims_std[i, j], 4)) + ")")
+        print("Here is the average epoch reward for intersection 11:",
+              average_epoch_reward_per_intersection_dic["11"])
+
         # 3rd: Calculate the last-epoch average max time waited over all intersections and all simulations.
         total_max_time_waited_only_last_epoch_all_sims = []
         for sim in self.max_time_waited_history_per_intersection_all_sims:
@@ -278,6 +302,8 @@ class MasterKeeper:
                     str(round(last_epoch_satisfaction_scores_std, 2)) + ')\n')
             f.write('Last-epoch average satisfaction score per bidding type, over all simulations: ' +
                     str(last_epoch_average_satisfaction_score_per_bidding_type) + " (SD: " + str(last_epoch_average_satisfaction_score_per_bidding_type_std) + ')\n')
+            f.write('Average epoch reward per intersection:' + str(
+                average_epoch_reward_per_intersection_dic) + '\n')
 
     def plot_satisfaction_scores_overall_average(self):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations."""

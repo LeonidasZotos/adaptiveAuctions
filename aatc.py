@@ -127,7 +127,7 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--auction_modifier_type_action_selection",
         default="boltzmann",
-        choices=["e-greedy-decay", "boltzmann"],
+        choices=["e-greedy_decay", "boltzmann"],
         type=str,
         help="Type of auction modifier action selection. Defaults to 'e-greedy-decay'. Must be one of 'e-greedy-decay' or 'boltzmann'."
     )
