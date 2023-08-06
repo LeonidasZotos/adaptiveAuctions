@@ -278,7 +278,7 @@ class Intersection:
         collected_bids = {}
         queue_waiting_times = {}
         queue_lengths = {}
-        queue_delay_boost = self.auction_modifier.generate_auction_parameters()
+        queue_delay_boost = self.auction_modifier.select_auction_params()
         self.last_tried_auction_params = [queue_delay_boost]
 
         for queue in self.carQueues:
@@ -348,9 +348,8 @@ class Intersection:
         Args:
             reward (float): The reward of the last auction
         """
-        if self.args.adaptive_auction_update_rule == "simple_bandit":
-            self.auction_modifier.update_params_simple_bandit(
-                self.last_tried_auction_params, reward)
+        self.auction_modifier.update_expected_rewards(
+            self.last_tried_auction_params, reward)
 
     def ready_for_new_epoch(self, epoch):
         """Prepares the intersection for the next epoch.

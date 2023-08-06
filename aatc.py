@@ -117,19 +117,19 @@ if __name__ == '__main__':
             As a consequent, the learning algorithm will adjust based on all auctions.""")
 
     run_parser.add_argument(
-        "--adaptive_auction_update_rule",
-        default="simple_bandit",
-        choices=["random", "static", "simple_bandit", "svr"],
+        "--adaptive_auction_action_selection",
+        default="boltzmann",
+        choices=["e_greedy_decay", "boltzmann", "random"],
         type=str,
-        help="TODO!"
+        help="Type of auction modifier action selection. Defaults to 'e_greedy_decay'. Must be one of 'e_greedy_decay' or 'boltzmann'."
     )
 
     run_parser.add_argument(
-        "--adaptive_auction_action_selection",
-        default="boltzmann",
-        choices=["e-greedy_decay", "boltzmann", "random"],
+        "--adaptive_auction_update_rule",
+        default="simple_bandit",
+        choices=["simple_bandit", "svr"],
         type=str,
-        help="Type of auction modifier action selection. Defaults to 'e-greedy-decay'. Must be one of 'e-greedy-decay' or 'boltzmann'."
+        help="TODO!"
     )
 
     run_parser.add_argument(
