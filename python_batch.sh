@@ -13,7 +13,7 @@ source $HOME/.envs/cars/bin/activate
  
 congestion_rate=("0.05")
 intersection_reward_type=("time" "time_and_urgency" "max_time_waited")
-auction_modifier_type=("bandit" "static")
+auction_modifier_type=("simple_bandit" "static")
 
 # Loop through congestion_rate
 for var1 in "${congestion_rate[@]}"

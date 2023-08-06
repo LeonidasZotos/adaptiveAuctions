@@ -348,8 +348,8 @@ class Intersection:
         Args:
             reward (float): The reward of the last auction
         """
-        if self.args.auction_modifier_type == "bandit":
-            self.auction_modifier.update_bandit_params(
+        if self.args.adaptive_auction_update_rule == "simple_bandit":
+            self.auction_modifier.update_params_simple_bandit(
                 self.last_tried_auction_params, reward)
 
     def ready_for_new_epoch(self, epoch):
