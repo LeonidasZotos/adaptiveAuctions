@@ -8,8 +8,10 @@ from sklearn.svm import SVR
 # The structure is as follows:
 # Boltzmann: uninformed_score, initial_temperature
 # E-greedy_decay: uninformed_score, initial_epsilon
+# E-greedy_exp_decay: uninformed_score, initial_epsilon, epsilon_decay (multiplier)
 BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.3],
-                                    'e_greedy_decay': [0, 0.3]}
+                                    'e_greedy_decay': [0, 0.3],
+                                    'e_greedy_exp_decay': [0, 0.1, 0.99]}
 
 MIN_MAX_DELAY_BOOSTS = [0, 5]
 
@@ -46,11 +48,15 @@ class AuctionModifier:
         self.action_selection_boltzmann_params = {}
         # E-greedy with decay Action Selection parameters
         self.action_selection_e_greedy_decay_params = {}
+        # E-greedy with exponential decay Action Selection parameters
+        self.action_selection_e_greedy_exp_decay_params = {}
 
         if (self.args.adaptive_auction_action_selection == "boltzmann"):
             self.init_action_selection_boltzmann_params_dict()
         elif (self.args.adaptive_auction_action_selection == "e_greedy_decay"):
             self.init_action_selection_e_greedy_decay_params_dict()
+        elif (self.args.adaptive_auction_action_selection == "e_greedy_exp_decay"):
+            self.init_action_selection_e_greedy_exp_decay_params_dict()
 
         #### Update Rule Dictionaries ####
         self.reward_update_svr_params = {}
@@ -123,11 +129,27 @@ class AuctionModifier:
         # Set number_of_exploration_epochs to something below num_of_epochs in case exploration should stop before the end of the simulation.
         number_of_exploration_epochs = self.args.num_of_epochs
         # Calcualte the decay so that it is ~0 after number_of_exploration_epochs epochs
-        esilon_decay = initial_epsilon / number_of_exploration_epochs
+        epsilon_decay = initial_epsilon / number_of_exploration_epochs
 
-        self.action_selection_e_greedy_decay_params = {'epsilon_decay': esilon_decay,
-                                                  'current_epsilon': initial_epsilon,
-                                                  }
+        self.action_selection_e_greedy_decay_params = {'epsilon_decay': epsilon_decay,
+                                                       'current_epsilon': initial_epsilon,
+                                                       }
+
+        self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
+            self.params_and_expected_rewards['expected_rewards'])
+
+    def init_action_selection_e_greedy_exp_decay_params_dict(self):
+        """Initializes the parameters for the e_greedy_exp_decay action selection
+        uninformed_score: The initial score for each parameter combination.
+        initial_epsilon: The initial esilon used for the algorithm
+        epsilon_decay: The decay of the esilon after each auction (not epoch, as multiple auctions can happen in an epoch).
+        """
+        uninformed_score, initial_epsilon, epsilon_decay = BEST_PARAMETERS_ACTION_SELECTION[
+            'e_greedy_exp_decay']
+
+        self.action_selection_e_greedy_decay_params = {'epsilon_decay': epsilon_decay,
+                                                       'current_epsilon': initial_epsilon,
+                                                       }
 
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
@@ -192,7 +214,10 @@ class AuctionModifier:
             chosen_param = self.select_auction_params_boltzmann()
 
         elif self.args.adaptive_auction_action_selection == 'e_greedy_decay':
-            chosen_param = self.select_auction_params_e_greedy_decay()
+            chosen_param = self.select_auction_params_e_greedy_edecay()
+
+        elif self.args.adaptive_auction_action_selection == 'e_greedy_exp_decay':
+            chosen_param = self.select_auction_params_e_greedy_exp_decay()
 
         elif self.args.adaptive_auction_action_selection == 'random':
             chosen_param = random.choice(
@@ -239,6 +264,38 @@ class AuctionModifier:
         if (self.action_selection_e_greedy_decay_params['current_epsilon'] - self.action_selection_e_greedy_decay_params['epsilon_decay'] > 0):
             self.action_selection_e_greedy_decay_params[
                 'current_epsilon'] -= self.action_selection_e_greedy_decay_params['epsilon_decay']
+
+        epsilon = self.action_selection_e_greedy_decay_params['current_epsilon']
+        # Calculate the e_greedy probabilities.
+        e_greedy_probabilities = [
+            0] * len(self.params_and_expected_rewards['possible_param_combs'])
+
+        # Find the best parameter combination.
+        best_param_comb_index = self.params_and_expected_rewards['expected_rewards'].index(
+            max(self.params_and_expected_rewards['expected_rewards']))
+
+        # Set the probability of the best parameter combination to 1 - epsilon.
+        e_greedy_probabilities[best_param_comb_index] = 1 - epsilon
+
+        # Set the probability of the rest of the parameter combinations to epsilon.
+        for prob_index, _ in enumerate(e_greedy_probabilities):
+            if prob_index != best_param_comb_index:
+                e_greedy_probabilities[prob_index] = epsilon / \
+                    (len(e_greedy_probabilities) - 1)
+
+        # Last, choose a parameter set based on the calculated probabilities.
+        chosen_params = random.choices(
+            self.params_and_expected_rewards['possible_param_combs'], weights=e_greedy_probabilities)
+
+        return chosen_params[0][0]
+
+    def select_auction_params_e_greedy_exp_decay(self):
+        """Generates the auction parameters for the next auction, using the e_greedy exponential decay algorithm."""
+        # First, reduce the temperature based on the decay. Once the temperature is equal to 0, stop decreasing it.
+        self.action_selection_e_greedy_decay_params[
+            'current_epsilon'] *= self.action_selection_e_greedy_decay_params['epsilon_decay']
+        if (self.action_selection_e_greedy_decay_params['current_epsilon'] < 0.001):
+            self.action_selection_e_greedy_decay_params['current_epsilon'] = 0
 
         epsilon = self.action_selection_e_greedy_decay_params['current_epsilon']
         # Calculate the e_greedy probabilities.
