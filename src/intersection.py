@@ -196,7 +196,6 @@ class Intersection:
     def get_auction_parameters_and_valuations_and_counts(self):
         """Returns the parameters, their valuations and counts of the auction
             Returns:
-                None or
                 tuple: A tuple containing the parameters, their valuations and counts of the auction  
             """
         return self.auction_modifier.get_parameters_and_valuations_and_counts()

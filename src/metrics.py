@@ -120,12 +120,11 @@ class MasterKeeper:
         self.max_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
             sim_metrics_keeper.max_time_waited_history_per_intersection))
 
-        if self.args.adaptive_auction_update_rule == "simple_bandit":  # Only relevant for adaptive auctions
-            # Retrieve the parameter space and the valuations per intersection. The parameters space is the same for all intersections
-            self.auction_parameters_space = sim_metrics_keeper.auction_parameters_space
+        # Retrieve the parameter space and the valuations per intersection. The parameters space is the same for all intersections
+        self.auction_parameters_space = sim_metrics_keeper.auction_parameters_space
 
-            self.sum_auction_parameters_valuations_per_intersection += sim_metrics_keeper.auction_parameters_valuations_per_intersection
-            self.sum_auction_parameters_counts_per_intersection += sim_metrics_keeper.auction_parameters_counts_per_intersection
+        self.sum_auction_parameters_valuations_per_intersection += sim_metrics_keeper.auction_parameters_valuations_per_intersection
+        self.sum_auction_parameters_counts_per_intersection += sim_metrics_keeper.auction_parameters_counts_per_intersection
 
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
@@ -158,8 +157,7 @@ class MasterKeeper:
         # Create a graph with graphs of the average reward per intersection, over all simulations
         self.plot_reward_per_intersection_history()
 
-        if self.args.adaptive_auction_update_rule == "simple_bandit":
-            self.plot_adaptive_auction_parameters_valuations_per_intersection()
+        self.plot_adaptive_auction_parameters_valuations_per_intersection()
 
     def produce_general_metrics(self):
         """Produces the general metrics of all simulations"""
@@ -898,7 +896,6 @@ class SimulationMetrics:
             self.max_time_waited_history_per_intersection[x_cord][y_cord] = intersection.get_max_time_waited_history(
             )
 
-            if self.args.adaptive_auction_update_rule == "simple_bandit":  # Only if adaptive auction is used
-                # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
-                self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord], self.auction_parameters_counts_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations_and_counts(
-                )
+            # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
+            self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord], self.auction_parameters_counts_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations_and_counts(
+            )

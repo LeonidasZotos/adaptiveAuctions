@@ -1,6 +1,8 @@
 """This module contains the AuctionModifier class, which contains the modofier that is used to modify the auction parameters"""
 import random
 from math import exp
+import numpy as np
+from sklearn.svm import SVR
 
 # The global below is used to store the best hyperparameters found for the different approaches for action selection
 # The structure is as follows:
@@ -19,30 +21,20 @@ class AuctionModifier:
         args (argparse.Namespace): Arguments parsed from the command line
         intersection_id (str): The id of the intersection foFr which the modifier is used, or 'same'
             if the same auction parameters are used everywhere
-        grid (Grid): The grid object that contains all intersections and car queues
-        simple_bandit_params (dict): The parameters used for the simple bandit adaptive algorithm, if used.
+        TODO: add stuff
     Functions:
-        get_parameters_and_valuations_and_counts: Returns the parameters, valuations and counts for the adaptive algorithm
-        init_simple_bandit_params: Initializes the bandit parameters for the bandit adaptive algorithm
-        generate_random_parameters: Generates random parameters for the next auction
-        generate_static_parameters: Generates static parameters for the next auction
-        generate_simple_bandit_parameters: Returns the auction parameters for the next auction, using the bandit adaptive algorithm.
-        update_params_simple_bandit (last_tried_auction_params, reward): Updates the bandit parameters for the bandit adaptive algorithm, based on the reward received
-        generate_auction_parameters (last_reward): Calls the appropriate function to generate the auction parameters
-        ready_for_new_epoch: Prepares the modifier for the next epoch
+        TODO: add functions
     """
 
-    def __init__(self, args, intersection_id, grid):
+    def __init__(self, args, intersection_id):
         """Initialize the AuctionModifier object
         Args:
             args (argparse.Namespace): Arguments parsed from the command line
             intersection_id (str): The id of the intersection for which the modifier is used, or 'same'
                 if the same auction parameters are used everywhere
-            grid (Grid): The grid object that contains all intersections and car queues
         """
         self.args = args
         self.intersection_id = intersection_id
-        self.grid = grid
 
         # Present regardless of action selection/update rules.
         self.params_and_expected_rewards = {}
@@ -61,6 +53,9 @@ class AuctionModifier:
             self.init_action_selection_e_greedy_decay_params_dict()
 
         #### Update Rule Dictionaries ####
+        self.reward_update_svr_params = {}
+        if (self.args.adaptive_auction_update_rule == 'svr'):
+            self.init_reward_update_svr_params_dict()
 
     def __str__(self):
         return f'Auction Modifier (intersection {self.intersection_id})'
@@ -130,14 +125,21 @@ class AuctionModifier:
         # Calcualte the decay so that it is ~0 after number_of_exploration_epochs epochs
         esilon_decay = initial_epsilon / number_of_exploration_epochs
 
-        self.action_selection_boltzmann_params = {'epsilon_decay': esilon_decay,
+        self.action_selection_e_greedy_decay_params = {'epsilon_decay': esilon_decay,
                                                   'current_epsilon': initial_epsilon,
                                                   }
 
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
+    def init_reward_update_svr_params_dict(self):
+        self.reward_update_svr_params = {'svr_model': SVR(kernel='rbf'),
+                                         'update_interval': 10,
+                                         'encountered_data': np.array([], ndmin=2),
+                                         'received_rewards': np.array([], ndmin=2)
+                                         }
 # Update Rule Functions
+
     def update_expected_rewards(self, last_tried_auction_params, reward):
         if self.args.adaptive_auction_update_rule == 'simple_bandit':
             self.update_expected_rewards_simple_bandit(
@@ -160,10 +162,27 @@ class AuctionModifier:
         self.params_and_expected_rewards['counts'][params_index] += 1
 
     def update_expected_rewards_svr(self, last_tried_auction_params, reward):
-        print("not implemented yet!")
-        pass
+        # First, add the experience and reward to the encountered_data and received_rewards.
+        self.reward_update_svr_params['encountered_data'] = np.append(
+            self.reward_update_svr_params['encountered_data'], np.array(last_tried_auction_params)).reshape(-1, 1)
+        self.reward_update_svr_params['received_rewards'] = np.append(
+            self.reward_update_svr_params['received_rewards'], np.array(reward))
+
+        # Then, calculate a new fit and expected reward for each possible parameter value if the update interval is reached.
+        if self.params_and_expected_rewards['number_of_auctions'] % self.reward_update_svr_params['update_interval'] == 0:
+            self.reward_update_svr_params['svr_model'].fit(
+                self.reward_update_svr_params['encountered_data'], self.reward_update_svr_params['received_rewards'].ravel())
+            # Update the expected rewards for each possible parameter combination.
+            for index, _ in enumerate(self.params_and_expected_rewards['possible_param_combs']):
+                self.params_and_expected_rewards['expected_rewards'][index] = self.reward_update_svr_params['svr_model'].predict(
+                    np.array(self.params_and_expected_rewards['possible_param_combs'][index], ndmin=2))[0]
+
+        # Update the counts for the last tried parameter
+        self.params_and_expected_rewards['counts'][self.params_and_expected_rewards['possible_param_combs'].index(
+            last_tried_auction_params)] += 1
 
 # Action Selection/Parameter Generation Functions
+
     def select_auction_params(self):
         """Returns the auction parameters for the next auction, using the chosen action selection algorithm.
         """

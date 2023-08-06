@@ -47,7 +47,7 @@ class Grid:
         self.all_cars = []
 
         intersection_auction_modifier = AuctionModifier(
-            self.args, 'same', self)
+            self.args, 'same')
 
         # Create the grid of intersections
         for i in range(self.args.grid_size):
@@ -57,7 +57,7 @@ class Grid:
                 # Each intersection has its own unique auction modifier
                 if not self.args.shared_auction_parameters:
                     intersection_auction_modifier = AuctionModifier(
-                        self.args, intersection_id, self)
+                        self.args, intersection_id)
                 intersection = Intersection(
                     self.args, intersection_id, intersection_auction_modifier)
                 self.all_car_queues.extend(intersection.get_car_queues())
