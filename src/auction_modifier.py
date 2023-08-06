@@ -11,9 +11,9 @@ from sklearn.svm import SVR
 # E-greedy_exp_decay: uninformed_score, initial_epsilon, epsilon_decay (multiplier)
 BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.3],
                                     'e_greedy_decay': [0, 0.3],
-                                    'e_greedy_exp_decay': [0, 0.1, 0.99]}
+                                    'e_greedy_exp_decay': [0, 1, 0.997]}
 
-MIN_MAX_DELAY_BOOSTS = [0, 5]
+MIN_MAX_DELAY_BOOSTS = [0, 2]
 
 
 class AuctionModifier:
@@ -160,8 +160,8 @@ class AuctionModifier:
                                          'encountered_data': np.array([], ndmin=2),
                                          'received_rewards': np.array([], ndmin=2)
                                          }
-# Update Rule Functions
 
+# Update Rule Functions
     def update_expected_rewards(self, last_tried_auction_params, reward):
         if self.args.adaptive_auction_update_rule == 'simple_bandit':
             self.update_expected_rewards_simple_bandit(
@@ -204,7 +204,6 @@ class AuctionModifier:
             last_tried_auction_params)] += 1
 
 # Action Selection/Parameter Generation Functions
-
     def select_auction_params(self):
         """Returns the auction parameters for the next auction, using the chosen action selection algorithm.
         """
@@ -221,7 +220,7 @@ class AuctionModifier:
 
         elif self.args.adaptive_auction_action_selection == 'random':
             chosen_param = random.choice(
-                self.action_selection_boltzmann_params['possible_param_combs'])[0]
+                self.params_and_expected_rewards['possible_param_combs'])[0]
 
         return chosen_param
 
@@ -296,7 +295,6 @@ class AuctionModifier:
             'current_epsilon'] *= self.action_selection_e_greedy_decay_params['epsilon_decay']
         if (self.action_selection_e_greedy_decay_params['current_epsilon'] < 0.001):
             self.action_selection_e_greedy_decay_params['current_epsilon'] = 0
-
         epsilon = self.action_selection_e_greedy_decay_params['current_epsilon']
         # Calculate the e_greedy probabilities.
         e_greedy_probabilities = [
