@@ -9,9 +9,11 @@ from sklearn.svm import SVR
 # Boltzmann: uninformed_score, initial_temperature
 # E-greedy_decay: uninformed_score, initial_epsilon
 # E-greedy_exp_decay: uninformed_score, initial_epsilon, epsilon_decay (multiplier)
+# UCB1: uninformed score, exploration_factor
 BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.3],
                                     'e_greedy_decay': [0, 0.3],
-                                    'e_greedy_exp_decay': [0, 1, 0.997]}
+                                    'e_greedy_exp_decay': [0, 1, 0.997],
+                                    'ucb1': [0, 0.5]} # Higher exploration_factor -> more exploration.
 
 MIN_MAX_DELAY_BOOSTS = [0, 2]
 
@@ -50,6 +52,8 @@ class AuctionModifier:
         self.action_selection_e_greedy_decay_params = {}
         # E-greedy with exponential decay Action Selection parameters
         self.action_selection_e_greedy_exp_decay_params = {}
+        # UCB1 Action Selection parameters
+        self.action_selection_ucb1_params = {}
 
         if (self.args.adaptive_auction_action_selection == "boltzmann"):
             self.init_action_selection_boltzmann_params_dict()
@@ -57,6 +61,8 @@ class AuctionModifier:
             self.init_action_selection_e_greedy_decay_params_dict()
         elif (self.args.adaptive_auction_action_selection == "e_greedy_exp_decay"):
             self.init_action_selection_e_greedy_exp_decay_params_dict()
+        elif (self.args.adaptive_auction_action_selection == "ucb1"):
+            self.init_action_selection_ucb1_params_dict()
 
         #### Update Rule Dictionaries ####
         self.reward_update_svr_params = {}
@@ -154,6 +160,17 @@ class AuctionModifier:
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
+    def init_action_selection_ucb1_params_dict(self):
+        """Initializes the parameters for the ucb1 action selection
+        uninformed_score: The initial score for each parameter combination.
+        exploration_factor: The exploration factor used for the algorithm
+        """
+        uninformed_score, self.action_selection_ucb1_params[
+            'exploration_factor'] = BEST_PARAMETERS_ACTION_SELECTION['ucb1']
+
+        self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
+            self.params_and_expected_rewards['expected_rewards'])
+
     def init_reward_update_svr_params_dict(self):
         self.reward_update_svr_params = {'svr_model': SVR(kernel='rbf'),
                                          'update_interval': 10,
@@ -217,7 +234,10 @@ class AuctionModifier:
 
         elif self.args.adaptive_auction_action_selection == 'e_greedy_exp_decay':
             chosen_param = self.select_auction_params_e_greedy_exp_decay()
-
+            
+        elif self.args.adaptive_auction_action_selection == 'ucb1':
+            chosen_param = self.select_auction_params_ucb1()
+            
         elif self.args.adaptive_auction_action_selection == 'random':
             chosen_param = random.choice(
                 self.params_and_expected_rewards['possible_param_combs'])[0]
@@ -318,6 +338,19 @@ class AuctionModifier:
             self.params_and_expected_rewards['possible_param_combs'], weights=e_greedy_probabilities)
 
         return chosen_params[0][0]
+
+    def select_auction_params_ucb1(self):
+        """Generates the auction parameters for the next auction, using the ucb1 algorithm."""
+        choices = self.params_and_expected_rewards['possible_param_combs']
+        expected_rewards = np.array(self.params_and_expected_rewards['expected_rewards'])
+        counts = np.array(self.params_and_expected_rewards['counts'])
+        num_of_auctions = self.params_and_expected_rewards['number_of_auctions']
+        
+        index_of_best_choice = np.argmax(expected_rewards + self.action_selection_ucb1_params[
+            'exploration_factor'] * np.sqrt(2 * np.log(num_of_auctions + 1) / (counts + 1e-6)))  # Add a small epsilon to avoid division by zero
+        choices[index_of_best_choice]
+        
+        return choices[index_of_best_choice][0]
 
 # General Functions
     def ready_for_new_epoch(self):
