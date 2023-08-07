@@ -1,4 +1,4 @@
-"""This module contains the AuctionModifier class, which contains the modofier that is used to modify the auction parameters"""
+"""This module contains the AuctionModifier class, which contains the modofier that is used to choose the auction parameters"""
 import random
 from math import exp
 import numpy as np
@@ -13,7 +13,7 @@ from sklearn.svm import SVR
 BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.3],
                                     'e_greedy_decay': [0, 0.3],
                                     'e_greedy_exp_decay': [0, 1, 0.997],
-                                    'ucb1': [0, 0.5]} # Higher exploration_factor -> more exploration.
+                                    'ucb1': [0, 0.5]}  # Higher exploration_factor -> more exploration.
 
 MIN_MAX_DELAY_BOOSTS = [0, 2]
 
@@ -109,7 +109,17 @@ class AuctionModifier:
         initial_temperature: The initial temperature used for the algorithm
         temperature_decay: The decay of the temperature after each auction (not epoch, as multiple auctions can happen in an epoch).
         """
-        uninformed_score, initial_temperature = BEST_PARAMETERS_ACTION_SELECTION['boltzmann']
+        uninformed_score, initial_temperature = 0, 0
+        if self.args.action_selection_hyperparameters is None:
+            uninformed_score, initial_temperature = BEST_PARAMETERS_ACTION_SELECTION[
+                'boltzmann']
+        else:
+            if len(self.args.action_selection_hyperparameters) == len(BEST_PARAMETERS_ACTION_SELECTION[
+                    'boltzmann']):
+                uninformed_score, initial_temperature = self.args.action_selection_hyperparameters
+            else:
+                raise Exception(
+                    "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
 
         # Set number_of_exploration_epochs to something below num_of_epochs in case exploration should stop before the end of the simulation.
         number_of_exploration_epochs = self.args.num_of_epochs
@@ -129,8 +139,18 @@ class AuctionModifier:
         initial_epsilon: The initial esilon used for the algorithm
         epsilon_decay: The decay of the esilon after each auction (not epoch, as multiple auctions can happen in an epoch).
         """
-        uninformed_score, initial_epsilon = BEST_PARAMETERS_ACTION_SELECTION[
-            'e_greedy_decay']
+        uninformed_score, initial_epsilon = 0, 0
+
+        if self.args.action_selection_hyperparameters is None:
+            uninformed_score, initial_epsilon = BEST_PARAMETERS_ACTION_SELECTION[
+                'e_greedy_decay']
+        else:
+            if len(self.args.action_selection_hyperparameters) == len(BEST_PARAMETERS_ACTION_SELECTION[
+                    'e_greedy_decay']):
+                uninformed_score, initial_epsilon = self.args.action_selection_hyperparameters
+            else:
+                raise Exception(
+                    "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
 
         # Set number_of_exploration_epochs to something below num_of_epochs in case exploration should stop before the end of the simulation.
         number_of_exploration_epochs = self.args.num_of_epochs
@@ -150,8 +170,18 @@ class AuctionModifier:
         initial_epsilon: The initial esilon used for the algorithm
         epsilon_decay: The decay of the esilon after each auction (not epoch, as multiple auctions can happen in an epoch).
         """
-        uninformed_score, initial_epsilon, epsilon_decay = BEST_PARAMETERS_ACTION_SELECTION[
-            'e_greedy_exp_decay']
+        uninformed_score, initial_epsilon, epsilon_decay = 0, 0, 0
+
+        if self.args.action_selection_hyperparameters is None:
+            uninformed_score, initial_epsilon, epsilon_decay = BEST_PARAMETERS_ACTION_SELECTION[
+                'e_greedy_exp_decay']
+        else:
+            if len(self.args.action_selection_hyperparameters) == len(BEST_PARAMETERS_ACTION_SELECTION[
+                    'e_greedy_exp_decay']):
+                uninformed_score, initial_epsilon, epsilon_decay = self.args.action_selection_hyperparameters
+            else:
+                raise Exception(
+                    "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
 
         self.action_selection_e_greedy_decay_params = {'epsilon_decay': epsilon_decay,
                                                        'current_epsilon': initial_epsilon,
@@ -165,9 +195,18 @@ class AuctionModifier:
         uninformed_score: The initial score for each parameter combination.
         exploration_factor: The exploration factor used for the algorithm
         """
-        uninformed_score, self.action_selection_ucb1_params[
-            'exploration_factor'] = BEST_PARAMETERS_ACTION_SELECTION['ucb1']
+        uninformed_score, exploration_factor = 0, 0
+        if self.args.action_selection_hyperparameters is None:
+            uninformed_score, exploration_factor = BEST_PARAMETERS_ACTION_SELECTION['ucb1']
 
+        else:
+            if len(self.args.action_selection_hyperparameters) == len(BEST_PARAMETERS_ACTION_SELECTION[
+                    'ucb1']):
+                uninformed_score, exploration_factor = self.args.action_selection_hyperparameters
+            else:
+                raise Exception(
+                    "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
+        self.action_selection_ucb1_params['exploration_factor'] = exploration_factor
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
@@ -234,10 +273,10 @@ class AuctionModifier:
 
         elif self.args.adaptive_auction_action_selection == 'e_greedy_exp_decay':
             chosen_param = self.select_auction_params_e_greedy_exp_decay()
-            
+
         elif self.args.adaptive_auction_action_selection == 'ucb1':
             chosen_param = self.select_auction_params_ucb1()
-            
+
         elif self.args.adaptive_auction_action_selection == 'random':
             chosen_param = random.choice(
                 self.params_and_expected_rewards['possible_param_combs'])[0]
@@ -342,14 +381,15 @@ class AuctionModifier:
     def select_auction_params_ucb1(self):
         """Generates the auction parameters for the next auction, using the ucb1 algorithm."""
         choices = self.params_and_expected_rewards['possible_param_combs']
-        expected_rewards = np.array(self.params_and_expected_rewards['expected_rewards'])
+        expected_rewards = np.array(
+            self.params_and_expected_rewards['expected_rewards'])
         counts = np.array(self.params_and_expected_rewards['counts'])
         num_of_auctions = self.params_and_expected_rewards['number_of_auctions']
-        
+
         index_of_best_choice = np.argmax(expected_rewards + self.action_selection_ucb1_params[
             'exploration_factor'] * np.sqrt(2 * np.log(num_of_auctions + 1) / (counts + 1e-6)))  # Add a small epsilon to avoid division by zero
         choices[index_of_best_choice]
-        
+
         return choices[index_of_best_choice][0]
 
 # General Functions

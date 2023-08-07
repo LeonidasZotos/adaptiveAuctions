@@ -130,7 +130,15 @@ if __name__ == '__main__':
         default="simple_bandit",
         choices=["simple_bandit", "svr"],
         type=str,
-        help="TODO!"
+        help="This is the rule used to update the expected reward for each parameter combination. E.g. simple_bandit uses a simple average reward, while svr does a fit."
+    )
+
+    run_parser.add_argument(
+        '--action_selection_hyperparameters',
+        nargs="+",  #  At least 1 argument
+        type=float,
+        help="""Hyperparameters to use for the action selection algorithm. This depends on the algorithm, consult auction_modifier.py for more information. 
+                Present to facilitate parameter sweeps. If not present, the default/best found values will be used."""
     )
 
     run_parser.add_argument(
