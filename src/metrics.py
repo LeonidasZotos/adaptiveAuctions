@@ -762,11 +762,6 @@ class MasterKeeper:
                 self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
             for i in range(self.args.grid_size):
                 for j in range(self.args.grid_size):
-
-                    # TODO: REMOVE THIS
-                    if i == 1 and j == 1:
-                        print("counts: ", counts_1d[i, j, :])
-
                     axs[i, j].scatter(
                         parameter_space_1d[:, 0], rewards_1d[i, j, :], s=counts_1d[i, j, :], marker="o")
                     axs[i, j].set_title('[' + str(i) + str(j) + ']')

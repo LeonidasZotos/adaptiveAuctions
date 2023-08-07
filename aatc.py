@@ -89,7 +89,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--congestion_rate",
-        default=0.1,
+        default=0.07,
         type=float_range(0.01, 1),
         help="Rate of congestion (Percentage of occupied spots, 0.01-1)."
     )
@@ -143,7 +143,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--adaptive_auction_discretization",
-        default=20,
+        default=25,
         choices=range(1, 101),
         metavar="[1-100]",
         type=int,
