@@ -269,7 +269,7 @@ class AuctionModifier:
             chosen_param = self.select_auction_params_boltzmann()
 
         elif self.args.adaptive_auction_action_selection == 'e_greedy_decay':
-            chosen_param = self.select_auction_params_e_greedy_edecay()
+            chosen_param = self.select_auction_params_e_greedy_decay()
 
         elif self.args.adaptive_auction_action_selection == 'e_greedy_exp_decay':
             chosen_param = self.select_auction_params_e_greedy_exp_decay()
