@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --time=1:00:00
+#SBATCH --time=2:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=128
+#SBATCH --cpus-per-task=64
 #SBATCH --job-name=parameter_sweep_ucb1
-#SBATCH --mem=64GB
+#SBATCH --mem=32GB
 
 module purge
 module load Python/3.9.6-GCCcore-11.2.0
@@ -23,7 +23,7 @@ do
         for var3 in "${action_selection_hyperparameters[@]}"
         do
             # Execute your command with the current parameters
-            command="python3 aatc.py run --num_of_simulations 128 --num_of_epochs 5000  --only_winning_bid_moves --adaptive_auction_update_rule=$var1 --adaptive_auction_action_selection=$var2 --action_selection_hyperparameters=$var3"
+            command="python3 aatc.py run --num_of_simulations 64 --num_of_epochs 5000  --only_winning_bid_moves --adaptive_auction_update_rule $var1 --adaptive_auction_action_selection $var2 --action_selection_hyperparameters $var3"
             echo "Executing: $command"
             eval $command
         done
