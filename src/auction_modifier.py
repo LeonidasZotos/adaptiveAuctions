@@ -234,7 +234,8 @@ class AuctionModifier:
             else:
                 raise Exception(
                     "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
-        self.action_selection_reverse_sigmoid_decay_params['percent_of_exploration'] = percent_of_exploration
+        self.action_selection_reverse_sigmoid_decay_params[
+            'percent_of_exploration'] = percent_of_exploration
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
@@ -304,7 +305,7 @@ class AuctionModifier:
 
         elif self.args.adaptive_auction_action_selection == 'ucb1':
             chosen_param = self.select_auction_params_ucb1()
-            
+
         elif self.args.adaptive_auction_action_selection == 'reverse_sigmoid_decay':
             chosen_param = self.select_auction_params_reverse_sigmoid_decay()
 
@@ -430,11 +431,12 @@ class AuctionModifier:
         def reverse_sigmoid(x, percent_of_exploration):
             x_offset = self.args.num_of_epochs * 2 * percent_of_exploration
             slope = 0.01  # Increase the slope value if there are fewer epochs, for a smoother curve
-            if (x-(x_offset/2)) > 700: # Use inf if this is larger than 700, to avoid overflow warnings.
-                return ((1 / (1 + np.inf**slope)) + 1)/2
-            y = ((1 / (1 + np.exp(x-(x_offset/2))**slope)) + 1)/2
+            # Use inf if this is larger than 700, to avoid overflow warnings.
+            if (x-(x_offset/2)) > 700:
+                return ((2 / (1 + np.inf**slope)))/2
+            y = ((2 / (1 + np.exp(x-(x_offset/2))**slope)))/2
             return y
-        
+
         # Calculate the probability to explore randomly:
         exploration_probability = reverse_sigmoid(
             self.params_and_expected_rewards['number_of_auctions'], self.action_selection_reverse_sigmoid_decay_params['percent_of_exploration'])
@@ -459,7 +461,7 @@ class AuctionModifier:
         # Last, choose a parameter set based on the calculated probabilities.
         chosen_params = random.choices(
             self.params_and_expected_rewards['possible_param_combs'], weights=probabilities)
-
+        
         return chosen_params[0][0]
 
 # General Functions
