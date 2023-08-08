@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
-#SBATCH --job-name=parameter_sweep_e_greedy_decay
+#SBATCH --job-name=parameter_sweep_reverse_sigmoid_decay
 #SBATCH --mem=32GB
 
 module purge
@@ -12,8 +12,8 @@ module load Python/3.9.6-GCCcore-11.2.0
 source $HOME/.envs/cars/bin/activate
  
 adaptive_auction_update_rule=("simple_bandit" "svr")
-adaptive_auction_action_selection=("e_greedy_decay") # rest: "e_greedy_decay" "e_greedy_exp_decay" "boltzmann" "random"
-action_selection_hyperparameters=("0 0.01" "0 0.05" "0 0.1" "0 0.2" "0 0.3" "0 0.4" "0 0.5" "0 0.6" "0 0.7" "0 0.8" "0 0.9" "0 1")
+adaptive_auction_action_selection=("reverse_sigmoid_decay")
+action_selection_hyperparameters=("0 0.01" "0 0.05" "0 0.1" "0 0.2" "0 0.3" "0 0.4" "0 0.5" "0 0.6")
 
 for var1 in "${adaptive_auction_update_rule[@]}"
 do

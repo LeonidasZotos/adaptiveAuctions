@@ -119,10 +119,11 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--adaptive_auction_action_selection",
         default="e_greedy_exp_decay",
-        choices=["ucb1", "e_greedy_decay",
-                 "e_greedy_exp_decay", "boltzmann", "random"],
+        choices=["boltzmann", "e_greedy_decay", "e_greedy_exp_decay",
+                 "ucb1", "reverse_sigmoid_decay", "random"],
         type=str,
-        help="Type of auction modifier action selection. Defaults to 'e_greedy_decay'. Must be one of 'e_greedy_decay' or 'boltzmann'."
+        help="Type of auction modifier action selection. Defaults to 'e_greedy_decay'. Must be one of 'boltzmann',\
+        'e_greedy_decay', 'e_greedy_exp_decay', 'ucb1', 'reverse_sigmoid_decay' or 'random'."
     )
 
     run_parser.add_argument(
