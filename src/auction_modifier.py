@@ -458,11 +458,10 @@ class AuctionModifier:
                 probabilities[prob_index] = exploration_probability / \
                     (len(probabilities) - 1)
 
-    
         # Last, choose a parameter set based on the calculated probabilities.
         chosen_params = random.choices(
             self.params_and_expected_rewards['possible_param_combs'], weights=probabilities)
-        
+
         return chosen_params[0][0]
 
 # General Functions
