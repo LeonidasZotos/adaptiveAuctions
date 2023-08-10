@@ -16,7 +16,7 @@ BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.01],
                                     'e_greedy_exp_decay': [0, 1, 0.985],
                                     # Higher exploration_factor -> more exploration.
                                     'ucb1': [0, 0.05],
-                                    'reverse_sigmoid_decay': [0, 0.1]}
+                                    'reverse_sigmoid_decay': [0, 0.05]}
 
 MIN_MAX_DELAY_BOOSTS = [0, 2]
 
@@ -458,6 +458,7 @@ class AuctionModifier:
                 probabilities[prob_index] = exploration_probability / \
                     (len(probabilities) - 1)
 
+    
         # Last, choose a parameter set based on the calculated probabilities.
         chosen_params = random.choices(
             self.params_and_expected_rewards['possible_param_combs'], weights=probabilities)
