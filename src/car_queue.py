@@ -48,9 +48,9 @@ class CarQueue:
         self.parent_intersection = parent_intersection
         self.time_inactive = 0
         self.bids = {}
-        self.bid_rank = 0  #  The rank of the bid compared to other queues of the intersection. Reset after every auction
+        self.bid_rank = nan  #  The rank of the bid compared to other queues of the intersection. Reset after every auction
         #  The rank of the time waited compared to other queues of the intersection. Reset after every auction
-        self.time_waited_rank = 0
+        self.time_waited_rank = nan
 
     def __str__(self):
         # Create list of all IDs of cars in the queue
@@ -244,10 +244,7 @@ class CarQueue:
             if total_submitted_bid > 0:
                 individual_price = fee * \
                     queue_bids[i] / total_submitted_bid
-
             self.cars[i].pay_bid(individual_price)
-        # Finally, the inactivity time must be reset for the queue itself.
-        self.time_inactive = 0
 
         reward = 0
         if self.parent_intersection.get_num_of_non_empty_queues() > 1:
@@ -265,10 +262,14 @@ class CarQueue:
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
                 reward = (0.5 * self.get_time_waited_rank() +
                           0.5 * self.get_bid_rank())
+
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)
         else:
             self.parent_intersection.add_reward_to_history(nan)
+
+        # Finally, the inactivity time must be reset for the queue itself.
+        self.time_inactive = 0
 
     def reset_bids(self):
         """Resets the bids submitted by the cars in the queue, so that the next auction can be run."""
@@ -288,5 +289,5 @@ class CarQueue:
         if not self.is_empty():
             # Inactivity time only increases if there are cars there.
             self.time_inactive += 1
-        self.bid_rank = 0
-        self.time_waited_rank = 0
+        self.bid_rank = nan
+        self.time_waited_rank = nan

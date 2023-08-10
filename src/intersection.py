@@ -206,16 +206,16 @@ class Intersection:
         """
         ordered_queues = []
         for queue in self.carQueues:
-            # Only collect bids from non-empty queues.
             if not queue.is_empty():
                 ordered_queues.append(queue)
 
+            
         num_of_queues = len(ordered_queues)
         ordered_queues = sorted(
             ordered_queues, key=lambda queue: queue.get_time_inactive())
         for index, queue in enumerate(ordered_queues):
             queue.set_time_waited_rank(index / num_of_queues)
-
+            
         # If they are equal, give them the same rank.
         for index, queue in enumerate(ordered_queues):
             if index != 0 and queue.get_time_inactive() == ordered_queues[index-1].get_time_inactive():
@@ -275,8 +275,6 @@ class Intersection:
                 array contains the destinations of the first car in each queue.
         """
         collected_bids = {}
-        queue_waiting_times = {}
-        queue_lengths = {}
         queue_delay_boost = self.auction_modifier.select_auction_params()
         self.last_tried_auction_params = [queue_delay_boost]
 
@@ -286,8 +284,6 @@ class Intersection:
                 # Only collect the first car's bid.
                 collected_bids[queue.id] = queue.collect_bids(
                     only_collect_first=True)
-                queue_waiting_times[queue.id] = queue.get_time_inactive()
-                queue_lengths[queue.id] = queue.get_num_of_cars()
         # If there is only one entry:
         if len(collected_bids) == 1:
             # We return the only queue, and its destination, and do not charge a fee.
@@ -311,8 +307,10 @@ class Intersection:
         # One modified/final bid per queue. Small noise is added to avoid ties.
         for key in summed_bids.keys():
             queue = utils.get_car_queue_from_intersection(self, key)
+            # final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
+            #                    * queue_delay_boost)) + random.uniform(0, 0.001)
             final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
-                               * queue_delay_boost)) + random.uniform(0, 0.001)
+                               * 0.5)) + random.uniform(0, 0.001)  # TODO: REMOVE THIS. Only for testing.
 
         # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.

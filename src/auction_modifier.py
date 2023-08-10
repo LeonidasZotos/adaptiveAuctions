@@ -293,7 +293,7 @@ class AuctionModifier:
         """Returns the auction parameters for the next auction, using the chosen action selection algorithm.
         """
         self.params_and_expected_rewards['number_of_auctions'] += 1
-
+        chosen_param = 0
         if self.args.adaptive_auction_action_selection == 'boltzmann':
             chosen_param = self.select_auction_params_boltzmann()
 
@@ -312,7 +312,9 @@ class AuctionModifier:
         elif self.args.adaptive_auction_action_selection == 'random':
             chosen_param = random.choice(
                 self.params_and_expected_rewards['possible_param_combs'])[0]
-
+        # if self.intersection_id == "11":
+        #     print("Auction modifier returning parameter:  " + str(chosen_param))
+            
         return chosen_param
 
     def select_auction_params_boltzmann(self):

@@ -145,8 +145,8 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--adaptive_auction_discretization",
         default=25,
-        choices=range(1, 101),
-        metavar="[1-100]",
+        choices=range(1, 1001),
+        metavar="[1-1000]",
         type=int,
         help="Number of discrete values to check for each parameter of the adaptive auction. Defaults to 5. Must be an integer between 1 and 100."
     )

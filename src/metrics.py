@@ -764,6 +764,9 @@ class MasterKeeper:
                 for j in range(self.args.grid_size):
                     axs[i, j].scatter(
                         parameter_space_1d[:, 0], rewards_1d[i, j, :], s=counts_1d[i, j, :], marker="o")
+                    # if [i, j] == [1, 1]:
+                    #     print("max reward: ", round(
+                    #         np.max(rewards_1d[i, j, :]), 3), " at ", parameter_space_1d[np.argmax(rewards_1d[i, j, :]), 0])
                     axs[i, j].set_title('[' + str(i) + str(j) + ']')
                     axs[i, j].set_xlabel('Delay Boost')
                     axs[i, j].set_ylabel('Average Reward')
