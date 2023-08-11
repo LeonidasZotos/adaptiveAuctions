@@ -162,7 +162,7 @@ if __name__ == '__main__':
         "--intersection_reward_type",
         default="mixed_metric_rank",
         choices=["time", "time_and_urgency", "max_time_waited",
-                 "time_waited_rank", "mixed_metric_rank"],
+                 "inact_rank", "mixed_metric_rank"],
         type=str,
         help="Type of reward for the intersection. Defaults to 'max_time_waited'. Must be one of 'time', 'time_and_urgency' or 'max_time_waited' ."
     )

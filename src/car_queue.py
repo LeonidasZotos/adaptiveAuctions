@@ -50,7 +50,7 @@ class CarQueue:
         self.bids = {}
         self.bid_rank = nan  #  The rank of the bid compared to other queues of the intersection. Reset after every auction
         #  The rank of the time waited compared to other queues of the intersection. Reset after every auction
-        self.time_waited_rank = nan
+        self.inact_rank = nan
 
     def __str__(self):
         # Create list of all IDs of cars in the queue
@@ -139,19 +139,19 @@ class CarQueue:
         """
         return self.bid_rank
 
-    def set_time_waited_rank(self, rank):
+    def set_inact_rank(self, rank):
         """Sets the time waited rank of the queue
         Args:
             rank (float): The rank of the queue
         """
-        self.time_waited_rank = rank
+        self.inact_rank = rank
 
-    def get_time_waited_rank(self):
+    def get_inact_rank(self):
         """Returns the time waited rank of the queue
         Returns:
             float: The time waited rank of the queue
         """
-        return self.time_waited_rank
+        return self.inact_rank
 
 ### Queue Manipulation Functions ###
     def add_car(self, car):
@@ -257,13 +257,13 @@ class CarQueue:
                      * self.cars[0].get_urgency())
             elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
                 reward = 1/(1+self.parent_intersection.get_max_time_waited())
-            elif self.parent_intersection.get_intersection_reward_type() == "time_waited_rank":
-                reward = self.get_time_waited_rank()
+            elif self.parent_intersection.get_intersection_reward_type() == "inact_rank":
+                reward = self.get_inact_rank()
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
-                reward = (0.5 * self.get_time_waited_rank() +
+                reward = (0.5 * self.get_inact_rank() +
                           0.5 * self.get_bid_rank())
-                if self.parent_intersection.id == "11":
-                    print("reward of queue {} is {}".format(self.id, reward))
+                # if self.parent_intersection.id == "11":
+                #     print("reward of queue {} is {}".format(self.id, reward))
 
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)
@@ -292,4 +292,4 @@ class CarQueue:
             # Inactivity time only increases if there are cars there.
             self.time_inactive += 1
         self.bid_rank = nan
-        self.time_waited_rank = nan
+        self.inact_rank = nan

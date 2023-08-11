@@ -213,27 +213,27 @@ class Intersection:
         ordered_queues = sorted(
             ordered_queues, key=lambda queue: queue.get_time_inactive())
         for index, queue in enumerate(ordered_queues):
-            queue.set_time_waited_rank(index / num_of_queues)
+            queue.set_inact_rank(index / num_of_queues)
 
         # If they are equal, give them the same rank.
         for index, queue in enumerate(ordered_queues):
             if index != 0 and queue.get_time_inactive() == ordered_queues[index-1].get_time_inactive():
-                queue.set_time_waited_rank(
-                    ordered_queues[index-1].get_time_waited_rank())
+                queue.set_inact_rank(
+                    ordered_queues[index-1].get_inact_rank())
         # Normalise between 0 and 1
-        max_time_waited_rank = max(
-            [queue.get_time_waited_rank() for queue in ordered_queues])
-        min_time_waited_rank = min(
-            [queue.get_time_waited_rank() for queue in ordered_queues])
+        max_inact_rank = max(
+            [queue.get_inact_rank() for queue in ordered_queues])
+        min_inact_rank = min(
+            [queue.get_inact_rank() for queue in ordered_queues])
 
-        if max_time_waited_rank == min_time_waited_rank:
+        if max_inact_rank == min_inact_rank:
             # If all times are equal, we set all ranks to 0.5
             for queue in ordered_queues:
-                queue.set_time_waited_rank(0.5)
+                queue.set_inact_rank(0.5)
         else:
             for queue in ordered_queues:
-                queue.set_time_waited_rank(
-                    (queue.get_time_waited_rank() - min_time_waited_rank) / (max_time_waited_rank - min_time_waited_rank))
+                queue.set_inact_rank(
+                    (queue.get_inact_rank() - min_inact_rank) / (max_inact_rank - min_inact_rank))
 
     def calc_bid_rank(self, summed_bids):
         """This function calculates the bid rank of each queue, and sets it. The rank is relative to the bid of the other queues,
@@ -301,30 +301,29 @@ class Intersection:
         self.calc_inact_rank()
         self.calc_bid_rank(summed_bids)
 
-        if self.id == "11":
-            non_empty_queues = [
-                queue for queue in self.carQueues if not queue.is_empty()]
-            print("-------------------")
-            print("bids: ", summed_bids)
-            print("bid_ranks: ", [queue.get_bid_rank()
-                                  for queue in non_empty_queues])
-            print("----------")
-            print("Inactivity times: ", [queue.get_time_inactive()
-                                         for queue in non_empty_queues])
-            print("inactive_ranks: ", [queue.get_time_waited_rank()
-                                       for queue in non_empty_queues])
-            print("----------")
+        # if self.id == "11":
+        #     non_empty_queues = [
+        #         queue for queue in self.carQueues if not queue.is_empty()]
+            # print("-------------------")
+            # print("bids: ", summed_bids)
+            # print("bid_ranks: ", [queue.get_bid_rank()
+            #                       for queue in non_empty_queues])
+            # print("----------")
+            # print("Inactivity times: ", [queue.get_time_inactive()
+            #                              for queue in non_empty_queues])
+            # print("inactive_ranks: ", [queue.get_inact_rank()
+            #                            for queue in non_empty_queues])
+            # print("----------")
 
         # Calculate the final boosted bids
         final_bids = {}
         # One modified/final bid per queue. Small noise is added to avoid ties.
         for key in summed_bids.keys():
             queue = utils.get_car_queue_from_intersection(self, key)
-            final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
-                               * queue_delay_boost)) + random.uniform(0, 0.00001)
-
-            # final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
-            #                    * 0.5)) + random.uniform(0, 0.00001)  # TODO: REMOVE THIS. Only for testing constant delay boost
+            # final_bids[key] = (summed_bids[key] + (queue.get_inact_rank()
+            #                    * queue_delay_boost)) + random.uniform(0, 0.00001)
+            final_bids[key] = (summed_bids[key] + (queue.get_inact_rank()
+                               * 10000)) + random.uniform(0, 0.00001)
         # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.
         final_bids = {k: v for k, v in sorted(
