@@ -209,13 +209,12 @@ class Intersection:
             if not queue.is_empty():
                 ordered_queues.append(queue)
 
-            
         num_of_queues = len(ordered_queues)
         ordered_queues = sorted(
             ordered_queues, key=lambda queue: queue.get_time_inactive())
         for index, queue in enumerate(ordered_queues):
             queue.set_time_waited_rank(index / num_of_queues)
-            
+
         # If they are equal, give them the same rank.
         for index, queue in enumerate(ordered_queues):
             if index != 0 and queue.get_time_inactive() == ordered_queues[index-1].get_time_inactive():
@@ -302,33 +301,66 @@ class Intersection:
         self.calc_inact_rank()
         self.calc_bid_rank(summed_bids)
 
+        if self.id == "11":
+            non_empty_queues = [
+                queue for queue in self.carQueues if not queue.is_empty()]
+            print("-------------------")
+            print("bids: ", summed_bids)
+            print("bid_ranks: ", [queue.get_bid_rank()
+                                  for queue in non_empty_queues])
+            print("----------")
+            print("Inactivity times: ", [queue.get_time_inactive()
+                                         for queue in non_empty_queues])
+            print("inactive_ranks: ", [queue.get_time_waited_rank()
+                                       for queue in non_empty_queues])
+            print("----------")
+
         # Calculate the final boosted bids
         final_bids = {}
         # One modified/final bid per queue. Small noise is added to avoid ties.
         for key in summed_bids.keys():
             queue = utils.get_car_queue_from_intersection(self, key)
-            # final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
-            #                    * queue_delay_boost)) + random.uniform(0, 0.001)
             final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
-                               * 0.5)) + random.uniform(0, 0.001)  # TODO: REMOVE THIS. Only for testing.
+                               * queue_delay_boost)) + random.uniform(0, 0.00001)
 
+            # final_bids[key] = (summed_bids[key] + (queue.get_time_waited_rank()
+            #                    * 0.5)) + random.uniform(0, 0.00001)  # TODO: REMOVE THIS. Only for testing constant delay boost
         # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.
         final_bids = {k: v for k, v in sorted(
             final_bids.items(), key=lambda item: item[1], reverse=True)}
 
-        queues_in_order = [utils.get_car_queue_from_intersection(
+        queues_in_order_of_final_bids = [utils.get_car_queue_from_intersection(
             self, queue_id) for queue_id in final_bids.keys()]
 
-        self.auction_fees = [summed_bids[queue.id]
-                             for queue in queues_in_order]
+        queues_in_order_of_original_bids = [utils.get_car_queue_from_intersection(
+            self, queue_id) for queue_id in summed_bids.keys()]
 
+        # All fees that are higher than the winners fee, are set to 0, so that the winner doesn't have to pay more than they bid.
+        # For example, with 3 bidders, if the winner bid the lowest, they shouldn't pay the 2nd price, but instead 0 (2nd highest price below the winner's bid)
+        for queue in queues_in_order_of_original_bids:
+            if summed_bids[queue.id] > summed_bids[queues_in_order_of_final_bids[0].id]:
+                summed_bids[queue.id] = 0
+
+        # order depending on the summed bid
+        queues_in_order_of_original_bids = sorted(
+            queues_in_order_of_original_bids, key=lambda queue: summed_bids[queue.id], reverse=True)
+
+        # All fees that are higher than the winners fee, are set to 0, so that the winner doesn't have to pay more than they bid.
+        # For example, with 3 bidders, if the winner bid the lowest, they shouldn't pay the 2nd price, but instead 0 (2nd highest price below the winner's bid)
+        for queue in queues_in_order_of_original_bids:
+            if summed_bids[queue.id] > summed_bids[queues_in_order_of_final_bids[0].id]:
+                summed_bids[queue.id] = 0
+
+        self.auction_fees = [summed_bids[queue.id]
+                             for queue in queues_in_order_of_original_bids]
         # Remove the highest bid as we have a 2nd price auction
         self.remove_top_fee()
 
         destinations = [queue.get_destination_of_first_car()
-                        for queue in queues_in_order]
-        winning_queues_id = [queue.id for queue in queues_in_order]
+                        for queue in queues_in_order_of_final_bids]
+        winning_queues_id = [
+            queue.id for queue in queues_in_order_of_final_bids]
 
         # We return the originating car queues and the destination car queues. We don't need to know the car ID,
         # as we can retrieve it later, if the move is possible.
