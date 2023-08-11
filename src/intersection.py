@@ -304,26 +304,24 @@ class Intersection:
         # if self.id == "11":
         #     non_empty_queues = [
         #         queue for queue in self.carQueues if not queue.is_empty()]
-            # print("-------------------")
-            # print("bids: ", summed_bids)
-            # print("bid_ranks: ", [queue.get_bid_rank()
-            #                       for queue in non_empty_queues])
-            # print("----------")
-            # print("Inactivity times: ", [queue.get_time_inactive()
-            #                              for queue in non_empty_queues])
-            # print("inactive_ranks: ", [queue.get_inact_rank()
-            #                            for queue in non_empty_queues])
-            # print("----------")
+        #     print("-------------------")
+        #     print("bids: ", summed_bids)
+        #     print("bid_ranks: ", [queue.get_bid_rank()
+        #                           for queue in non_empty_queues])
+        #     print("----------")
+        #     print("Inactivity times: ", [queue.get_time_inactive()
+        #                                  for queue in non_empty_queues])
+        #     print("inactive_ranks: ", [queue.get_inact_rank()
+        #                                for queue in non_empty_queues])
+        #     print("----------")
 
         # Calculate the final boosted bids
         final_bids = {}
         # One modified/final bid per queue. Small noise is added to avoid ties.
         for key in summed_bids.keys():
             queue = utils.get_car_queue_from_intersection(self, key)
-            # final_bids[key] = (summed_bids[key] + (queue.get_inact_rank()
-            #                    * queue_delay_boost)) + random.uniform(0, 0.00001)
             final_bids[key] = (summed_bids[key] + (queue.get_inact_rank()
-                               * 10000)) + random.uniform(0, 0.00001)
+                               * queue_delay_boost)) + random.uniform(0, 0.00001)
         # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.
         final_bids = {k: v for k, v in sorted(

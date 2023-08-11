@@ -18,7 +18,7 @@ BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.01],
                                     'ucb1': [0, 0.05],
                                     'reverse_sigmoid_decay': [0, 0.05]}
 
-MIN_MAX_DELAY_BOOSTS = [1, 2]
+MIN_MAX_DELAY_BOOSTS = [0, 5]
 
 
 class AuctionModifier:

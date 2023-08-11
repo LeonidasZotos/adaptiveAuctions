@@ -161,10 +161,10 @@ if __name__ == '__main__':
     run_parser.add_argument(
         "--intersection_reward_type",
         default="mixed_metric_rank",
-        choices=["time", "time_and_urgency", "max_time_waited",
-                 "inact_rank", "mixed_metric_rank"],
+        choices=["inact_rank", "rank_dist_metric", "mixed_metric_rank", "mixed_rank_dist_metric"],
         type=str,
-        help="Type of reward for the intersection. Defaults to 'max_time_waited'. Must be one of 'time', 'time_and_urgency' or 'max_time_waited' ."
+        help="Type of reward for the intersection. Defaults to 'mixed_metric_rank'. Must be one of 'inact_rank',\
+        'mixed_metric_rank', 'mixed_rank_dist_metric' or 'rank_dist_metric'."
     )
 
     run_parser.add_argument(

@@ -48,7 +48,8 @@ class CarQueue:
         self.parent_intersection = parent_intersection
         self.time_inactive = 0
         self.bids = {}
-        self.bid_rank = nan  #  The rank of the bid compared to other queues of the intersection. Reset after every auction
+        #  The rank of the bid compared to other queues of the intersection. Reset after every auction
+        self.bid_rank = nan
         #  The rank of the time waited compared to other queues of the intersection. Reset after every auction
         self.inact_rank = nan
 
@@ -249,21 +250,21 @@ class CarQueue:
         reward = 0
         if self.parent_intersection.get_num_of_non_empty_queues() > 1:
             # Only calculate a reward/update mechanism if there was an auction
-            if self.parent_intersection.get_intersection_reward_type() == "time":
-                reward = 1/(1+self.cars[0].get_time_at_intersection())
-            elif self.parent_intersection.get_intersection_reward_type() == "time_and_urgency":
-                reward = 1 / \
-                    (1+self.cars[0].get_time_at_intersection()
-                     * self.cars[0].get_urgency())
-            elif self.parent_intersection.get_intersection_reward_type() == "max_time_waited":
-                reward = 1/(1+self.parent_intersection.get_max_time_waited())
-            elif self.parent_intersection.get_intersection_reward_type() == "inact_rank":
+            if self.parent_intersection.get_intersection_reward_type() == "inact_rank":
                 reward = self.get_inact_rank()
+            elif self.parent_intersection.get_intersection_reward_type() == "rank_dist_metric":
+                # This is between 0 and 1
+                reward = 1 - abs(self.get_inact_rank() - self.get_bid_rank())
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
                 reward = (0.5 * self.get_inact_rank() +
                           0.5 * self.get_bid_rank())
-                # if self.parent_intersection.id == "11":
-                #     print("reward of queue {} is {}".format(self.id, reward))
+            elif self.parent_intersection.get_intersection_reward_type() == "mixed_rank_dist_metric":
+                distance_between_ranks = abs(
+                    self.get_inact_rank() - self.get_bid_rank())  # This is between 0 and 1
+                mixed_metric = (0.5 * self.get_inact_rank() +
+                                0.5 * self.get_bid_rank())  # This is between 0 and 1
+                # This is also between 0 and 1
+                reward = ((1 - distance_between_ranks) + mixed_metric) / 2
 
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)
