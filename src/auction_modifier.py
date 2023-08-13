@@ -1,8 +1,9 @@
 """This module contains the AuctionModifier class, which contains the modofier that is used to choose the auction parameters"""
 import random
-from math import exp
+from math import exp, nan
 import numpy as np
 from sklearn.svm import SVR
+
 
 # The global below is used to store the best hyperparameters found for the different approaches for action selection
 # The structure is as follows:
@@ -18,7 +19,7 @@ BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.01],
                                     'ucb1': [0, 0.05],
                                     'reverse_sigmoid_decay': [0, 0.05]}
 
-MIN_MAX_DELAY_BOOSTS = [0, 5]
+MIN_MAX_DELAY_BOOSTS = [-5, 5]
 
 
 class AuctionModifier:
@@ -42,6 +43,8 @@ class AuctionModifier:
         """
         self.args = args
         self.intersection_id = intersection_id
+        self.episode_length = 10
+        self.last_tried_param = [nan]
 
         # Present regardless of action selection/update rules.
         self.params_and_expected_rewards = {}
@@ -248,6 +251,7 @@ class AuctionModifier:
 
 # Update Rule Functions
     def update_expected_rewards(self, last_tried_auction_params, reward):
+        self.last_tried_param = last_tried_auction_params
         if self.args.adaptive_auction_update_rule == 'simple_bandit':
             self.update_expected_rewards_simple_bandit(
                 last_tried_auction_params, reward)
@@ -294,27 +298,31 @@ class AuctionModifier:
         """
         self.params_and_expected_rewards['number_of_auctions'] += 1
         chosen_param = 0
-        if self.args.adaptive_auction_action_selection == 'boltzmann':
-            chosen_param = self.select_auction_params_boltzmann()
+        # Every episode_length auctions, try a new parameter. last_tried_param is [nan] at the start, so in that case we do need a new param.
+        if self.params_and_expected_rewards['number_of_auctions'] % self.episode_length == 0 or self.last_tried_param == [nan]:
+            # Time to try a new parameter.
+            if self.args.adaptive_auction_action_selection == 'boltzmann':
+                chosen_param = self.select_auction_params_boltzmann()
 
-        elif self.args.adaptive_auction_action_selection == 'e_greedy_decay':
-            chosen_param = self.select_auction_params_e_greedy_decay()
+            elif self.args.adaptive_auction_action_selection == 'e_greedy_decay':
+                chosen_param = self.select_auction_params_e_greedy_decay()
 
-        elif self.args.adaptive_auction_action_selection == 'e_greedy_exp_decay':
-            chosen_param = self.select_auction_params_e_greedy_exp_decay()
+            elif self.args.adaptive_auction_action_selection == 'e_greedy_exp_decay':
+                chosen_param = self.select_auction_params_e_greedy_exp_decay()
 
-        elif self.args.adaptive_auction_action_selection == 'ucb1':
-            chosen_param = self.select_auction_params_ucb1()
+            elif self.args.adaptive_auction_action_selection == 'ucb1':
+                chosen_param = self.select_auction_params_ucb1()
 
-        elif self.args.adaptive_auction_action_selection == 'reverse_sigmoid_decay':
-            chosen_param = self.select_auction_params_reverse_sigmoid_decay()
+            elif self.args.adaptive_auction_action_selection == 'reverse_sigmoid_decay':
+                chosen_param = self.select_auction_params_reverse_sigmoid_decay()
 
-        elif self.args.adaptive_auction_action_selection == 'random':
-            chosen_param = random.choice(
-                self.params_and_expected_rewards['possible_param_combs'])[0]
-        # if self.intersection_id == "11":
-        #     print("Auction modifier returning parameter:  " + str(chosen_param))
-            
+            elif self.args.adaptive_auction_action_selection == 'random':
+                chosen_param = random.choice(
+                    self.params_and_expected_rewards['possible_param_combs'])[0]
+        else:
+            # Not time to try a new parameter yet.
+            chosen_param = self.last_tried_param[0]
+
         return chosen_param
 
     def select_auction_params_boltzmann(self):

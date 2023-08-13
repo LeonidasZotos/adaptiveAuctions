@@ -225,8 +225,6 @@ class MasterKeeper:
             for j in range(self.args.grid_size):
                 average_epoch_reward_per_intersection_dic[str(i) + str(j)] = str(
                     str(round(average_epoch_reward_per_intersection_all_sims[i, j], 4)) + " (SD: " + str(round(average_epoch_reward_per_intersection_all_sims_std[i, j], 4)) + ")")
-        print("Here is the average epoch reward for intersection 11:",
-              average_epoch_reward_per_intersection_dic["11"])
 
         # 3rd: Calculate the last-epoch average max time waited over all intersections and all simulations.
         total_max_time_waited_only_last_epoch_all_sims = []
@@ -741,7 +739,6 @@ class MasterKeeper:
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
         """Creates a plot of subplots for each intersection. Each subplot is a 2 or 3d subplot of the evaluation per parameter set."""
-
         if NUM_OF_ADAPT_PARAMS == 1:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
@@ -764,9 +761,6 @@ class MasterKeeper:
                 for j in range(self.args.grid_size):
                     axs[i, j].scatter(
                         parameter_space_1d[:, 0], rewards_1d[i, j, :], s=counts_1d[i, j, :], marker="o")
-                    # if [i, j] == [1, 1]:
-                    #     print("max reward: ", round(
-                    #         np.max(rewards_1d[i, j, :]), 3), " at ", parameter_space_1d[np.argmax(rewards_1d[i, j, :]), 0])
                     axs[i, j].set_title('[' + str(i) + str(j) + ']')
                     axs[i, j].set_xlabel('Delay Boost')
                     axs[i, j].set_ylabel('Average Reward')

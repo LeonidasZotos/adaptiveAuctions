@@ -1,7 +1,7 @@
 """This module contains the CarQueue class, which is used to represent a queue of cars at an intersection.
 This class is also responsible for gathering bids from the queue and making the cars pay their individual fees.
 Lastly, it also keeps track of how long the queue has been inactive (i.e. no cars have left the queue)."""
-from math import nan
+from math import nan, exp
 
 
 class CarQueue:
@@ -220,35 +220,36 @@ class CarQueue:
         """This is executed when the car queue has won the auction and the movement was succesful.
         Makes the cars in the queue pay their individual fees, and resets the inactivity time of the queue
         Args:
-            fee (int): The total fee that the cars in the queue have to pay
+            fee (float): The total fee that the cars in the queue have to pay
         """
-        # If a queue wins an auction:
-        # 1. The winning bid is paid by the cars in the queue.
-        # 2. The inactivity time is reset for the queue.
 
-        # First, the bid must be paid
-        queue_car_ids = []  # This holds the IDs of all cars in the queue
-        queue_bids = []  # This holds the bids of all cars in the queue, in the same order as the IDs
-        total_submitted_bid = 0  # This is the sum of the bids of all cars in the queue
+        if self.parent_intersection.get_last_tried_auction_params() != [nan]:
+            # An auction was held, so:
+            # 1. The winning bid is paid by the cars in the queue.
+            # 2. The inactivity time is reset for the queue.
+            # 3. The reward is calculated and the mechanism is updated.
+            # First, the bid must be paid
+            queue_car_ids = []  # This holds the IDs of all cars in the queue
+            queue_bids = []  # This holds the bids of all cars in the queue, in the same order as the IDs
+            total_submitted_bid = 0  # This is the sum of the bids of all cars in the queue
 
-        # First, separate the bids and the car IDs into two lists, from the bids that were previously collected.
-        for bid in self.bids.items():
-            queue_car_ids.append(bid[0])
-            queue_bids.append(bid[1])
-            total_submitted_bid += bid[1]
+            # First, separate the bids and the car IDs into two lists, from the bids that were previously collected.
+            for bid in self.bids.items():
+                queue_car_ids.append(bid[0])
+                queue_bids.append(bid[1])
+                total_submitted_bid += bid[1]
 
-        # Second, pay the bids for all cars in the queue. The payment is proportional to the individual bid.
-        for i in range(len(queue_car_ids)):
-            # The winning bid is divided proportionally depending on the individual bids of the cars in the queue.
-            # Default case is that the car pays nothing (This is explicit to avoid division by zero)
-            individual_price = 0
-            if total_submitted_bid > 0:
-                individual_price = fee * \
-                    queue_bids[i] / total_submitted_bid
-            self.cars[i].pay_bid(individual_price)
+            # Second, pay the bids for all cars in the queue. The payment is proportional to the individual bid.
+            for i in range(len(queue_car_ids)):
+                # The winning bid is divided proportionally depending on the individual bids of the cars in the queue.
+                # Default case is that the car pays nothing (This is explicit to avoid division by zero)
+                individual_price = 0
+                if total_submitted_bid > 0:
+                    individual_price = fee * \
+                        queue_bids[i] / total_submitted_bid
+                self.cars[i].pay_bid(individual_price)
 
-        reward = 0
-        if self.parent_intersection.get_num_of_non_empty_queues() > 1:
+            reward = 0
             # Only calculate a reward/update mechanism if there was an auction
             if self.parent_intersection.get_intersection_reward_type() == "inact_rank":
                 reward = self.get_inact_rank()
@@ -261,14 +262,16 @@ class CarQueue:
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_rank_dist_metric":
                 distance_between_ranks = abs(
                     self.get_inact_rank() - self.get_bid_rank())  # This is between 0 and 1
-                mixed_metric = (0.5 * self.get_inact_rank() +
-                                0.5 * self.get_bid_rank())  # This is between 0 and 1
+                mixed_metric = (self.get_inact_rank() + self.get_bid_rank())/2
                 # This is also between 0 and 1
                 reward = ((1 - distance_between_ranks) + mixed_metric) / 2
+            elif self.parent_intersection.get_intersection_reward_type() == "test_metric":
+                reward = (self.get_bid_rank() + self.get_inact_rank()) / 2
 
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)
         else:
+            # No auction was actually held.
             self.parent_intersection.add_reward_to_history(nan)
 
         # Finally, the inactivity time must be reset for the queue itself.

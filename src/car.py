@@ -282,6 +282,9 @@ class Car:
         self.time_at_intersection += 1
         self.time_in_traffic_network += 1
         self.submitted_bid = 0
+        # if self.time_at_intersection > 1:
+        #     # Urgency increases when the car hasn't received priority.
+        #     self.urgency = min(self.urgency + 0.1, 1)
 
 
 class SmallCar:
