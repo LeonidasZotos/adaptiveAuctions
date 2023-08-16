@@ -265,8 +265,6 @@ class CarQueue:
                 mixed_metric = (self.get_inact_rank() + self.get_bid_rank())/2
                 # This is also between 0 and 1
                 reward = ((1 - distance_between_ranks) + mixed_metric) / 2
-            elif self.parent_intersection.get_intersection_reward_type() == "test_metric":
-                reward = (self.get_bid_rank() + self.get_inact_rank()) / 2
 
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)

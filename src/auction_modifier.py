@@ -43,7 +43,6 @@ class AuctionModifier:
         """
         self.args = args
         self.intersection_id = intersection_id
-        self.episode_length = 10
         self.last_tried_param = [nan]
 
         # Present regardless of action selection/update rules.
@@ -299,7 +298,7 @@ class AuctionModifier:
         self.params_and_expected_rewards['number_of_auctions'] += 1
         chosen_param = 0
         # Every episode_length auctions, try a new parameter. last_tried_param is [nan] at the start, so in that case we do need a new param.
-        if self.params_and_expected_rewards['number_of_auctions'] % self.episode_length == 0 or self.last_tried_param == [nan]:
+        if self.params_and_expected_rewards['number_of_auctions'] % self.args.auction_episode_length == 0 or self.last_tried_param == [nan]:
             # Time to try a new parameter.
             if self.args.adaptive_auction_action_selection == 'boltzmann':
                 chosen_param = self.select_auction_params_boltzmann()

@@ -135,6 +135,14 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
+        "--auction_episode_length",
+        default=1,
+        choices=range(1, 1001),
+        metavar="[1-1000]",
+        type=int,
+        help="Length of an episode for the adaptive auction. I.e. the number of epochs to run the auction with the same parameters. Defaults to 1. Must be an integer between 1 and 1000."
+    )
+    run_parser.add_argument(
         '--action_selection_hyperparameters',
         nargs="+",  #  At least 1 argument
         type=float,
@@ -160,8 +168,9 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--intersection_reward_type",
-        default="test_metric",
-        choices=["inact_rank", "rank_dist_metric", "mixed_metric_rank", "mixed_rank_dist_metric", "test_metric"],
+        default="mixed_metric_rank",
+        choices=["inact_rank", "rank_dist_metric",
+                 "mixed_metric_rank", "mixed_rank_dist_metric"],
         type=str,
         help="Type of reward for the intersection. Defaults to 'mixed_metric_rank'. Must be one of 'inact_rank',\
         'mixed_metric_rank', 'mixed_rank_dist_metric' or 'rank_dist_metric'."
@@ -193,14 +202,6 @@ if __name__ == '__main__':
         '--print_grid',
         action=argparse.BooleanOptionalAction,
         help="""If present, the grid will be printed after each epoch.""")
-
-    # TODO: REMOVE THIS!!!!
-    run_parser.add_argument(
-        "--test_boost",
-        default=1,
-        type=float_range(-inf, inf),
-        help="Quick way to check a boost value"
-    )
 
     # Clean command
     clean_parser = subparsers.add_parser(

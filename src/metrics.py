@@ -110,8 +110,10 @@ class MasterKeeper:
             sim_metrics_keeper.throughput_history_per_intersection)
 
         # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
-        self.count_of_reward_measurements_per_intersection += np.where(
-            sim_metrics_keeper.reward_history_per_intersection != nan, 1, 0)
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                self.count_of_reward_measurements_per_intersection[i, j] += np.where(
+                    np.isnan(sim_metrics_keeper.reward_history_per_intersection[i, j]), 0, 1)
         self.reward_history_per_simulation_all_sims.append(
             np.nan_to_num(sim_metrics_keeper.reward_history_per_intersection))
 
