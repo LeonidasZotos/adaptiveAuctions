@@ -150,9 +150,7 @@ class Intersection:
         """
         if self.is_empty():
             return nan
-
         all_times = [queue.get_time_inactive() for queue in self.carQueues]
-
         return max(all_times)
 
     def get_last_reward(self):

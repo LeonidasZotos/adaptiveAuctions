@@ -2,7 +2,6 @@
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib import cm
 from math import nan
 import pandas as pd
 import csv
@@ -110,15 +109,13 @@ class MasterKeeper:
             sim_metrics_keeper.throughput_history_per_intersection)
 
         # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
-        for i in range(self.args.grid_size):
-            for j in range(self.args.grid_size):
-                self.count_of_reward_measurements_per_intersection[i, j] += np.where(
-                    np.isnan(sim_metrics_keeper.reward_history_per_intersection[i, j]), 0, 1)
+        self.count_of_reward_measurements_per_intersection += np.where(
+            np.isnan(sim_metrics_keeper.reward_history_per_intersection), 0, 1)
         self.reward_history_per_simulation_all_sims.append(
             np.nan_to_num(sim_metrics_keeper.reward_history_per_intersection))
 
         self.count_of_max_time_waited_measurements_per_intersection += np.where(
-            sim_metrics_keeper.max_time_waited_history_per_intersection != nan, 1, 0)
+            np.isnan(sim_metrics_keeper.max_time_waited_history_per_intersection), 0, 1)
         self.max_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
             sim_metrics_keeper.max_time_waited_history_per_intersection))
 
@@ -490,6 +487,22 @@ class MasterKeeper:
                     np.std(RL_bidding_results[epoch]))
             else:
                 RL_bidder_sd.append(nan)
+
+        # Remove the first WARMUP_EPOCHS
+        epochs = epochs[WARMUP_EPOCHS:]
+        static_bidding_average_satisfaction_scores = static_bidding_average_satisfaction_scores[
+            WARMUP_EPOCHS:]
+        static_bidding_sd = static_bidding_sd[WARMUP_EPOCHS:]
+        random_bidding_average_satisfaction_scores = random_bidding_average_satisfaction_scores[
+            WARMUP_EPOCHS:]
+        random_bidding_sd = random_bidding_sd[WARMUP_EPOCHS:]
+        free_rider_bidding_average_satisfaction_scores = free_rider_bidding_average_satisfaction_scores[
+            WARMUP_EPOCHS:]
+        free_rider_bidding_sd = free_rider_bidding_sd[WARMUP_EPOCHS:]
+        RL_bidder_average_satisfaction_scores = RL_bidder_average_satisfaction_scores[
+            WARMUP_EPOCHS:]
+        RL_bidder_sd = RL_bidder_sd[WARMUP_EPOCHS:]
+
         if with_std == True:
             # Plot the average satisfaction score per epoch, per bidding type & with error bars
             if len(static_bidding_results) > 0:
@@ -518,21 +531,6 @@ class MasterKeeper:
             if len(RL_bidding_results) > 0:
                 plt.plot(
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
-
-        # Remove the first 30 epochs, which are the warm-up epochs
-        epochs = epochs[WARMUP_EPOCHS:]
-        static_bidding_average_satisfaction_scores = static_bidding_average_satisfaction_scores[
-            WARMUP_EPOCHS:]
-        static_bidding_sd = static_bidding_sd[WARMUP_EPOCHS:]
-        random_bidding_average_satisfaction_scores = random_bidding_average_satisfaction_scores[
-            WARMUP_EPOCHS:]
-        random_bidding_sd = random_bidding_sd[WARMUP_EPOCHS:]
-        free_rider_bidding_average_satisfaction_scores = free_rider_bidding_average_satisfaction_scores[
-            WARMUP_EPOCHS:]
-        free_rider_bidding_sd = free_rider_bidding_sd[WARMUP_EPOCHS:]
-        RL_bidder_average_satisfaction_scores = RL_bidder_average_satisfaction_scores[
-            WARMUP_EPOCHS:]
-        RL_bidder_sd = RL_bidder_sd[WARMUP_EPOCHS:]
 
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
@@ -714,6 +712,11 @@ class MasterKeeper:
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
             self.max_time_waited_history_per_intersection_all_sims, axis=0)
+        print("max time waited intersection 1,1:")
+        print(total_max_time_waited_history_summed_sims[1, 1])
+        print("divided by count of measurements:")
+        print(
+            self.count_of_max_time_waited_measurements_per_intersection[1, 1])
         average_max_time_waited_per_intersection = np.divide(
             total_max_time_waited_history_summed_sims, self.count_of_max_time_waited_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the max_time_waited history of that intersection. In total there are as many subplots as intersections

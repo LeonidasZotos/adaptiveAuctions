@@ -87,7 +87,7 @@ class Car:
         Returns:
             str: A short description of the car, containing the ID, final destination, balance and urgency.
         """
-        return f'C(id={self.id}), d: {self.final_destination}, b: {self.balance}, r: {self.urgency}, t: {self.time_in_traffic_network}'
+        return f'Car(id={self.id}), destin.: {self.final_destination}, queue destin.:{self.next_destination_queue}, balance: {self.balance}, urgency: {self.urgency}, time: {self.time_in_traffic_network}'
 
 ### Helper functions ###
     def is_at_destination(self):
