@@ -61,6 +61,10 @@ class MasterKeeper:
             args (argparse.Namespace): Arguments parsed from the command line
         """
         self.args = args
+        # Number of Gridlocked simulations
+        self.num_of_gridlocks = 0
+
+        # The satisfaction scores history of all simulations
         self.all_simulations_satisfaction_scores = []
 
         # Total throughput per intersection
@@ -99,6 +103,12 @@ class MasterKeeper:
         Args:
             sim_metrics_keeper (SimulationMetrics): The metrics keeper of the current simulation
         """
+
+        if sim_metrics_keeper.check_if_gridlocked() == True:
+            # If the simulation was gridlocked, take note of that and do not store the results.
+            self.num_of_gridlocks += 1
+            return
+
         self.all_simulations_satisfaction_scores.append(
             sim_metrics_keeper.current_sim_satisfaction_scores)
 
@@ -170,8 +180,9 @@ class MasterKeeper:
 
         throughput_only_last_epoch_all_sims_sum = np.sum(
             throughput_only_last_epoch_all_sims, axis=0)
+        # throughput_only_last_epoch_all_sims.shape[0] is the number of simulations, excluding grilocks.
         throughput_only_last_epoch_all_sims_avg = np.divide(
-            throughput_only_last_epoch_all_sims_sum, self.args.num_of_simulations)
+            throughput_only_last_epoch_all_sims_sum, throughput_only_last_epoch_all_sims.shape[0])
         # Calculate the standard deviation of throughput_only_last_epoch_all_sims over all sims.
         last_epoch_average_throughput_std = np.std(
             throughput_only_last_epoch_all_sims, axis=0)
@@ -192,7 +203,7 @@ class MasterKeeper:
         total_reward_only_last_epoch_all_sims_sum = np.sum(
             total_reward_only_last_epoch_all_sims, axis=0)
         total_reward_only_last_epoch_all_sims_avg = np.divide(
-            total_reward_only_last_epoch_all_sims_sum, self.args.num_of_simulations)
+            total_reward_only_last_epoch_all_sims_sum, total_reward_only_last_epoch_all_sims.shape[0])
         # Calculate the standard deviation
         last_epoch_average_total_reward_std = np.std(
             total_reward_only_last_epoch_all_sims, axis=0)
@@ -217,8 +228,7 @@ class MasterKeeper:
         average_epoch_reward_per_intersection_all_sims = np.sum(
             average_epoch_reward_per_intersection_all_sims, axis=0)
         average_epoch_reward_per_intersection_all_sims = np.divide(
-            average_epoch_reward_per_intersection_all_sims, self.args.num_of_simulations)
-
+            average_epoch_reward_per_intersection_all_sims, len(self.reward_history_per_simulation_all_sims))
         average_epoch_reward_per_intersection_dic = {}
         for i in range(self.args.grid_size):
             for j in range(self.args.grid_size):
@@ -236,7 +246,7 @@ class MasterKeeper:
         total_max_time_waited_only_last_epoch_all_sims_sum = np.sum(
             total_max_time_waited_only_last_epoch_all_sims, axis=0)
         total_max_time_waited_only_last_epoch_all_sims_avg = np.divide(
-            total_max_time_waited_only_last_epoch_all_sims_sum, self.args.num_of_simulations)
+            total_max_time_waited_only_last_epoch_all_sims_sum, len(total_max_time_waited_only_last_epoch_all_sims))
         # Calculate the standard deviation
         total_max_time_waited_only_last_epoch_all_sims_std = np.std(
             total_max_time_waited_only_last_epoch_all_sims, axis=0)
@@ -286,6 +296,8 @@ class MasterKeeper:
 
         # Export the results to a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
+            f.write('Num of excluded simulations, due to gridlocks: ' +
+                    str(self.num_of_gridlocks) + '\n')
             f.write('Last-epoch average throughput over all intersections and all simulations: ' + str(
                 throughput_per_intersection_last_epoch_dict) + '\n')
             f.write('Last-epoch average throughput over all intersections and all simulations: ' + str(
@@ -631,7 +643,7 @@ class MasterKeeper:
         total_population_per_intersection = np.sum(
             self.total_population_per_intersection_all_sims, axis=0)
         average_congestion_per_intersection = np.divide(
-            total_population_per_intersection, self.args.num_of_simulations)
+            total_population_per_intersection, self.args.num_of_simulations - self.num_of_gridlocks)
         average_congestion_per_intersection = np.divide(
             average_congestion_per_intersection, self.args.num_of_epochs)
         average_congestion_per_intersection = np.divide(
@@ -653,7 +665,7 @@ class MasterKeeper:
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
         average_throughput_per_intersection = np.divide(
-            total_throughput_history_summed_sims, self.args.num_of_simulations)
+            total_throughput_history_summed_sims, len(self.total_throughput_history_per_intersection_all_sims))
         # Remove the first x epochs from the history, because they are part of the warm-up period
         # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
@@ -712,11 +724,6 @@ class MasterKeeper:
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
             self.max_time_waited_history_per_intersection_all_sims, axis=0)
-        print("max time waited intersection 1,1:")
-        print(total_max_time_waited_history_summed_sims[1, 1])
-        print("divided by count of measurements:")
-        print(
-            self.count_of_max_time_waited_measurements_per_intersection[1, 1])
         average_max_time_waited_per_intersection = np.divide(
             total_max_time_waited_history_summed_sims, self.count_of_max_time_waited_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the max_time_waited history of that intersection. In total there are as many subplots as intersections
@@ -744,13 +751,14 @@ class MasterKeeper:
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self):
         """Creates a plot of subplots for each intersection. Each subplot is a 2 or 3d subplot of the evaluation per parameter set."""
+        number_of_non_gridlocked_sims = self.args.num_of_simulations - self.num_of_gridlocks
         if NUM_OF_ADAPT_PARAMS == 1:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
-                self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
+                self.sum_auction_parameters_valuations_per_intersection, number_of_non_gridlocked_sims)
 
             average_count_per_parameter_set_per_intersection = np.divide(
-                self.sum_auction_parameters_counts_per_intersection, self.args.num_of_simulations)
+                self.sum_auction_parameters_counts_per_intersection, number_of_non_gridlocked_sims)
 
             parameter_space_1d = np.reshape(
                 self.auction_parameters_space, (self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS))
@@ -776,7 +784,7 @@ class MasterKeeper:
         elif NUM_OF_ADAPT_PARAMS == 2:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
-                self.sum_auction_parameters_valuations_per_intersection, self.args.num_of_simulations)
+                self.sum_auction_parameters_valuations_per_intersection, number_of_non_gridlocked_sims)
 
             parameter_space_2d = np.reshape(
                 self.auction_parameters_space, (self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS))
@@ -858,6 +866,13 @@ class SimulationMetrics:
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
         self.auction_parameters_counts_per_intersection = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
+
+    def check_if_gridlocked(self):
+        # If a queue has been inactive for more than half of the simulation, it is considered gridlocked
+        if (np.nanmax(list(np.concatenate(self.max_time_waited_history_per_intersection).flat)) > self.args.num_of_epochs / 2):
+            return True
+
+        return False
 
     def add_satisfaction_scores(self, epoch, satisfaction_scores):
         """Adds the satisfaction scores of the cars that completed a trip. If there was no car that completed
