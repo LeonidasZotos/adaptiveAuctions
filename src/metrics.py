@@ -1,4 +1,5 @@
 """A class to keep track of the metrics of the simulation and create relevant graphs."""
+import os
 import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
@@ -51,7 +52,7 @@ class MasterKeeper:
             Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
         plot_reward_per_intersection_history(export_results=True): Creates a plot with subplots for each intersection.
             Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
-        plot_adaptive_auction_parameters_valuations_per_intersection(): Creates a plot with subplots for each intersection.
+        plot_adaptive_auction_parameters_valuations_per_intersection(export_results=True): Creates a plot with subplots for each intersection.
             Each subplot is a graph of the valuations of the auction parameters of that intersection.
     """
 
@@ -61,6 +62,11 @@ class MasterKeeper:
             args (argparse.Namespace): Arguments parsed from the command line
         """
         self.args = args
+
+        self.export_location = self.args.results_folder + "/exported_data"
+        if not os.path.exists(self.export_location):
+            os.makedirs(self.export_location)
+
         # Number of Gridlocked simulations
         self.num_of_gridlocks = 0
 
@@ -137,6 +143,7 @@ class MasterKeeper:
 
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
+
         # Create a .txt file with the arguments used for the simulation
         with open(self.args.results_folder + '/configuration.txt', 'w') as f:
             for arg in vars(self.args):
@@ -312,7 +319,7 @@ class MasterKeeper:
             f.write('Average epoch reward per intersection:' + str(
                 average_epoch_reward_per_intersection_dic) + '\n')
 
-    def plot_satisfaction_scores_overall_average(self):
+    def plot_satisfaction_scores_overall_average(self, export_results=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations."""
 
         def remove_car_copies_from_dict(dict):
@@ -367,7 +374,11 @@ class MasterKeeper:
                     '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=False, filter_outliers=False):
+        if export_results == True:
+            np.save(self.export_location + "/average_satisfaction_score.npy",
+                    average_satisfaction_scores)
+
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -596,7 +607,7 @@ class MasterKeeper:
                 RL_bidder_average_satisfaction_scores, RL_bidder_sd
             ]).T, delimiter=",", header="Epoch, Static low bidding Score, Static low bidding SD, Static high bidding Score, Static high bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
 
-    def histogram_satisfaction_scores_by_bidding_type(self, export_results=False, filter_outliers=False):
+    def histogram_satisfaction_scores_by_bidding_type(self, export_results=True, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -678,7 +689,7 @@ class MasterKeeper:
                 for values in zip_longest(*[all_static_low_bidding_results, all_static_high_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
                     writer.writerow(values)
 
-    def plot_congestion_heatmap_average(self, export_results=False):
+    def plot_congestion_heatmap_average(self, export_results=True):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -705,7 +716,7 @@ class MasterKeeper:
             np.savetxt(self.args.results_folder + '/average_congestion_per_intersection.csv',
                        average_congestion_per_intersection, delimiter=",")
 
-    def plot_throughput_per_intersection_history(self, export_results=False):
+    def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
@@ -727,15 +738,10 @@ class MasterKeeper:
         plt.clf()
 
         if export_results == True:
-            throughput_history_df = pd.DataFrame()
-            for i in range(average_throughput_per_intersection.shape[0]):
-                for j in range(average_throughput_per_intersection.shape[1]):
-                    throughput_history_df[str(
-                        i) + '_' + str(j)] = average_throughput_per_intersection[i, j]
-            throughput_history_df.to_csv(self.args.results_folder +
-                                         '/average_throughput_per_intersection_history.csv', index=False)
+            np.save(self.export_location + "/average_throughput_per_intersection.npy",
+                    average_throughput_per_intersection)
 
-    def plot_reward_per_intersection_history(self, export_results=False):
+    def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
             self.reward_history_per_simulation_all_sims, axis=0)
@@ -756,15 +762,10 @@ class MasterKeeper:
         plt.clf()
 
         if export_results == True:
-            rewards_history_df = pd.DataFrame()
-            for i in range(average_reward_per_intersection.shape[0]):
-                for j in range(average_reward_per_intersection.shape[1]):
-                    rewards_history_df[str(
-                        i) + '_' + str(j)] = average_reward_per_intersection[i, j]
-            rewards_history_df.to_csv(self.args.results_folder +
-                                      '/average_reward_per_intersection_history.csv', index=False)
+            np.save(self.export_location + "/average_reward_per_intersection_history.npy",
+                    average_reward_per_intersection)
 
-    def plot_max_time_waited_per_intersection_history(self, export_results=False):
+    def plot_max_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
@@ -786,15 +787,10 @@ class MasterKeeper:
         plt.clf()
 
         if export_results == True:
-            max_time_waited_history_df = pd.DataFrame()
-            for i in range(average_max_time_waited_per_intersection.shape[0]):
-                for j in range(average_max_time_waited_per_intersection.shape[1]):
-                    max_time_waited_history_df[str(
-                        i) + '_' + str(j)] = average_max_time_waited_per_intersection[i, j]
-            max_time_waited_history_df.to_csv(self.args.results_folder +
-                                              '/average_max_time_waited_per_intersection_history.csv', index=False)
+            np.save(self.export_location + "/average_max_time_waited_per_intersection_history.npy",
+                    average_max_time_waited_per_intersection)
 
-    def plot_adaptive_auction_parameters_valuations_per_intersection(self):
+    def plot_adaptive_auction_parameters_valuations_per_intersection(self, export_results=True):
         """Creates a plot of subplots for each intersection. Each subplot is a 2 or 3d subplot of the evaluation per parameter set."""
         number_of_non_gridlocked_sims = self.args.num_of_simulations - self.num_of_gridlocks
         if NUM_OF_ADAPT_PARAMS == 1:
@@ -825,6 +821,14 @@ class MasterKeeper:
             plt.savefig(self.args.results_folder +
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
+            
+            if export_results == True:
+                np.save(self.export_location + "/average_reward_per_parameter_set_per_intersection_rewards.npy",
+                        rewards_1d)
+                np.save(self.export_location + "/average_reward_per_parameter_set_per_intersection_parameters.npy",
+                        parameter_space_1d)
+                np.save(self.export_location + "/average_reward_per_parameter_set_per_intersection_counts.npy",
+                        counts_1d)
 
         elif NUM_OF_ADAPT_PARAMS == 2:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
