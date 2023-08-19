@@ -131,7 +131,7 @@ class Grid:
                 if not self.args.shared_bid_generator:
                     bid_generator = BidGenerator(self.args)
                 bidding_type = random.choices(
-                    ['static', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
+                    ['static_low', 'static_high', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
                 # Create a new car, number_of_spawns is actually the ID.
                 car = Car(self.args, number_of_spawns,
                           random_queue, bidding_type, bid_generator)

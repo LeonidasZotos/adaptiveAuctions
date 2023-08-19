@@ -2,7 +2,7 @@
 The SmallCar class is a small version of the Car class, which only contains the essential car info. The latter is used for evaluation purposes,
 so that no full copies are kept.
 """
-
+import numpy as np
 import random
 
 
@@ -69,7 +69,7 @@ class Car:
         # Set an initial balance. This is set to 0 because the car will receive credit in the 0th epoch.
         self.balance = 0
         # Rush factor is random between 0 and 1, rounded to 1 decimal. The higher the urgency, the higher the urgency.
-        self.urgency = round(random.random(), 1)
+        self.urgency = self.set_urgency()
         # Time spent at the current intersection
         self.time_at_intersection = 0
         # Time spent in the network for the current trip
@@ -219,6 +219,31 @@ class Car:
         # Return the next destination queue
         return self.next_destination_queue
 
+    def set_urgency(self):
+        """Sets the urgency of the car, depending on the bidding type
+        Returns: 
+            urgency (float): The urgency of the car
+        """
+        urgency = 0
+        if self.bidding_type == 'static_low':
+            # Random float from gaussian with mean 0.25, and sigma 0.2
+            mu_v = 0.25
+            sigma_v = 0.2
+            valuation = np.random.normal(mu_v, sigma_v)
+            while valuation < 0 or valuation > 1:
+                valuation = np.random.normal(mu_v, sigma_v)
+                urgency = valuation
+        elif self.bidding_type == 'static_high':
+            # Random float from gaussian with mean 0.75, and sigma 0.2
+            mu_v = 0.75
+            sigma_v = 0.2
+            valuation = np.random.normal(mu_v, sigma_v)
+            while valuation < 0 or valuation > 1:
+                valuation = np.random.normal(mu_v, sigma_v)
+                urgency = valuation
+
+        return urgency
+
     def reset_car(self, car_queue_id):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
            next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
@@ -229,7 +254,7 @@ class Car:
         self.car_queue_id = car_queue_id
         self.reset_final_destination()
         self.next_destination_queue = self.update_next_destination_queue()
-        self.urgency = round(random.random(), 1)
+        self.urgency = self.set_urgency()
         self.submitted_bid = 0
         self.time_at_intersection = 0
         self.time_in_traffic_network = 0
@@ -282,9 +307,6 @@ class Car:
         self.time_at_intersection += 1
         self.time_in_traffic_network += 1
         self.submitted_bid = 0
-        # if self.time_at_intersection > 1:
-        #     # Urgency increases when the car hasn't received priority.
-        #     self.urgency = min(self.urgency + 0.1, 1)
 
 
 class SmallCar:

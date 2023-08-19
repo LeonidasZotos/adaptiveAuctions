@@ -367,7 +367,7 @@ class MasterKeeper:
                     '/average_satisfaction_score.png')
         plt.clf()
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=False, filter_outliers=True):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=False, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -377,7 +377,8 @@ class MasterKeeper:
             filter_outliers (bool): Whether to filter out outliers from the results
         """
 
-        static_bidding_results = {}
+        static_low_bidding_results = {}
+        static_high_bidding_results = {}
         random_bidding_results = {}
         free_rider_bidding_results = {}
         RL_bidding_results = {}
@@ -387,11 +388,16 @@ class MasterKeeper:
                 for (car_copy, score) in result_dict[epoch]:
                     bidding_type = car_copy.bidding_type
                     # Static bidding
-                    if bidding_type == 'static':
-                        if epoch in static_bidding_results:
-                            static_bidding_results[epoch].append(score)
+                    if bidding_type == 'static_low':
+                        if epoch in static_low_bidding_results:
+                            static_low_bidding_results[epoch].append(score)
                         else:
-                            static_bidding_results[epoch] = [score]
+                            static_low_bidding_results[epoch] = [score]
+                    elif bidding_type == 'static_high':
+                        if epoch in static_high_bidding_results:
+                            static_high_bidding_results[epoch].append(score)
+                        else:
+                            static_high_bidding_results[epoch] = [score]
                     # Random bidding
                     elif bidding_type == 'random':
                         if epoch in random_bidding_results:
@@ -413,17 +419,21 @@ class MasterKeeper:
 
         # Create a list of all epochs in which cars completed their trip
         epochs = []
-        for epoch in static_bidding_results:
-            if static_bidding_results[epoch] != None or random_bidding_results[epoch] != None or free_rider_bidding_results[epoch] != None or RL_bidding_results[epoch] != None:
+        for epoch in static_low_bidding_results:
+            if static_low_bidding_results[epoch] != None or static_high_bidding_results[epoch] != None or random_bidding_results[epoch] != None or free_rider_bidding_results[epoch] != None or RL_bidding_results[epoch] != None:
                 epochs.append(epoch)
 
         # Remove outliers if necessary:
         if filter_outliers == True:
             for epoch in epochs:
-                # Static bidding:
-                if epoch in static_bidding_results:
-                    static_bidding_results[epoch] = utils.remove_outliers(
-                        static_bidding_results[epoch])
+                # Static low bidding:
+                if epoch in static_low_bidding_results:
+                    static_low_bidding_results[epoch] = utils.remove_outliers(
+                        static_low_bidding_results[epoch])
+                # Static high bidding
+                if epoch in static_high_bidding_results:
+                    static_high_bidding_results[epoch] = utils.remove_outliers(
+                        static_high_bidding_results[epoch])
                 # Random bidding:
                 if epoch in random_bidding_results:
                     random_bidding_results[epoch] = utils.remove_outliers(
@@ -438,18 +448,25 @@ class MasterKeeper:
                         RL_bidding_results[epoch])
 
         # Create a list of all average satisfaction scores
-        static_bidding_average_satisfaction_scores = []
+        static_low_bidding_average_satisfaction_scores = []
+        static_high_bidding_average_satisfaction_scores = []
         random_bidding_average_satisfaction_scores = []
         free_rider_bidding_average_satisfaction_scores = []
         RL_bidder_average_satisfaction_scores = []
 
         for epoch in epochs:
-            # Static bidding:
-            if epoch in static_bidding_results:
-                static_bidding_average_satisfaction_scores.append(
-                    sum(static_bidding_results[epoch]) / len(static_bidding_results[epoch]))
+            # Static low bidding:
+            if epoch in static_low_bidding_results:
+                static_low_bidding_average_satisfaction_scores.append(
+                    sum(static_low_bidding_results[epoch]) / len(static_low_bidding_results[epoch]))
             else:
-                static_bidding_average_satisfaction_scores.append(nan)
+                static_low_bidding_average_satisfaction_scores.append(nan)
+            # Static high bidding:
+            if epoch in static_high_bidding_results:
+                static_high_bidding_average_satisfaction_scores.append(
+                    sum(static_high_bidding_results[epoch]) / len(static_high_bidding_results[epoch]))
+            else:
+                static_high_bidding_average_satisfaction_scores.append(nan)
             # Random bidding:
             if epoch in random_bidding_results:
                 random_bidding_average_satisfaction_scores.append(
@@ -470,17 +487,24 @@ class MasterKeeper:
                 RL_bidder_average_satisfaction_scores.append(nan)
 
         # Create a list of all standard deviations of satisfaction scores
-        static_bidding_sd = []
+        static_low_bidding_sd = []
+        static_high_bidding_sd = []
         random_bidding_sd = []
         free_rider_bidding_sd = []
         RL_bidder_sd = []
         for epoch in epochs:
-            # Static bidding:
-            if epoch in static_bidding_results:
-                static_bidding_sd.append(
-                    np.std(static_bidding_results[epoch]))
+            # Static low bidding:
+            if epoch in static_low_bidding_results:
+                static_low_bidding_sd.append(
+                    np.std(static_low_bidding_results[epoch]))
             else:
-                static_bidding_sd.append(nan)
+                static_low_bidding_sd.append(nan)
+            # Static high bidding:
+            if epoch in static_high_bidding_results:
+                static_high_bidding_sd.append(
+                    np.std(static_high_bidding_results[epoch]))
+            else:
+                static_high_bidding_sd.append(nan)
             # Random bidding:
             if epoch in random_bidding_results:
                 random_bidding_sd.append(
@@ -502,9 +526,14 @@ class MasterKeeper:
 
         # Remove the first WARMUP_EPOCHS
         epochs = epochs[WARMUP_EPOCHS:]
-        static_bidding_average_satisfaction_scores = static_bidding_average_satisfaction_scores[
+        static_low_bidding_average_satisfaction_scores = static_low_bidding_average_satisfaction_scores[
             WARMUP_EPOCHS:]
-        static_bidding_sd = static_bidding_sd[WARMUP_EPOCHS:]
+        static_low_bidding_sd = static_low_bidding_sd[WARMUP_EPOCHS:]
+
+        static_high_bidding_average_satisfaction_scores = static_high_bidding_average_satisfaction_scores[
+            WARMUP_EPOCHS:]
+        static_high_bidding_sd = static_high_bidding_sd[WARMUP_EPOCHS:]
+
         random_bidding_average_satisfaction_scores = random_bidding_average_satisfaction_scores[
             WARMUP_EPOCHS:]
         random_bidding_sd = random_bidding_sd[WARMUP_EPOCHS:]
@@ -517,9 +546,12 @@ class MasterKeeper:
 
         if with_std == True:
             # Plot the average satisfaction score per epoch, per bidding type & with error bars
-            if len(static_bidding_results) > 0:
-                plt.errorbar(epochs, static_bidding_average_satisfaction_scores,
-                             yerr=static_bidding_sd, fmt='o', label='Static bidding')
+            if len(static_low_bidding_results) > 0:
+                plt.errorbar(epochs, static_low_bidding_average_satisfaction_scores,
+                             yerr=static_low_bidding_sd, fmt='o', label='Static low bidding')
+            if len(static_high_bidding_results) > 0:
+                plt.errorbar(epochs, static_high_bidding_average_satisfaction_scores,
+                             yerr=static_high_bidding_sd, fmt='o', label='Static high bidding')
             if len(random_bidding_results) > 0:
                 plt.errorbar(epochs, random_bidding_average_satisfaction_scores,
                              yerr=random_bidding_sd, fmt='o', label='Random bidding')
@@ -531,9 +563,12 @@ class MasterKeeper:
                              yerr=RL_bidder_sd, fmt='o', label='RL bidding')
         else:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
-            if len(static_bidding_results) > 0:
+            if len(static_low_bidding_results) > 0:
                 plt.plot(
-                    epochs, static_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Static bidding', markersize=1.5)
+                    epochs, static_low_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Static low bidding', markersize=1.5)
+            if len(static_high_bidding_results) > 0:
+                plt.plot(
+                    epochs, static_high_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Static high bidding', markersize=1.5)
             if len(random_bidding_results) > 0:
                 plt.plot(
                     epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding', markersize=1.5)
@@ -554,19 +589,21 @@ class MasterKeeper:
 
         if export_results == True:
             np.savetxt(self.args.results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([
-                epochs, static_bidding_average_satisfaction_scores, static_bidding_sd,
+                epochs, static_low_bidding_average_satisfaction_scores, static_low_bidding_sd,
+                static_high_bidding_average_satisfaction_scores, static_high_bidding_sd,
                 random_bidding_average_satisfaction_scores, random_bidding_sd,
                 free_rider_bidding_average_satisfaction_scores, free_rider_bidding_sd,
                 RL_bidder_average_satisfaction_scores, RL_bidder_sd
-            ]).T, delimiter=",", header="Epoch, Static bidding Score, Static bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
+            ]).T, delimiter=",", header="Epoch, Static low bidding Score, Static low bidding SD, Static high bidding Score, Static high bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
 
-    def histogram_satisfaction_scores_by_bidding_type(self, export_results=False, filter_outliers=True):
+    def histogram_satisfaction_scores_by_bidding_type(self, export_results=False, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file
             filter_outliers (bool): Whether to filter out outliers from the results
         """
-        all_static_bidding_results = []
+        all_static_low_bidding_results = []
+        all_static_high_bidding_results = []
         all_random_bidding_results = []
         all_free_rider_bidding_results = []
         all_RL_bidding_results = []
@@ -576,8 +613,10 @@ class MasterKeeper:
                 for (car_copy, score) in result_dict[epoch]:
                     bidding_type = car_copy.bidding_type
                     # Static bidding
-                    if bidding_type == 'static':
-                        all_static_bidding_results.append(score)
+                    if bidding_type == 'static_low':
+                        all_static_low_bidding_results.append(score)
+                    if bidding_type == 'static_high':
+                        all_static_high_bidding_results.append(score)
                     # Random bidding
                     elif bidding_type == 'random':
                         all_random_bidding_results.append(score)
@@ -590,9 +629,12 @@ class MasterKeeper:
 
         # Remove outliers if necessary:
         if filter_outliers == True:
-            if len(all_static_bidding_results) > 0:
-                all_static_bidding_results = utils.remove_outliers(
-                    all_static_bidding_results)
+            if len(all_static_low_bidding_results) > 0:
+                all_static_low_bidding_results = utils.remove_outliers(
+                    all_static_low_bidding_results)
+            if len(all_static_high_bidding_results) > 0:
+                all_static_high_bidding_results = utils.remove_outliers(
+                    all_static_high_bidding_results)
             if len(all_random_bidding_results) > 0:
                 all_random_bidding_results = utils.remove_outliers(
                     all_random_bidding_results)
@@ -604,9 +646,12 @@ class MasterKeeper:
                     all_RL_bidding_results)
 
         # Create a histogram of all satisfaction scores, per bidding type
-        if len(all_static_bidding_results) > 0:
-            plt.hist(all_static_bidding_results, bins=30,
-                     alpha=0.5, label='Static bidding')
+        if len(all_static_low_bidding_results) > 0:
+            plt.hist(all_static_low_bidding_results, bins=30,
+                     alpha=0.5, label='Static low bidding')
+        if len(all_static_high_bidding_results) > 0:
+            plt.hist(all_static_high_bidding_results, bins=30,
+                     alpha=0.5, label='Static high bidding')
         if len(all_random_bidding_results) > 0:
             plt.hist(all_random_bidding_results, bins=30,
                      alpha=0.5, label='Random bidding')
@@ -618,7 +663,7 @@ class MasterKeeper:
                      alpha=0.5, label='RL bidding')
 
         plt.xlabel('Satisfaction Score \n (the lower, the better)')
-        plt.ylabel('Frequency')
+        plt.ylabel('Frequency \n (all simulations, all epochs)')
         plt.title('Histogram of Satisfaction Scores')
         plt.legend()
         plt.savefig(self.args.results_folder +
@@ -629,8 +674,8 @@ class MasterKeeper:
             with open(self.args.results_folder + "/satisfaction_scores_by_type.csv", "w+") as f:
                 writer = csv.writer(f)
                 writer.writerow(
-                    ['Static bidding', 'Random bidding', 'Free-rider bidding', 'RL bidding'])
-                for values in zip_longest(*[all_static_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
+                    ['Static low bidding', 'Static high bidding' 'Random bidding', 'Free-rider bidding', 'RL bidding'])
+                for values in zip_longest(*[all_static_low_bidding_results, all_static_high_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
                     writer.writerow(values)
 
     def plot_congestion_heatmap_average(self, export_results=False):

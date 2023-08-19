@@ -183,11 +183,11 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         '--bidders_proportion',
-        nargs=4,
-        default=[1, 0, 0, 0],
+        nargs=5,
+        default=[1, 0, 0, 0, 0],
         type=int,
         help="""Proportion for the types of bidders to use, should be a list of integers.
-            Order: [static, random, free-riders & RL]
+            Order: [static_low, static_high, random, free-riders & RL]
             Does not have to add up to something. E.g. "2 1 1 0" means 2/4 static, 1/4 random, 1/4 free-riders and 0 RL bidders.
             """)
 

@@ -69,7 +69,8 @@ class BidGenerator:
             Exception: If the bidding strategy is not valid.
         """
 
-        if bidding_strategy == 'static':
+        if bidding_strategy == 'static_low' or bidding_strategy == 'static_high':
+            # For both, the bid is the urgency
             bid = self.generate_static_bid(urgency)
             return bid
         if bidding_strategy == 'random':
