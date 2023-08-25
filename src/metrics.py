@@ -4,9 +4,6 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 from math import nan
-import csv
-from itertools import zip_longest
-
 import src.utils as utils
 
 NUM_OF_ADAPT_PARAMS = 1
@@ -725,7 +722,7 @@ class MasterKeeper:
         average_reward_per_intersection = []
         with np.errstate(invalid='ignore'):
             average_reward_per_intersection = np.divide(total_reward_history_summed_sims,
-                      self.count_of_reward_measurements_per_intersection)
+                                                        self.count_of_reward_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
