@@ -100,6 +100,12 @@ class MasterKeeper:
         self.sum_auction_parameters_counts_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, pow(self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS)))
 
+        # Winner inact and bid ranks per intersection. The length of the third dimension is usually num_of_simulations, but if an intersection never held an auction, it will be smaller.
+        self.all_sims_winners_inact_ranks_means = [
+            [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
+        self.all_sims_winners_bid_ranks_means = [
+            [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
+
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
         Args:
@@ -137,6 +143,24 @@ class MasterKeeper:
         self.sum_auction_parameters_valuations_per_intersection += sim_metrics_keeper.auction_parameters_valuations_per_intersection
         self.sum_auction_parameters_counts_per_intersection += sim_metrics_keeper.auction_parameters_counts_per_intersection
 
+        # Store the mean and sd bid and inact rank from the simulation #TODO: find shorthand way to do this
+        means = sim_metrics_keeper.winners_inact_ranks_per_intersection_means
+        valid_indices = ~np.isnan(means)
+        grid_size = self.args.grid_size
+        for i in range(grid_size):
+            for j in range(grid_size):
+                if valid_indices[i, j]:
+                    self.all_sims_winners_inact_ranks_means[i][j].append(
+                        means[i, j])
+        means = sim_metrics_keeper.winners_bid_ranks_per_intersection_means
+        valid_indices = ~np.isnan(means)
+        grid_size = self.args.grid_size
+        for i in range(grid_size):
+            for j in range(grid_size):
+                if valid_indices[i, j]:
+                    self.all_sims_winners_bid_ranks_means[i][j].append(
+                        means[i, j])
+
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
 
@@ -170,6 +194,8 @@ class MasterKeeper:
         self.plot_reward_per_intersection_history()
 
         self.plot_adaptive_auction_parameters_valuations_per_intersection()
+
+        self.plot_mean_bid__and_inact_rank_per_intersection()
 
     def produce_general_metrics(self):
         """Produces the general metrics of all simulations"""
@@ -833,6 +859,48 @@ class MasterKeeper:
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
 
+    def plot_mean_bid__and_inact_rank_per_intersection(self):
+        mean_bid_rank_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size))
+        se_bid_rank_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size))
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                mean_bid_rank_per_intersection[i, j] = np.mean(
+                    self.all_sims_winners_bid_ranks_means[i][j])
+                # Below we calculate the SE of the means of the bid ranks per intersection
+                se_bid_rank_per_intersection[i, j] = np.std(
+                    self.all_sims_winners_bid_ranks_means[i][j]) / np.sqrt(len(self.all_sims_winners_bid_ranks_means[i][j]))
+
+        mean_inact_rank_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size))
+        se_inact_rank_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size))
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                mean_inact_rank_per_intersection[i, j] = np.mean(
+                    self.all_sims_winners_inact_ranks_means[i][j])
+                se_inact_rank_per_intersection[i, j] = np.std(
+                    self.all_sims_winners_inact_ranks_means[i][j]) / np.sqrt(len(self.all_sims_winners_inact_ranks_means[i][j]))
+
+        rank_labels = ['bid_rank', 'inact_rank']
+        fig, axs = plt.subplots(
+            self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                rank_means = [mean_bid_rank_per_intersection[i, j],
+                              mean_inact_rank_per_intersection[i, j]]
+                rank_ses = [se_bid_rank_per_intersection[i, j],
+                            se_inact_rank_per_intersection[i, j]]
+                # Create a barplot of the bid ranks per intersection
+                axs[i, j].bar(rank_labels, rank_means,
+                              yerr=rank_ses, capsize=5)
+                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].set_ylabel('Average Rank')
+        plt.savefig(self.args.results_folder +
+                    '/winner_bid_inact_rank_per_intersection.png')
+        plt.clf()
+
 
 class SimulationMetrics:
     """
@@ -882,6 +950,17 @@ class SimulationMetrics:
 
         self.max_time_waited_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
+
+        # The bid and inact ranks have 2 lists each, one for mean and one for the standard errors
+        self.winners_inact_ranks_per_intersection_means = np.zeros(
+            (args.grid_size, args.grid_size))
+        self.winners_inact_ranks_per_intersection_ses = np.zeros(
+            (args.grid_size, args.grid_size))
+
+        self.winners_bid_ranks_per_intersection_means = np.zeros(
+            (args.grid_size, args.grid_size))
+        self.winners_bid_ranks_per_intersection_ses = np.zeros(
+            (args.grid_size, args.grid_size))
 
         # If discretisation is adaptive_auction_discretization and there are 2 parameters,
         # then there are adaptive_auction_discretization^2 possible combinations of parameters
@@ -936,4 +1015,10 @@ class SimulationMetrics:
 
             # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
             self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord], self.auction_parameters_counts_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations_and_counts(
+            )
+
+            # Gather winner mean & se bid and inact ranks for each itnersection:
+            self.winners_inact_ranks_per_intersection_means[x_cord][y_cord] = intersection.calc_and_get_mean_winners_inact_ranks(
+            )
+            self.winners_bid_ranks_per_intersection_means[x_cord][y_cord] = intersection.calc_and_get_mean_winners_bid_ranks(
             )

@@ -266,6 +266,10 @@ class CarQueue:
                 # This is also between 0 and 1
                 reward = ((1 - distance_between_ranks) + mixed_metric) / 2
 
+            # Store the inact and bid rank of the winner queue to the intersection
+            self.parent_intersection.add_winner_bid_rank(self.get_bid_rank())
+            self.parent_intersection.add_winner_inact_rank(
+                self.get_inact_rank())
             self.parent_intersection.update_mechanism(reward)
             self.parent_intersection.add_reward_to_history(reward)
         else:

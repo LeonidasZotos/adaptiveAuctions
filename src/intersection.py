@@ -62,9 +62,12 @@ class Intersection:
         self.auction_fees = []
         self.last_tried_auction_params = [nan]
         self.reward_history = []
-        # Each element is either 0 or 1, degpending on whether a car passed through the intersection in that epoch
+        # Each element is either 0 or 1, depending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
         self.max_time_waited_history = []
+        # A list of inact and bid ranks of winners
+        self.winners_bid_ranks = []
+        self.winners_inact_ranks = []
 
     def __str__(self):
         return f'Intersection(id={self.id})'
@@ -176,6 +179,34 @@ class Intersection:
     def add_max_time_waited_to_history(self):
         """Adds the maximum time waited by any car_queue in the intersection to the history"""
         self.max_time_waited_history.append(self.get_max_time_waited())
+
+    def add_winner_bid_rank(self, bid_rank):
+        """Adds the bid rank of the winner to the history"""
+        self.winners_bid_ranks.append(bid_rank)
+
+    def add_winner_inact_rank(self, inact_rank):
+        """Adds the inactivity rank of the winner to the history"""
+        self.winners_inact_ranks.append(inact_rank)
+
+    def calc_and_get_mean_winners_bid_ranks(self):
+        """Returns the bid ranks of the winners
+        Returns:
+            list: The bid ranks of the winners
+        """
+        if len(self.winners_bid_ranks) == 0:
+            return nan
+        mean = sum(self.winners_bid_ranks) / len(self.winners_bid_ranks)
+        return mean
+
+    def calc_and_get_mean_winners_inact_ranks(self):
+        """Returns the inactivity ranks of the winners
+        Returns:
+            list: The inactivity ranks of the winners
+        """
+        if len(self.winners_inact_ranks) == 0:
+            return nan
+        mean = sum(self.winners_inact_ranks) / len(self.winners_inact_ranks)
+        return mean
 
     def get_auction_reward_history(self):
         """Returns the reward history of the auction modifier
