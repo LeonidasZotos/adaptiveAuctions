@@ -4,7 +4,6 @@ import seaborn as sns
 import numpy as np
 import matplotlib.pyplot as plt
 from math import nan
-import pandas as pd
 import csv
 from itertools import zip_longest
 
@@ -378,13 +377,12 @@ class MasterKeeper:
             np.save(self.export_location + "/average_satisfaction_score.npy",
                     average_satisfaction_scores)
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, export_results=True, filter_outliers=False):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
         Args:
             with_std (bool): Whether to include the standard deviation in the plot
-            export_results (bool): Whether to export the results to a .csv file
             filter_outliers (bool): Whether to filter out outliers from the results
         """
 
@@ -598,16 +596,7 @@ class MasterKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-        if export_results == True:
-            np.savetxt(self.args.results_folder + '/average_satisfaction_score_by_bidding_type.csv', np.array([
-                epochs, static_low_bidding_average_satisfaction_scores, static_low_bidding_sd,
-                static_high_bidding_average_satisfaction_scores, static_high_bidding_sd,
-                random_bidding_average_satisfaction_scores, random_bidding_sd,
-                free_rider_bidding_average_satisfaction_scores, free_rider_bidding_sd,
-                RL_bidder_average_satisfaction_scores, RL_bidder_sd
-            ]).T, delimiter=",", header="Epoch, Static low bidding Score, Static low bidding SD, Static high bidding Score, Static high bidding SD, Random bidding Score, Random bidding SD, Free-rider bidding Score, Free-rider bidding SD, RL bidding Score, RL bidding SD")
-
-    def histogram_satisfaction_scores_by_bidding_type(self, export_results=True, filter_outliers=False):
+    def histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -681,15 +670,7 @@ class MasterKeeper:
                     '/histogram_satisfaction_scores_by_bidding_type.png')
         plt.clf()
 
-        if export_results == True:
-            with open(self.args.results_folder + "/satisfaction_scores_by_type.csv", "w+") as f:
-                writer = csv.writer(f)
-                writer.writerow(
-                    ['Static low bidding', 'Static high bidding' 'Random bidding', 'Free-rider bidding', 'RL bidding'])
-                for values in zip_longest(*[all_static_low_bidding_results, all_static_high_bidding_results, all_random_bidding_results, all_free_rider_bidding_results, all_RL_bidding_results]):
-                    writer.writerow(values)
-
-    def plot_congestion_heatmap_average(self, export_results=True):
+    def plot_congestion_heatmap_average(self):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -711,10 +692,6 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_congestion_heatmap.png')
         plt.clf()
-
-        if export_results == True:
-            np.savetxt(self.args.results_folder + '/average_congestion_per_intersection.csv',
-                       average_congestion_per_intersection, delimiter=",")
 
     def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
