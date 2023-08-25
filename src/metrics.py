@@ -745,8 +745,10 @@ class MasterKeeper:
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
             self.reward_history_per_simulation_all_sims, axis=0)
-        average_reward_per_intersection = np.divide(
-            total_reward_history_summed_sims, self.count_of_reward_measurements_per_intersection)
+        average_reward_per_intersection = []
+        with np.errstate(invalid='ignore'):
+            average_reward_per_intersection = np.divide(total_reward_history_summed_sims,
+                      self.count_of_reward_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
@@ -770,8 +772,10 @@ class MasterKeeper:
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
             self.max_time_waited_history_per_intersection_all_sims, axis=0)
-        average_max_time_waited_per_intersection = np.divide(
-            total_max_time_waited_history_summed_sims, self.count_of_max_time_waited_measurements_per_intersection)
+        average_max_time_waited_per_intersection = []
+        with np.errstate(invalid='ignore'):
+            average_max_time_waited_per_intersection = np.divide(
+                total_max_time_waited_history_summed_sims, self.count_of_max_time_waited_measurements_per_intersection)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the max_time_waited history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_max_time_waited_per_intersection.shape[0], average_max_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
@@ -797,7 +801,6 @@ class MasterKeeper:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
                 self.sum_auction_parameters_valuations_per_intersection, number_of_non_gridlocked_sims)
-
             average_count_per_parameter_set_per_intersection = np.divide(
                 self.sum_auction_parameters_counts_per_intersection, number_of_non_gridlocked_sims)
 
@@ -821,7 +824,7 @@ class MasterKeeper:
             plt.savefig(self.args.results_folder +
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
-            
+
             if export_results == True:
                 np.save(self.export_location + "/average_reward_per_parameter_set_per_intersection_rewards.npy",
                         rewards_1d)
