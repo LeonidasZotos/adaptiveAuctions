@@ -12,7 +12,7 @@ from sklearn.svm import SVR
 # E-greedy_exp_decay: uninformed_score, initial_epsilon, epsilon_decay (multiplier)
 # UCB1: uninformed score, exploration_factor
 # Reverse Sigmoid Decay: uninformed score, percent_of_exploration
-BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.01],
+BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.5],
                                     'e_greedy_decay': [0, 0.05],
                                     'e_greedy_exp_decay': [0, 1, 0.985],
                                     # Higher exploration_factor -> more exploration.
