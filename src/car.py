@@ -144,19 +144,17 @@ class Car:
         self.distance_travelled_in_trip += 1
 
     def calculate_satisfaction_score(self):
-        """This function should only be called at the end fo a trip. Returns the satisfaction score of the trip,
+        """This function should only be called at the end of a trip. Returns the satisfaction score of the trip,
             Function Explanation: The time spent in the network is divided by the distance travelled in the trip,
             to get the average time spent per intersection. This is then multiplied by the urgency.
-            The urgency is subtracted from the result, so that if the car won every auction, the score is 0.
-            Since everything is in the denominator, the lower the score, the better. The 1+ is there to avoid division by 0.
         Returns:
             tuple: A tuple containing a small copy of the car and the satisfaction score of the trip.
                 By 'small', we mean that the car only contains the necessary information.
         """
-        # score = 1/(1+(((self.time_in_traffic_network * self.urgency) /
-        #               self.distance_travelled_in_trip) - self.urgency))
-        score = (((self.time_in_traffic_network * self.urgency) /
-                  self.distance_travelled_in_trip) - self.urgency)
+        speed = self.distance_travelled_in_trip / \
+            self.time_in_traffic_network  # Distance over time is the speed
+        # The higher the speed, the higher the score
+        score = self.urgency * speed
 
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
         return SmallCar(self), score
@@ -233,6 +231,7 @@ class Car:
             mu_v = 0.25
             sigma_v = 0.2
             valuation = np.random.normal(mu_v, sigma_v)
+            urgency = valuation
             while valuation < 0 or valuation > 1:
                 valuation = np.random.normal(mu_v, sigma_v)
                 urgency = valuation
@@ -241,6 +240,7 @@ class Car:
             mu_v = 0.75
             sigma_v = 0.2
             valuation = np.random.normal(mu_v, sigma_v)
+            urgency = valuation
             while valuation < 0 or valuation > 1:
                 valuation = np.random.normal(mu_v, sigma_v)
                 urgency = valuation

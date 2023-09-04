@@ -257,8 +257,8 @@ class CarQueue:
                 # This is between 0 and 1
                 reward = 1 - abs(self.get_inact_rank() - self.get_bid_rank())
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_metric_rank":
-                reward = (0.5 * self.get_inact_rank() +
-                          0.5 * self.get_bid_rank())
+                reward = (self.args.bid_rank_weight * self.get_inact_rank() +
+                          self.args.inact_rank_weight * self.get_bid_rank())
             elif self.parent_intersection.get_intersection_reward_type() == "mixed_rank_dist_metric":
                 distance_between_ranks = abs(
                     self.get_inact_rank() - self.get_bid_rank())  # This is between 0 and 1

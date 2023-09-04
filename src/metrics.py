@@ -389,7 +389,6 @@ class MasterKeeper:
         # Plot the average satisfaction score per epoch, without error bars, using a yscale of 0-1
         plt.plot(epochs, average_satisfaction_scores,
                  'o', ls='none', markersize=1.5)
-        plt.ylim(0, 1)
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')
@@ -611,7 +610,6 @@ class MasterKeeper:
             if len(RL_bidding_results) > 0:
                 plt.plot(
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
-        plt.ylim(0, 1)
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')

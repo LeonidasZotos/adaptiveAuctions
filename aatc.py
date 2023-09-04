@@ -177,6 +177,20 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
+        "--inact_rank_weight",
+        default=0.5,
+        type=float_range(0, 1),
+        help="Weight of the inactivity rank used for the intersection auction reward. Defaults to 0.5. Must be a float between 0 and 1."
+    )
+
+    run_parser.add_argument(
+        "--bid_rank_weight",
+        default=0.5,
+        type=float_range(0, 1),
+        help="Weight of the bid rank used for the intersection auction reward. Defaults to 0.5. Must be a float between 0 and 1."
+    )
+
+    run_parser.add_argument(
         '--shared_bid_generator',
         action=argparse.BooleanOptionalAction,
         help="""If enabled, all bidders will share the same bid generator, instead of agents learning to bid separately.""")
