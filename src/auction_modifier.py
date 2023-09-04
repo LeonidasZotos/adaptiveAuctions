@@ -15,7 +15,6 @@ from sklearn.svm import SVR
 BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [0, 0.5],
                                     'e_greedy_decay': [0, 0.05],
                                     'e_greedy_exp_decay': [0, 1, 0.985],
-                                    # Higher exploration_factor -> more exploration.
                                     'ucb1': [0, 0.05],
                                     'reverse_sigmoid_decay': [0, 0.05]}
 
