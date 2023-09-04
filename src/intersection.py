@@ -1,10 +1,12 @@
 """This module contains the Intersection class, which represents an intersection in the grid."""
 
 import random
+import numpy as np
 from math import nan, isnan
 
 import src.utils as utils
 from src.car_queue import CarQueue
+
 
 
 class Intersection:
@@ -65,6 +67,7 @@ class Intersection:
         # Each element is either 0 or 1, depending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
         self.max_time_waited_history = []
+        self.gini_history = []
         # A list of inact and bid ranks of winners
         self.winners_bid_ranks = []
         self.winners_inact_ranks = []
@@ -180,6 +183,28 @@ class Intersection:
         """Adds the maximum time waited by any car_queue in the intersection to the history"""
         self.max_time_waited_history.append(self.get_max_time_waited())
 
+    def add_gini_to_history(self):
+        """Adds the GINI coefficient to the history"""
+        def calc_gini(x):
+            """Calculates the GINI coeffecient of a list of numbers.
+            Source: https://www.statology.org/gini-coefficient-python/
+            """
+            x = np.array(x)
+            total = 0
+            for i, xi in enumerate(x[:-1], 1):
+                total += np.sum(np.abs(xi - x[i:]))
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    gini_result = total / (len(x)**2 * np.mean(x))
+            return gini_result
+        # First, calculate the gini coefficient from the times waited.
+        gini_value = nan
+        if self.get_num_of_non_empty_queues() > 1:
+            times_waited = [queue.get_time_inactive()
+                            for queue in self.carQueues]
+            gini_value = calc_gini(times_waited)
+
+        self.gini_history.append(gini_value)
+
     def add_winner_bid_rank(self, bid_rank):
         """Adds the bid rank of the winner to the history"""
         self.winners_bid_ranks.append(bid_rank)
@@ -228,6 +253,13 @@ class Intersection:
             list: The maximum time waited history of the intersection
         """
         return self.max_time_waited_history
+
+    def get_gini_history(self):
+        """Returns the GINI coefficient history of the intersection
+        Returns:
+            list: The GINI coefficient history of the intersection
+        """
+        return self.gini_history
 
     def get_auction_parameters_and_valuations_and_counts(self):
         """Returns the parameters, their valuations and counts of the auction
@@ -417,3 +449,4 @@ class Intersection:
         if len(self.throughput_history) <= epoch:
             self.throughput_history.append(0)
         self.add_max_time_waited_to_history()
+        self.add_gini_to_history()
