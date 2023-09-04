@@ -88,10 +88,10 @@ class MasterKeeper:
 
         # Max time waited history per intersection
         self.max_time_waited_history_per_intersection_all_sims = []
-        
+
         # Gini history per intersection
         self.gini_history_per_intersection_all_sims = []
-        
+
         # Number of gini measurements per intersection, used to calculate the average
         self.count_of_gini_measurements_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
@@ -143,7 +143,7 @@ class MasterKeeper:
             np.isnan(sim_metrics_keeper.max_time_waited_history_per_intersection), 0, 1)
         self.max_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
             sim_metrics_keeper.max_time_waited_history_per_intersection))
-        
+
         self.count_of_gini_measurements_per_intersection += np.where(
             np.isnan(sim_metrics_keeper.gini_history_per_intersection), 0, 1)
         self.gini_history_per_intersection_all_sims.append(np.nan_to_num(
@@ -809,8 +809,7 @@ class MasterKeeper:
         if export_results == True:
             np.save(self.export_location + "/average_max_time_waited_per_intersection_history.npy",
                     average_max_time_waited_per_intersection)
-            
-            
+
     def plot_gini_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -829,7 +828,8 @@ class MasterKeeper:
                     average_gini_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel('Average GINI Coefficient (based on time waited)')
+                axs[i, j].set_ylabel(
+                    'Average GINI Coefficient (based on time waited)')
         plt.savefig(self.args.results_folder +
                     '/average_gini_per_intersection_history.png')
         plt.clf()
@@ -994,7 +994,7 @@ class SimulationMetrics:
 
         self.max_time_waited_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
-        
+
         self.gini_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
 

@@ -8,7 +8,6 @@ import src.utils as utils
 from src.car_queue import CarQueue
 
 
-
 class Intersection:
     """
     The Intersection class is responsible for keeping track of the car queues that are part of the intersection, and for holding auctions.
