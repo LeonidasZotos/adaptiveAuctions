@@ -412,7 +412,8 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score.png')
         plt.clf()
-
+        print("Average car satisfaction is: ",
+              round(np.mean(average_satisfaction_scores), 4))
         if export_results == True:
             np.save(self.export_location + "/average_satisfaction_score.npy",
                     average_satisfaction_scores)
@@ -805,7 +806,8 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_max_time_waited_per_intersection_history.png')
         plt.clf()
-
+        print("Average max_time_waited is: ", round(np.mean(
+            average_max_time_waited_per_intersection), 4))
         if export_results == True:
             np.save(self.export_location + "/average_max_time_waited_per_intersection_history.npy",
                     average_max_time_waited_per_intersection)
@@ -833,7 +835,8 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_gini_per_intersection_history.png')
         plt.clf()
-
+        print("Average Gini is: ", round(np.nanmean(
+            average_gini_per_intersection), 4))
         if export_results == True:
             np.save(self.export_location + "/average_gini_per_intersection_history.npy",
                     average_gini_per_intersection)
