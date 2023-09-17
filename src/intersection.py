@@ -64,9 +64,12 @@ class Intersection:
         self.auction_fees = []
         self.last_tried_auction_params = [nan]
         self.reward_history = []
+
+        ### Below are the metrics that are collected for the intersection ###
         # Each element is either 0 or 1, depending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
         self.max_time_waited_history = []
+        self.average_time_waited_history = []
         self.gini_time_waited_history = []
         # A list of inact and bid ranks of winners
         self.winners_bid_ranks = []
@@ -98,13 +101,83 @@ class Intersection:
         return True
 
     ### Functions for Metrics/Evaluation ###
+    ## Auction Related ##
     def add_reward_to_history(self, reward):
         """Adds a reward to the reward history"""
         self.reward_history.append(reward)
 
+    def get_auction_reward_history(self):
+        """Returns the reward history of the auction modifier
+        Returns:
+            list: The reward history of the auction modifier
+        """
+        return self.reward_history
+
+    def get_auction_parameters_and_valuations_and_counts(self):
+        """Returns the parameters, their valuations and counts of the auction
+            Returns:
+                tuple: A tuple containing the parameters, their valuations and counts of the auction  
+            """
+        return self.auction_modifier.get_parameters_and_valuations_and_counts()
+
+    def calc_and_get_mean_winners_bid_ranks(self):
+        """Returns the bid ranks of the winners
+        Returns:
+            list: The bid ranks of the winners
+        """
+        if len(self.winners_bid_ranks) == 0:
+            return nan
+        mean = sum(self.winners_bid_ranks) / len(self.winners_bid_ranks)
+        return mean
+
+    def calc_and_get_mean_winners_inact_ranks(self):
+        """Returns the inactivity ranks of the winners
+        Returns:
+            list: The inactivity ranks of the winners
+        """
+        if len(self.winners_inact_ranks) == 0:
+            return nan
+        mean = sum(self.winners_inact_ranks) / len(self.winners_inact_ranks)
+        return mean
+
+    def add_winner_bid_rank(self, bid_rank):
+        """Adds the bid rank of the winner to the history"""
+        self.winners_bid_ranks.append(bid_rank)
+
+    def add_winner_inact_rank(self, inact_rank):
+        """Adds the inactivity rank of the winner to the history"""
+        self.winners_inact_ranks.append(inact_rank)
+
+    ## Congestion Related ##
+    def get_auction_throughput_history(self):
+        """Returns the throughput history of the intersection
+        Returns:
+            list: The throughput history of the intersection
+        """
+        return self.throughput_history
+
+    ## Time Waited Related ##
     def add_max_time_waited_to_history(self):
         """Adds the maximum time waited by any car_queue in the intersection to the history"""
         self.max_time_waited_history.append(self.get_max_time_waited())
+
+    def get_max_time_waited_history(self):
+        """Returns the maximum time waited history of the intersection
+        Returns:
+            list: The maximum time waited history of the intersection
+        """
+        return self.max_time_waited_history
+
+    def get_max_time_waited(self):
+        """Returns the maximum time waited by a car_queue in the intersection
+        Returns:
+            float: The maximum time waited by a car_queue in the intersection
+            or nan  if the intersection is empty
+        """
+        if self.is_empty():
+            return nan
+        all_times = [queue.get_time_inactive() for queue in self.carQueues]
+        return max(all_times)
 
     def add_gini_time_waited_to_history(self):
         """Adds the GINI coefficient to the history"""
@@ -128,79 +201,12 @@ class Intersection:
 
         self.gini_time_waited_history.append(gini_value)
 
-    def add_winner_bid_rank(self, bid_rank):
-        """Adds the bid rank of the winner to the history"""
-        self.winners_bid_ranks.append(bid_rank)
-
-    def add_winner_inact_rank(self, inact_rank):
-        """Adds the inactivity rank of the winner to the history"""
-        self.winners_inact_ranks.append(inact_rank)
-
-    def calc_and_get_mean_winners_bid_ranks(self):
-        """Returns the bid ranks of the winners
-        Returns:
-            list: The bid ranks of the winners
-        """
-        if len(self.winners_bid_ranks) == 0:
-            return nan
-        mean = sum(self.winners_bid_ranks) / len(self.winners_bid_ranks)
-        return mean
-
-    def calc_and_get_mean_winners_inact_ranks(self):
-        """Returns the inactivity ranks of the winners
-        Returns:
-            list: The inactivity ranks of the winners
-        """
-        if len(self.winners_inact_ranks) == 0:
-            return nan
-        mean = sum(self.winners_inact_ranks) / len(self.winners_inact_ranks)
-        return mean
-
-    def get_auction_reward_history(self):
-        """Returns the reward history of the auction modifier
-        Returns:
-            list: The reward history of the auction modifier
-        """
-        return self.reward_history
-
-    def get_auction_throughput_history(self):
-        """Returns the throughput history of the intersection
-        Returns:
-            list: The throughput history of the intersection
-        """
-        return self.throughput_history
-
-    def get_max_time_waited_history(self):
-        """Returns the maximum time waited history of the intersection
-        Returns:
-            list: The maximum time waited history of the intersection
-        """
-        return self.max_time_waited_history
-
     def get_gini_time_waited_history(self):
         """Returns the GINI coefficient history of the intersection
         Returns:
             list: The GINI coefficient history of the intersection
         """
         return self.gini_time_waited_history
-
-    def get_auction_parameters_and_valuations_and_counts(self):
-        """Returns the parameters, their valuations and counts of the auction
-            Returns:
-                tuple: A tuple containing the parameters, their valuations and counts of the auction  
-            """
-        return self.auction_modifier.get_parameters_and_valuations_and_counts()
-
-    def get_max_time_waited(self):
-        """Returns the maximum time waited by a car_queue in the intersection
-        Returns:
-            float: The maximum time waited by a car_queue in the intersection
-            or nan  if the intersection is empty
-        """
-        if self.is_empty():
-            return nan
-        all_times = [queue.get_time_inactive() for queue in self.carQueues]
-        return max(all_times)
 
     ### Functional Getters ###
     def get_car_queues(self):
