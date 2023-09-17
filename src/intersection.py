@@ -157,6 +157,30 @@ class Intersection:
         return self.throughput_history
 
     ## Time Waited Related ##
+    # Average Time Waited
+    def add_average_time_waited_to_history(self):
+        """Adds the average time waited in the intersection to the history"""
+        self.average_time_waited_history.append(self.get_average_time_waited())
+
+    def get_average_time_waited(self):
+        """Returns the average time waited by a car_queue in the intersection
+        Returns:
+            float: The average time waited by a car_queue in the intersection
+            or nan if the intersection is empty
+        """
+        if self.is_empty():
+            return nan
+        all_times = [queue.get_time_inactive() for queue in self.carQueues]
+        return np.mean(all_times)
+
+    def get_average_time_waited_history(self):
+        """Returns the average time waited history of the intersection
+        Returns:
+            list: The average time waited history of the intersection
+        """
+        return self.average_time_waited_history
+
+    # Max Time Waited
     def add_max_time_waited_to_history(self):
         """Adds the maximum time waited by any car_queue in the intersection to the history"""
         self.max_time_waited_history.append(self.get_max_time_waited())
@@ -172,13 +196,14 @@ class Intersection:
         """Returns the maximum time waited by a car_queue in the intersection
         Returns:
             float: The maximum time waited by a car_queue in the intersection
-            or nan  if the intersection is empty
+            or nan if the intersection is empty
         """
         if self.is_empty():
             return nan
         all_times = [queue.get_time_inactive() for queue in self.carQueues]
         return max(all_times)
 
+    # GINI Time Waited
     def add_gini_time_waited_to_history(self):
         """Adds the GINI coefficient to the history"""
         def calc_gini(x):
@@ -460,9 +485,12 @@ class Intersection:
         """
         self.auction_fees = []
         self.last_tried_auction_params = [nan]
+
+        ## Metrics Keeping ##
         if len(self.reward_history) <= epoch:
             self.reward_history.append(nan)
         if len(self.throughput_history) <= epoch:
             self.throughput_history.append(0)
+        self.add_average_time_waited_to_history()
         self.add_max_time_waited_to_history()
         self.add_gini_time_waited_to_history()

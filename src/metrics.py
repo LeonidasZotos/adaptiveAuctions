@@ -81,6 +81,28 @@ class MasterKeeper:
         # Total throughput history per intersection
         self.total_throughput_history_per_intersection_all_sims = []
 
+        ####### Time Waited Metrics #######
+        # Number of average_time_waited measurements per intersection, used to calculate the average
+        self.count_of_average_time_waited_measurements_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+
+        # Average time waited history per intersection
+        self.average_time_waited_history_per_intersection_all_sims = []
+
+        # Number of max_time_waited measurements per intersection, used to calculate the average
+        self.count_of_max_time_waited_measurements_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+
+        # Max time waited history per intersection
+        self.max_time_waited_history_per_intersection_all_sims = []
+
+        # Gini history per intersection
+        self.gini_time_waited_history_per_intersection_all_sims = []
+
+        # Number of gini measurements per intersection, used to calculate the average
+        self.count_of_gini_time_waited_measurements_per_intersection = np.zeros(
+            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
+
         ####### Winner Worthiness/Auction Reward Metrics #######
         # Number of reward measurements per intersection, used to calculate the average
         self.count_of_reward_measurements_per_intersection = np.zeros(
@@ -106,21 +128,6 @@ class MasterKeeper:
         self.all_sims_winners_bid_ranks_means = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
 
-        ####### Time Waited Metrics #######
-        # Number of reward measurements per intersection, used to calculate the average
-        self.count_of_max_time_waited_measurements_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
-
-        # Max time waited history per intersection
-        self.max_time_waited_history_per_intersection_all_sims = []
-
-        # Gini history per intersection
-        self.gini_time_waited_history_per_intersection_all_sims = []
-
-        # Number of gini measurements per intersection, used to calculate the average
-        self.count_of_gini_time_waited_measurements_per_intersection = np.zeros(
-            (self.args.grid_size, self.args.grid_size, self.args.num_of_epochs))
-
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
         Args:
@@ -131,31 +138,40 @@ class MasterKeeper:
             # If the simulation was gridlocked, take note of that and do not store the results.
             self.num_of_gridlocks += 1
             return
-
+        ### Satisfaction Metric ###
         self.all_simulations_satisfaction_scores.append(
             sim_metrics_keeper.current_sim_satisfaction_scores)
 
+        ### Congestion Metric ###
         self.total_population_per_intersection_all_sims.append(
             sim_metrics_keeper.total_population_per_intersection)
 
         self.total_throughput_history_per_intersection_all_sims.append(
             sim_metrics_keeper.throughput_history_per_intersection)
 
+        ### Time Waited Metrics ###
+        ## Average ##
+        self.count_of_average_time_waited_measurements_per_intersection += np.where(
+            np.isnan(sim_metrics_keeper.average_time_waited_history_per_intersection), 0, 1)
+        self.average_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
+            sim_metrics_keeper.average_time_waited_history_per_intersection))
+        ## Max ##
+        self.count_of_max_time_waited_measurements_per_intersection += np.where(
+            np.isnan(sim_metrics_keeper.max_time_waited_history_per_intersection), 0, 1)
+        self.max_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
+            sim_metrics_keeper.max_time_waited_history_per_intersection))
+        ## Gini Time Waited ##
+        self.count_of_gini_time_waited_measurements_per_intersection += np.where(
+            np.isnan(sim_metrics_keeper.gini_time_waited_history_per_intersection), 0, 1)
+        self.gini_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
+            sim_metrics_keeper.gini_time_waited_history_per_intersection))
+
+        ### Auction Metrics ###
         # For each measurement that is not nan, we add 1 to the count of measurements, so that we can later calculate the average
         self.count_of_reward_measurements_per_intersection += np.where(
             np.isnan(sim_metrics_keeper.reward_history_per_intersection), 0, 1)
         self.reward_history_per_simulation_all_sims.append(
             np.nan_to_num(sim_metrics_keeper.reward_history_per_intersection))
-
-        self.count_of_max_time_waited_measurements_per_intersection += np.where(
-            np.isnan(sim_metrics_keeper.max_time_waited_history_per_intersection), 0, 1)
-        self.max_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
-            sim_metrics_keeper.max_time_waited_history_per_intersection))
-
-        self.count_of_gini_time_waited_measurements_per_intersection += np.where(
-            np.isnan(sim_metrics_keeper.gini_time_waited_history_per_intersection), 0, 1)
-        self.gini_time_waited_history_per_intersection_all_sims.append(np.nan_to_num(
-            sim_metrics_keeper.gini_time_waited_history_per_intersection))
 
         # Retrieve the parameter space and the valuations per intersection. The parameters space is the same for all intersections
         self.auction_parameters_space = sim_metrics_keeper.auction_parameters_space
@@ -163,7 +179,7 @@ class MasterKeeper:
         self.sum_auction_parameters_valuations_per_intersection += sim_metrics_keeper.auction_parameters_valuations_per_intersection
         self.sum_auction_parameters_counts_per_intersection += sim_metrics_keeper.auction_parameters_counts_per_intersection
 
-        # Store the mean and sd bid and inact rank from the simulation #TODO: find shorthand way to do this
+        # Store the mean and sd bid and inact rank from the simulation
         means = sim_metrics_keeper.winners_inact_ranks_per_intersection_means
         valid_indices = ~np.isnan(means)
         grid_size = self.args.grid_size
@@ -189,34 +205,37 @@ class MasterKeeper:
             for arg in vars(self.args):
                 f.write(arg + ': ' + str(getattr(self.args, arg)) + '\n')
 
-        # Produce all the general metrics
+        ### General, non-plot, Metrics ###
         self.produce_general_metrics()
 
+        ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
         self.plot_satisfaction_scores_overall_average()
-
         # Create a graph of all satisfaction scores, per bidding type, over all simulations
         self.plot_satisfaction_scores_by_bidding_type()
-
-        self.plot_gini_time_waited_per_intersection_history()
-
         # Create a histogram of all satisfaction scores, over all simulations, per bidding type
         self.histogram_satisfaction_scores_by_bidding_type()
 
+        ### Congestion Metrics ###
         # Create a heatmap of the average throughput per intersection, over all simulations
         self.plot_congestion_heatmap_average()
-
         # Create a graph with graphs of the average throughput per intersection, over all simulations
         self.plot_throughput_per_intersection_history()
 
+        ### Time Waited Metrics ###
+        # Create a graph with graphs of the average average time waited per intersection, over all simulations
+        self.plot_average_time_waited_per_intersection_history()
         # Create a graph with graphs of the average max time waited per intersection, over all simulations
         self.plot_max_time_waited_per_intersection_history()
+        # Create a graph with graphs of the average gini time waited per intersection, over all simulations
+        self.plot_gini_time_waited_per_intersection_history()
 
+        ### Auction Metrics ###
         # Create a graph with graphs of the average reward per intersection, over all simulations
         self.plot_reward_per_intersection_history()
-
+        # Create a graph with the valuations of the auction parameters of each intersection
         self.plot_adaptive_auction_parameters_valuations_per_intersection()
-
+        # Create a barplot with the mean bid and inact rank of the winner per intersection
         self.plot_mean_bid_and_inact_rank_per_intersection()
 
     def produce_general_metrics_DEPRECATED(self):
@@ -906,6 +925,34 @@ class MasterKeeper:
         plt.clf()
 
 ### Time Waited Metric ###
+    def plot_average_time_waited_per_intersection_history(self, export_results=True):
+        # The first x epochs are part of the warm-up period, so they are not included in the results
+        # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
+        total_average_time_waited_history_summed_sims = np.sum(
+            self.average_time_waited_history_per_intersection_all_sims, axis=0)
+        average_average_time_waited_per_intersection = []
+        with np.errstate(invalid='ignore'):
+            average_average_time_waited_per_intersection = np.divide(
+                total_average_time_waited_history_summed_sims, self.count_of_average_time_waited_measurements_per_intersection)
+        # Create a plot with subplots for each intersection. Each subplot is a graph of the average_time_waited history of that intersection. In total there are as many subplots as intersections
+        fig, axs = plt.subplots(
+            average_average_time_waited_per_intersection.shape[0], average_average_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+        for i in range(average_average_time_waited_per_intersection.shape[0]):
+            for j in range(average_average_time_waited_per_intersection.shape[1]):
+                axs[i, j].plot(
+                    average_average_time_waited_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
+                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].set_xlabel('Epoch')
+                axs[i, j].set_ylabel('Average Average Time Waited')
+        plt.savefig(self.args.results_folder +
+                    '/average_average_time_waited_per_intersection_history.png')
+        plt.clf()
+        print("Average average_time_waited is: ", round(np.mean(
+            average_average_time_waited_per_intersection), 4))
+        if export_results == True:
+            np.save(self.export_location + "/average_average_time_waited_per_intersection_history.npy",
+                    average_average_time_waited_per_intersection)
+
     def plot_max_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -1000,14 +1047,19 @@ class SimulationMetrics:
         """
         self.args = args
         self.grid = grid
+
+        ### Satisfaction Metric ###
         self.current_sim_satisfaction_scores = {}
+
+        ### Congestion Metric ###
         self.total_population_per_intersection = np.zeros(
             (args.grid_size, args.grid_size))
 
         self.throughput_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
 
-        self.reward_history_per_intersection = np.zeros(
+        ### Time Waited Metrics ###
+        self.average_time_waited_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
 
         self.max_time_waited_history_per_intersection = np.zeros(
@@ -1016,22 +1068,22 @@ class SimulationMetrics:
         self.gini_time_waited_history_per_intersection = np.zeros(
             (args.grid_size, args.grid_size, args.num_of_epochs))
 
+        ### Auction Metrics ###
+        self.reward_history_per_intersection = np.zeros(
+            (args.grid_size, args.grid_size, args.num_of_epochs))
         # The bid and inact ranks have 2 lists each, one for mean and one for the standard errors
         self.winners_inact_ranks_per_intersection_means = np.zeros(
             (args.grid_size, args.grid_size))
         self.winners_inact_ranks_per_intersection_ses = np.zeros(
             (args.grid_size, args.grid_size))
-
         self.winners_bid_ranks_per_intersection_means = np.zeros(
             (args.grid_size, args.grid_size))
         self.winners_bid_ranks_per_intersection_ses = np.zeros(
             (args.grid_size, args.grid_size))
-
         # If discretisation is adaptive_auction_discretization and there are 2 parameters,
         # then there are adaptive_auction_discretization^2 possible combinations of parameters
         self.auction_parameters_space = np.zeros(
             (pow(args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS), NUM_OF_ADAPT_PARAMS))
-
         self.auction_parameters_valuations_per_intersection = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
         self.auction_parameters_counts_per_intersection = [
@@ -1069,25 +1121,29 @@ class SimulationMetrics:
             id = intersection.id
             x_cord, y_cord = map(int, id)
 
-            # Gather the throughput history of each intersection
-            self.throughput_history_per_intersection[x_cord][y_cord] = intersection.get_auction_throughput_history(
+            ### Time Waited Metrics ###
+            # Gather the average_time_waited history of each intersection
+            self.average_time_waited_history_per_intersection[x_cord][y_cord] = intersection.get_average_time_waited_history(
             )
             # Gather the max_time_waited history of each intersection
             self.max_time_waited_history_per_intersection[x_cord][y_cord] = intersection.get_max_time_waited_history(
             )
-
-            # Gather the gini coeffs of each intersection, based on time waited
+            # Gather the gini time waited coeffs of each intersection
             self.gini_time_waited_history_per_intersection[x_cord][y_cord] = intersection.get_gini_time_waited_history(
             )
 
+            ### Congestion Metric ###
+            # Gather the throughput history of each intersection
+            self.throughput_history_per_intersection[x_cord][y_cord] = intersection.get_auction_throughput_history(
+            )
+
+            ### Auction Metrics ###
             # Gather the reward history of each intersection
             self.reward_history_per_intersection[x_cord][y_cord] = intersection.get_auction_reward_history(
             )
-
             # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
             self.auction_parameters_space, self.auction_parameters_valuations_per_intersection[x_cord][y_cord], self.auction_parameters_counts_per_intersection[x_cord][y_cord] = intersection.get_auction_parameters_and_valuations_and_counts(
             )
-
             # Gather winner mean & se bid and inact ranks for each itnersection:
             self.winners_inact_ranks_per_intersection_means[x_cord][y_cord] = intersection.calc_and_get_mean_winners_inact_ranks(
             )
