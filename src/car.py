@@ -89,7 +89,7 @@ class Car:
         """
         return f'Car(id={self.id}), destin.: {self.final_destination}, queue destin.:{self.next_destination_queue}, balance: {self.balance}, urgency: {self.urgency}, time: {self.time_in_traffic_network}'
 
-### Helper functions ###
+    ### Helper functions ###
     def is_at_destination(self):
         """ Boolean. Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
         Returns:
@@ -159,7 +159,7 @@ class Car:
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
         return SmallCar(self), score
 
-### General state functions ###
+    ### General state functions ###
     def reset_final_destination(self):
         """Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
            The new destination is randomly picked and canot be the same as the current intersection.
@@ -263,7 +263,7 @@ class Car:
         self.time_in_traffic_network = 0
         self.distance_travelled_in_trip = 0
 
-### Auction functions ###
+    ### Auction functions ###
     def submit_bid(self):
         """Submit a bid to the auction.
         Returns:
