@@ -66,7 +66,7 @@ class Intersection:
         # Each element is either 0 or 1, depending on whether a car passed through the intersection in that epoch
         self.throughput_history = []
         self.max_time_waited_history = []
-        self.gini_history = []
+        self.gini_time_waited_history = []
         # A list of inact and bid ranks of winners
         self.winners_bid_ranks = []
         self.winners_inact_ranks = []
@@ -182,7 +182,7 @@ class Intersection:
         """Adds the maximum time waited by any car_queue in the intersection to the history"""
         self.max_time_waited_history.append(self.get_max_time_waited())
 
-    def add_gini_to_history(self):
+    def add_gini_time_waited_to_history(self):
         """Adds the GINI coefficient to the history"""
         def calc_gini(x):
             """Calculates the GINI coeffecient of a list of numbers.
@@ -202,7 +202,7 @@ class Intersection:
                             for queue in self.carQueues]
             gini_value = calc_gini(times_waited)
 
-        self.gini_history.append(gini_value)
+        self.gini_time_waited_history.append(gini_value)
 
     def add_winner_bid_rank(self, bid_rank):
         """Adds the bid rank of the winner to the history"""
@@ -253,12 +253,12 @@ class Intersection:
         """
         return self.max_time_waited_history
 
-    def get_gini_history(self):
+    def get_gini_time_waited_history(self):
         """Returns the GINI coefficient history of the intersection
         Returns:
             list: The GINI coefficient history of the intersection
         """
-        return self.gini_history
+        return self.gini_time_waited_history
 
     def get_auction_parameters_and_valuations_and_counts(self):
         """Returns the parameters, their valuations and counts of the auction
@@ -454,4 +454,4 @@ class Intersection:
         if len(self.throughput_history) <= epoch:
             self.throughput_history.append(0)
         self.add_max_time_waited_to_history()
-        self.add_gini_to_history()
+        self.add_gini_time_waited_to_history()
