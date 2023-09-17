@@ -383,7 +383,15 @@ class MasterKeeper:
                 average_epoch_reward_per_intersection_dic) + '\n')
 
     def produce_general_metrics(self):
-        pass
+        """Produces the general metrics of all simulations"""
+        # Time Waited Metrics
+        self.calc_time_waited_general_metrics()
+
+        # Export the calculated metrics into a .txt file
+        with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
+            for metric in self.general_metrics:
+                f.write(
+                    metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
 
 ### Trip Satisfaction Metric ###
     def plot_satisfaction_scores_overall_average(self, export_results=True):
@@ -924,7 +932,51 @@ class MasterKeeper:
                     '/winner_bid_inact_rank_per_intersection.png')
         plt.clf()
 
-### Time Waited Metric ###
+    ### Time Waited Metric ###
+    def calc_time_waited_general_metrics(self):
+        # Agent Level
+        # Average time waited regardless of intersection. Average over sims
+        average_time_waited_per_simulation = []
+        for sim in self.average_time_waited_history_per_intersection_all_sims:
+            average_time_waited_per_simulation.append(np.mean(sim))
+        mean_text = str(round(np.mean(average_time_waited_per_simulation), 3))
+        std_text = str(round(np.std(average_time_waited_per_simulation), 3))
+        self.general_metrics['agent_average_time_waited'] = str(
+            "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average time waited regardless of intersection. Averaged over sims")
+        # Max time waited regardless of intersection. Average over sims
+        max_time_waited_per_simulation = []
+        for sim in self.max_time_waited_history_per_intersection_all_sims:
+            max_time_waited_per_simulation.append(np.mean(sim))
+        max_text = str(round(np.mean(max_time_waited_per_simulation), 3))
+        std_text = str(round(np.std(max_time_waited_per_simulation), 3))
+        self.general_metrics['agent_max_time_waited'] = str(
+            "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited regardless of intersection. Averaged over sims")
+
+        # Intersection Level
+        # Average time waited, per intersection. Average over sims
+        average_time_waited_per_simulation_per_intersection = []
+        for sim in self.average_time_waited_history_per_intersection_all_sims:
+            average_time_waited_per_simulation_per_intersection.append(
+                np.mean(sim, axis=2))
+        mean_text = str(np.round(np.mean(
+            average_time_waited_per_simulation_per_intersection, axis=0), 3))
+        std_text = str(np.round(np.std(
+            average_time_waited_per_simulation_per_intersection, axis=0), 3))
+        self.general_metrics['intersection_average_time_waited'] = str(
+            "Mean: \n" + mean_text + "\nSD:\n" + std_text + "\nDescription: Average average time waited per intersection. Averaged over sims")
+
+        # Max time waited, per intersection. Average over sims
+        max_time_waited_per_simulation_per_intersection = []
+        for sim in self.max_time_waited_history_per_intersection_all_sims:
+            max_time_waited_per_simulation_per_intersection.append(
+                np.mean(sim, axis=2))
+        max_text = str(np.round(np.mean(
+            max_time_waited_per_simulation_per_intersection, axis=0), 3))
+        std_text = str(np.round(np.std(
+            max_time_waited_per_simulation_per_intersection, axis=0), 3))
+        self.general_metrics['intersection_max_time_waited'] = str(
+            "Mean: \n" + max_text + "\nSD:\n" + std_text + "\nDescription: Average max time waited per intersection. Averaged over sims")
+
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
