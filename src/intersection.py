@@ -46,6 +46,7 @@ class Intersection:
         ready_for_new_epoch: Prepares the intersection for the next epoch.
     """
 
+    ### General Functions ###
     def __init__(self, args, id, auction_modifier):
         """Initialize the Intersection object
         Args:
@@ -86,43 +87,6 @@ class Intersection:
 
         return description
 
-    def get_car_queues(self):
-        """Returns the car queues that are part of this intersection
-        Returns:
-            list: A list of CarQueue objects that are part of this intersection
-        """
-        return self.carQueues
-
-    def get_auction_fee(self):
-        """Returns the fee that should be paid.
-        Returns:
-            float: The fee that should be paid
-        """
-        if len(self.auction_fees) == 0:  # This can happen if we use 2nd price and we have removed fees due to not-possible movements.
-            return 0
-        return self.auction_fees[0]
-
-    def get_last_tried_auction_params(self):
-        """Returns the last tried auction parameters
-        Returns:
-            list: The last tried auction parameters
-        """
-        return self.last_tried_auction_params
-
-    def get_intersection_reward_type(self):
-        """Returns the type of reward for the intersection. 
-        Returns:
-            str: The type of reward for the intersection.
-        """
-        return self.args.intersection_reward_type
-
-    def remove_top_fee(self):
-        """Removes the top/highest fee from the list of fees."""
-        if len(self.auction_fees) > 0:
-            self.auction_fees.pop(0)
-        else:  # If There are no fees to remove, we set the fee to 0
-            self.auction_fees = [0]
-
     def is_empty(self):
         """Boolean. Checks whether all car queues are empty in this intersection
         Returns:
@@ -133,47 +97,7 @@ class Intersection:
                 return False
         return True
 
-    def get_num_of_cars_in_intersection(self):
-        """Returns the number of cars in the intersection
-        Returns:
-            int: The number of cars in the intersection
-        """
-        return sum([queue.get_num_of_cars() for queue in self.carQueues])
-
-    def get_num_of_non_empty_queues(self):
-        """Returns the number of non-empty queues in the intersection
-        Returns:
-            int: The number of non-empty queues in the intersection
-        """
-        return sum([not queue.is_empty() for queue in self.carQueues])
-
-    def get_max_time_waited(self):
-        """Returns the maximum time waited by a car_queue in the intersection
-        Returns:
-            float: The maximum time waited by a car_queue in the intersection
-            or nan  if the intersection is empty
-        """
-        if self.is_empty():
-            return nan
-        all_times = [queue.get_time_inactive() for queue in self.carQueues]
-        return max(all_times)
-
-    def get_last_reward(self):
-        """Returns the last reward of the intersection
-        Returns:
-            float: The last reward of the intersection
-        """
-        if len(self.reward_history) == 0:
-            return 0
-
-        # Find the last non-nan value. The list is filled with nans for the epochs where there was no reward/no movement happened
-        last_non_nan = 0
-        for value in reversed(self.reward_history):
-            if not isinstance(value, float) or not isnan(value):
-                last_non_nan = value
-                break
-        return last_non_nan
-
+    ### Functions for Metrics/Evaluation ###
     def add_reward_to_history(self, reward):
         """Adds a reward to the reward history"""
         self.reward_history.append(reward)
@@ -266,6 +190,86 @@ class Intersection:
                 tuple: A tuple containing the parameters, their valuations and counts of the auction  
             """
         return self.auction_modifier.get_parameters_and_valuations_and_counts()
+
+    def get_max_time_waited(self):
+        """Returns the maximum time waited by a car_queue in the intersection
+        Returns:
+            float: The maximum time waited by a car_queue in the intersection
+            or nan  if the intersection is empty
+        """
+        if self.is_empty():
+            return nan
+        all_times = [queue.get_time_inactive() for queue in self.carQueues]
+        return max(all_times)
+
+    ### Functional Getters ###
+    def get_car_queues(self):
+        """Returns the car queues that are part of this intersection
+        Returns:
+            list: A list of CarQueue objects that are part of this intersection
+        """
+        return self.carQueues
+
+    def get_auction_fee(self):
+        """Returns the fee that should be paid.
+        Returns:
+            float: The fee that should be paid
+        """
+        if len(self.auction_fees) == 0:  # This can happen if we use 2nd price and we have removed fees due to not-possible movements.
+            return 0
+        return self.auction_fees[0]
+
+    def get_last_tried_auction_params(self):
+        """Returns the last tried auction parameters
+        Returns:
+            list: The last tried auction parameters
+        """
+        return self.last_tried_auction_params
+
+    def get_intersection_reward_type(self):
+        """Returns the type of reward for the intersection. 
+        Returns:
+            str: The type of reward for the intersection.
+        """
+        return self.args.intersection_reward_type
+
+    def get_num_of_cars_in_intersection(self):
+        """Returns the number of cars in the intersection
+        Returns:
+            int: The number of cars in the intersection
+        """
+        return sum([queue.get_num_of_cars() for queue in self.carQueues])
+
+    def get_num_of_non_empty_queues(self):
+        """Returns the number of non-empty queues in the intersection
+        Returns:
+            int: The number of non-empty queues in the intersection
+        """
+        return sum([not queue.is_empty() for queue in self.carQueues])
+
+    def get_last_reward(self):
+        """Returns the last reward of the intersection
+        Returns:
+            float: The last reward of the intersection
+        """
+        if len(self.reward_history) == 0:
+            return 0
+
+        # Find the last non-nan value. The list is filled with nans for the epochs where there was no reward/no movement happened
+        last_non_nan = 0
+        for value in reversed(self.reward_history):
+            if not isinstance(value, float) or not isnan(value):
+                last_non_nan = value
+                break
+        return last_non_nan
+
+    ### Auction Functions ###
+    def remove_top_fee(self):
+        """Removes the top/highest fee from the list of fees."""
+        if len(self.auction_fees) > 0:
+            self.auction_fees.pop(0)
+        else:  # If There are no fees to remove, we set the fee to 0
+            self.auction_fees = [0]
 
     def calc_inact_rank(self):
         """This function calculates the inactivity rank of each queue, and sets it.
@@ -442,6 +446,7 @@ class Intersection:
         self.auction_modifier.update_expected_rewards(
             self.last_tried_auction_params, reward)
 
+    ### New Epoch Function ###
     def ready_for_new_epoch(self, epoch):
         """Prepares the intersection for the next epoch.
         Args:

@@ -1068,9 +1068,7 @@ class SimulationMetrics:
         for intersection in self.grid.all_intersections:
             id = intersection.id
             x_cord, y_cord = map(int, id)
-            # Gather the reward history of each intersection
-            self.reward_history_per_intersection[x_cord][y_cord] = intersection.get_auction_reward_history(
-            )
+
             # Gather the throughput history of each intersection
             self.throughput_history_per_intersection[x_cord][y_cord] = intersection.get_auction_throughput_history(
             )
@@ -1080,6 +1078,10 @@ class SimulationMetrics:
 
             # Gather the gini coeffs of each intersection, based on time waited
             self.gini_time_waited_history_per_intersection[x_cord][y_cord] = intersection.get_gini_time_waited_history(
+            )
+
+            # Gather the reward history of each intersection
+            self.reward_history_per_intersection[x_cord][y_cord] = intersection.get_auction_reward_history(
             )
 
             # Gather the auction parameters and their valuations of each intersection. The parameter space is the same for all intersections
