@@ -44,7 +44,7 @@ class Car:
             The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
-
+    ### General Functions ###
     def __init__(self, args, id, parent_car_queue, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:

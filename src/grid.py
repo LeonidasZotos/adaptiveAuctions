@@ -77,7 +77,7 @@ class Grid:
         """
         return self.all_intersections, self.all_car_queues
 
-### Printing functions ###
+    ### Printing functions ###
     def print_grid(self, epoch):
         """Prints grid in a table format
         Args:
@@ -104,9 +104,7 @@ class Grid:
             print(car)
         print("=======End of Cars=======")
 
-
-### Car spawning functions ###
-
+    ### Car spawning functions ###
     def spawn_cars(self):
         """Spawns cars in the grid with the given congestion rate. This should only be exectuted at the start of the simulation
         Returns:
@@ -171,8 +169,7 @@ class Grid:
         return satisfaction_scores
 
 
-### Movement functions ###
-
+    ### Movement functions ###
     def move_cars(self):
         """ Moves all cars in the grid based on the epoch_movements"""
         # First, calculate all movements that need to be made
@@ -241,7 +238,7 @@ class Grid:
         # Let the car know of its new queue
         car_to_move.set_car_queue_id(destination_queue_id)
 
-### Epoch functions ###
+    ### Epoch functions ###
     def ready_for_new_epoch(self):
         """ Clears the class variables that are epoch-specific (e.g. epoch_movements)"""
         self.epoch_movements = []

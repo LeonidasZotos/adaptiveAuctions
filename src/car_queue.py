@@ -34,6 +34,7 @@ class CarQueue:
         ready_for_new_epoch: Prepares the queue for the next epoch
     """
 
+    ### General Functions ###
     def __init__(self, args, parent_intersection, id):
         """ Initialize the Car queue object
         Args:
@@ -72,7 +73,6 @@ class CarQueue:
 
         return queue_description
 
-### Helper functions ###
     def is_empty(self):
         """Checks whether the queue is empty
         Returns:
@@ -80,6 +80,14 @@ class CarQueue:
         """
         return not (self.get_num_of_cars() > 0)
 
+    def has_capacity(self):
+        """Returns whether the queue has capacity for more cars
+        Returns:
+            bool: True if the queue has capacity, False otherwise
+        """
+        return self.get_num_of_cars() < self.args.queue_capacity
+
+    ### Getters/Setters ###
     def get_num_of_cars(self):
         """Returns the number of cars in the queue
         Returns:
@@ -93,13 +101,6 @@ class CarQueue:
             int: The time that has passed since the last car left the queue
         """
         return self.time_inactive
-
-    def has_capacity(self):
-        """Returns whether the queue has capacity for more cars
-        Returns:
-            bool: True if the queue has capacity, False otherwise
-        """
-        return self.get_num_of_cars() < self.args.queue_capacity
 
     def get_num_of_free_spots(self):
         """Returns the number of free spots in the queue
@@ -126,26 +127,12 @@ class CarQueue:
         """
         return self.parent_intersection
 
-    def set_bid_rank(self, rank):
-        """Sets the bid rank of the queue
-        Args:
-            rank (float): The rank of the queue
-        """
-        self.bid_rank = rank
-
     def get_bid_rank(self):
         """Returns the bid rank of the queue
         Returns:
             float: The bid rank of the queue
         """
         return self.bid_rank
-
-    def set_inact_rank(self, rank):
-        """Sets the time waited rank of the queue
-        Args:
-            rank (float): The rank of the queue
-        """
-        self.inact_rank = rank
 
     def get_inact_rank(self):
         """Returns the time waited rank of the queue
@@ -154,7 +141,21 @@ class CarQueue:
         """
         return self.inact_rank
 
-### Queue Manipulation Functions ###
+    def set_inact_rank(self, rank):
+        """Sets the time waited rank of the queue
+        Args:
+            rank (float): The rank of the queue
+        """
+        self.inact_rank = rank
+
+    def set_bid_rank(self, rank):
+        """Sets the bid rank of the queue
+        Args:
+            rank (float): The rank of the queue
+        """
+        self.bid_rank = rank
+
+    ### Queue Manipulation Functions ###
     def add_car(self, car):
         """Adds a car to the end of the queue
         Args:
@@ -195,7 +196,7 @@ class CarQueue:
             return
         self.cars.remove(car)
 
-### Auction Functions ###
+    ### Auction Functions ###
     def collect_bids(self):
         """ Makes a collection of bids from all cars in the queue (not the payment, but the initial bid)
         Returns:
@@ -282,7 +283,7 @@ class CarQueue:
         if self.bids != None:
             self.bids = self.bids.clear()
 
-### Epoch Functions ###
+    ### Epoch Functions ###
     def ready_for_new_epoch(self):
         """Prepares the queue for the next epoch. This involved:
             1) Resetting the bids,
