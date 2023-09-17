@@ -28,7 +28,7 @@ class CarQueue:
         add_car(car): Adds a car to the end of the queue
         remove_first_car: Removes the first car from the queue
         remove_car(car): Removes a specific car from the queue
-        collect_bids(only_collect_first=True): Collects bids from all cars in the queue (not the payment, but the initial bid)
+        collect_bids(): Collects bids from the cars in the queue (not the payment, but the initial bid)
         win_auction(fee): Makes the cars in the queue pay their individual fees
         reset_bids: Resets the bids submitted by the cars in the queue
         ready_for_new_epoch: Prepares the queue for the next epoch
@@ -196,23 +196,21 @@ class CarQueue:
         self.cars.remove(car)
 
 ### Auction Functions ###
-    def collect_bids(self, only_collect_first=True):
+    def collect_bids(self):
         """ Makes a collection of bids from all cars in the queue (not the payment, but the initial bid)
-        Args:
-            only_collect_first (bool): If True, only the first car in the queue will submit a bid.
         Returns:
             dict: A dictionary of bids submitted by the cars in the queue.
                 The key is the car ID, and the value is the submitted bid of the car
         """
         # A dictionary is used so that we know which car submitted which bid
         self.bids = {}
-        if only_collect_first:
-            car_id, bid = self.cars[0].submit_bid()
-            self.bids[car_id] = bid
-        else:
+        if self.args.all_cars_bid:
             for car in self.cars:
                 car_id, bid = car.submit_bid()
                 self.bids[car_id] = bid
+        else:
+            car_id, bid = self.cars[0].submit_bid()
+            self.bids[car_id] = bid
 
         return self.bids
 

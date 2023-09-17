@@ -200,6 +200,12 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
+        '--all_cars_bid',
+        action=argparse.BooleanOptionalAction,
+        help="""If enabled, all cars of a queue can bid, not only the first one.""")
+
+
+    run_parser.add_argument(
         '--shared_bid_generator',
         action=argparse.BooleanOptionalAction,
         help="""If enabled, all bidders will share the same bid generator, instead of agents learning to bid separately.""")
