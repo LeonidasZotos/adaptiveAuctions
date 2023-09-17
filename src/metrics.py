@@ -977,6 +977,38 @@ class MasterKeeper:
         self.general_metrics['intersection_max_time_waited'] = str(
             "Mean: \n" + max_text + "\nSD:\n" + std_text + "\nDescription: Average max time waited per intersection. Averaged over sims")
 
+        # Grid Level
+        # Average time waited, aggregated over all intersections. Average over sims.
+        average_time_waited_per_simulation_per_intersection = []
+        for sim in self.average_time_waited_history_per_intersection_all_sims:
+            average_time_waited_per_simulation_per_intersection.append(
+                np.mean(sim, axis=2))
+        mean_per_intersection = np.mean(
+            average_time_waited_per_simulation_per_intersection, axis=0)
+        mean_text = str(np.round(np.mean(mean_per_intersection), 3))
+        std_text = str(np.round(np.std(mean_per_intersection), 3))
+        self.general_metrics['grid_average_time_waited'] = str(
+            "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average time waited of averages of intersections. Averaged over intersections")
+
+        # Max time waited, aggregated over all intersections. Average over sims.
+        max_time_waited_per_simulation_per_intersection = []
+        for sim in self.max_time_waited_history_per_intersection_all_sims:
+            max_time_waited_per_simulation_per_intersection.append(
+                np.mean(sim, axis=2))
+        max_per_intersection = np.mean(
+            max_time_waited_per_simulation_per_intersection, axis=0)
+        max_text = str(np.round(np.mean(max_per_intersection), 3))
+        std_text = str(np.round(np.std(max_per_intersection), 3))
+        self.general_metrics['grid_max_time_waited'] = str(
+            "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
+
+    # Inequality Metric ###
+    def calc_inequality_general_metrics(self):
+        # Here we calculate the average time waited overall inequality and satisfaction inequality
+        # TODO: THIS IS the next task. The gini of time waited is already calculated but need to average over epochs and sims. 
+        # The gini of satisfaction needs to be calculated here.
+        pass
+
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
