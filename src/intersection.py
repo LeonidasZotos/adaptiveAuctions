@@ -345,9 +345,8 @@ class Intersection:
         for queue in self.carQueues:
             # Only collect bids from non-empty queues.
             if not queue.is_empty():
-                # Only collect the first car's bid.
-                collected_bids[queue.id] = queue.collect_bids(
-                    only_collect_first=True)
+                # Depending on the self.args.all_cars_bid argument, we either collect bids from all cars, or only the first one.
+                collected_bids[queue.id] = queue.collect_bids()
 
         # If there is only one populated queue, no auction needs to be held.
         if len(collected_bids) == 1:
