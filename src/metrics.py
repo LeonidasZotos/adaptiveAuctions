@@ -386,6 +386,10 @@ class MasterKeeper:
         """Produces the general metrics of all simulations"""
         # Time Waited Metrics
         self.calc_time_waited_general_metrics()
+        self.calc_time_waited_gini_metric()
+
+        # Satisfaction Metrics:
+        self.calc_satisfaction_gini_metric()
 
         # Export the calculated metrics into a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
@@ -394,6 +398,40 @@ class MasterKeeper:
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
 
     ### Trip Satisfaction Metric ###
+    def calc_satisfaction_gini_metric(self):
+        def remove_car_copies_from_dict(dict):
+            """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
+            return [score for (_, score) in dict]
+
+        def calc_gini(x):
+            """Calculates the GINI coeffecient of a list of numbers.
+            Source: https://www.statology.org/gini-coefficient-python/
+            """
+            x = np.array(x)
+            total = 0
+            for i, xi in enumerate(x[:-1], 1):
+                total += np.sum(np.abs(xi - x[i:]))
+                with np.errstate(divide='ignore', invalid='ignore'):
+                    gini_result = total / (len(x)**2 * np.mean(x))
+            return gini_result
+
+        gini_per_simulation = []
+        for sim in self.all_simulations_satisfaction_scores:
+            sim_satisfaction_scores = []  # That is regardless of epoch
+            for epoch in sim:
+                if sim[epoch] != None:
+                    sim_satisfaction_scores.append(
+                        remove_car_copies_from_dict(sim[epoch]))
+            sim_satisfaction_scores_flat = [
+                item for sublist in sim_satisfaction_scores for item in sublist]
+            gini_per_simulation.append(calc_gini(sim_satisfaction_scores_flat))
+
+        mean_gini_text = str(round(np.mean(gini_per_simulation), 3))
+        std_gini_text = str(round(np.std(gini_per_simulation), 3))
+
+        self.general_metrics['satisfacation_avg_gini'] = str(
+            "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The Gini coefficient of all satisfaction scores of the simulation. Averaged over sims")
+
     def plot_satisfaction_scores_overall_average(self, export_results=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
@@ -1002,12 +1040,17 @@ class MasterKeeper:
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
-    ### Inequality Metric ###
-    def calc_inequality_general_metrics(self):
-        # Here we calculate the average time waited overall inequality and satisfaction inequality
-        # TODO: THIS IS the next task. The gini of time waited is already calculated but need to average over epochs and sims.
-        # The gini of satisfaction needs to be calculated here.
-        pass
+    def calc_time_waited_gini_metric(self):
+        average_gini_time_waited_history_sims = np.mean(
+            self.gini_time_waited_history_per_intersection_all_sims, axis=3)  # Average over epochs
+        mean_gini_per_simulation = []
+        for sim in average_gini_time_waited_history_sims:
+            mean_gini_per_simulation.append(
+                np.mean(sim))  # Average over intersections
+        mean_gini_text = str(round(np.mean(mean_gini_per_simulation), 3))
+        std_gini_text = str(round(np.std(mean_gini_per_simulation), 3))
+        self.general_metrics['time_waited_avg_gini'] = str(
+            "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The average of the GINI coefficients of all intersections. Averaged over sims")
 
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
