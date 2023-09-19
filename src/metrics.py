@@ -52,7 +52,7 @@ class MasterKeeper:
             Each subplot is a graph of the valuations of the auction parameters of that intersection.
     """
 
-### General Functions ###
+    ### General Functions ###
     def __init__(self, args):
         """ Initialize the MetricsKeeper object
         Args:
@@ -393,7 +393,7 @@ class MasterKeeper:
                 f.write(
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
 
-### Trip Satisfaction Metric ###
+    ### Trip Satisfaction Metric ###
     def plot_satisfaction_scores_overall_average(self, export_results=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
@@ -749,7 +749,7 @@ class MasterKeeper:
                     '/histogram_satisfaction_scores_by_bidding_type.png')
         plt.clf()
 
-### Congestion Metric ###
+    ### Congestion Metric ###
     def plot_congestion_heatmap_average(self):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
@@ -798,7 +798,7 @@ class MasterKeeper:
             np.save(self.export_location + "/average_throughput_per_intersection.npy",
                     average_throughput_per_intersection)
 
-### Winner Worthiness/Auction Reward Metric ###
+    ### Winner Worthiness/Auction Reward Metric ###
     def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
@@ -1002,10 +1002,10 @@ class MasterKeeper:
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
-    # Inequality Metric ###
+    ### Inequality Metric ###
     def calc_inequality_general_metrics(self):
         # Here we calculate the average time waited overall inequality and satisfaction inequality
-        # TODO: THIS IS the next task. The gini of time waited is already calculated but need to average over epochs and sims. 
+        # TODO: THIS IS the next task. The gini of time waited is already calculated but need to average over epochs and sims.
         # The gini of satisfaction needs to be calculated here.
         pass
 
