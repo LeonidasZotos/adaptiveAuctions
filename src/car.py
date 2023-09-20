@@ -34,7 +34,7 @@ class Car:
         set_balance(new_balance): Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id(new_car_queue_id): Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
         increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
-        calculate_satisfaction_score: Calculate the satisfaction score of the car after the completion of a trip
+        calc_satisfaction_score: Calculate the satisfaction score of the car after the completion of a trip
         reset_final_destination(): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
             we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
@@ -68,7 +68,7 @@ class Car:
         self.next_destination_queue = self.update_next_destination_queue()
         # Set an initial balance. This is set to 0 because the car will receive credit in the 0th epoch.
         self.balance = 0
-        # Rush factor is random between 0 and 1, rounded to 1 decimal. The higher the urgency, the higher the urgency.
+        # Urgency is random between 0 and 1, drawn from Gaussian.
         self.urgency = self.set_urgency()
         # Time spent at the current intersection
         self.time_at_intersection = 0
@@ -143,7 +143,7 @@ class Car:
         """Increase the distance spent in the current trip by 1"""
         self.distance_travelled_in_trip += 1
 
-    def calculate_satisfaction_score(self):
+    def calc_satisfaction_score(self):
         """This function should only be called at the end of a trip. Returns the satisfaction score of the trip,
             Function Explanation: The time spent in the network is divided by the distance travelled in the trip,
             to get the average time spent per intersection. This is then multiplied by the urgency.

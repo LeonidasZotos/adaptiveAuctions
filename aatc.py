@@ -128,7 +128,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--bid_calculation_rule",
-        default="linear",
+        default="non-linear",
         choices=["linear", "non-linear"],
         type=str,
         help="This is the way the bid is calculated. If linear, the formula is : bid + (inact_rank * delay_boost). If non-linear, the formula is : bid + (inact_rank/(1-delay_boost)).\
@@ -145,7 +145,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--auction_episode_length",
-        default=1,
+        default=10,
         choices=range(1, 1001),
         metavar="[1-1000]",
         type=int,

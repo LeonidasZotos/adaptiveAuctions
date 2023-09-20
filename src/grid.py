@@ -161,7 +161,7 @@ class Grid:
                 random_queue = random.choice(
                     [queue for queue in self.all_car_queues if queue.has_capacity()])
                 # Append copy of car and satisfaction score to list
-                satisfaction_scores.append(car.calculate_satisfaction_score())
+                satisfaction_scores.append(car.calc_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)
                 car.reset_car(random_queue.id)
 

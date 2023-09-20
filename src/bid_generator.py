@@ -16,6 +16,7 @@ class BidGenerator:
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
 
+    ### General Functions
     def __init__(self, args):
         """Initialize the BidGenerator object.
         Args:
@@ -26,6 +27,31 @@ class BidGenerator:
     def __str__(self):
         return f'Bid Generator'
 
+    def generate_bid(self, bidding_strategy, balance, urgency):
+        """Returns a bid, based on the bidding strategy.
+        Args:
+            bidding_strategy (string): The bidding strategy of the car.
+            balance (float): The balance of the car.
+            urgency (float): The urgency of the car.
+        Raises:
+            Exception: If the bidding strategy is not valid.
+        """
+
+        if bidding_strategy == 'static_low' or bidding_strategy == 'static_high':
+            # For both, the bid is the urgency
+            bid = self.generate_static_bid(urgency)
+            return bid
+        if bidding_strategy == 'random':
+            return self.generate_random_bid(balance)
+        if bidding_strategy == 'free-rider':
+            return self.generate_free_rider_bid()
+        if bidding_strategy == 'RL':
+            return self.generate_RL_bid(balance, urgency)
+        else:
+            raise Exception("ERROR: Invalid bidding strategy: ",
+                            bidding_strategy,  ". Returning random bid.")
+
+    ### Bidding Strategies
     def generate_static_bid(self, urgency):
         """Returns a static bid, which is the urgency
         Args:
@@ -59,30 +85,7 @@ class BidGenerator:
         """
         return self.generate_static_bid(urgency)
 
-    def generate_bid(self, bidding_strategy, balance, urgency):
-        """Returns a bid, based on the bidding strategy.
-        Args:
-            bidding_strategy (string): The bidding strategy of the car.
-            balance (float): The balance of the car.
-            urgency (float): The urgency of the car.
-        Raises:
-            Exception: If the bidding strategy is not valid.
-        """
-
-        if bidding_strategy == 'static_low' or bidding_strategy == 'static_high':
-            # For both, the bid is the urgency
-            bid = self.generate_static_bid(urgency)
-            return bid
-        if bidding_strategy == 'random':
-            return self.generate_random_bid(balance)
-        if bidding_strategy == 'free-rider':
-            return self.generate_free_rider_bid()
-        if bidding_strategy == 'RL':
-            return self.generate_RL_bid(balance, urgency)
-        else:
-            raise Exception("ERROR: Invalid bidding strategy: ",
-                            bidding_strategy,  ". Returning random bid.")
-
+    ### New Epoch Functions
     def ready_for_new_epoch(self):
         """Prepares the Bid Generator for the next epoch."""
         # Nothing to update.
