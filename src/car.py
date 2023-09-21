@@ -4,6 +4,7 @@ so that no full copies are kept.
 """
 import numpy as np
 import random
+from math import floor
 
 
 class Car:
@@ -45,6 +46,7 @@ class Car:
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
     ### General Functions ###
+
     def __init__(self, args, id, parent_car_queue, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
@@ -157,6 +159,7 @@ class Car:
         score = self.urgency * speed
 
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
+        # print("final balance", round(self.balance), 2)
         return SmallCar(self), score
 
     ### General state functions ###
@@ -245,7 +248,7 @@ class Car:
                 valuation = np.random.normal(mu_v, sigma_v)
                 urgency = valuation
 
-        return urgency
+        return round(urgency, 1) # 1 decimal place
 
     def reset_car(self, car_queue_id):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
@@ -298,7 +301,7 @@ class Car:
             print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {}, bidded: {})".format(
                 self.id, price, self.balance, self.submitted_bid))
 
-        self.balance -= price
+        self.balance = floor(self.balance - price)
         try:
             assert self.balance >= 0
         except AssertionError:

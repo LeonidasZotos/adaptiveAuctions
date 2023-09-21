@@ -1,6 +1,6 @@
 """This module contains the BidGenerator class, which contains the modofier that is used to modify the bidding behaviour of the cars"""
 import random
-
+from math import floor
 
 class BidGenerator:
     """
@@ -16,7 +16,7 @@ class BidGenerator:
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
 
-    ### General Functions
+    # General Functions
     def __init__(self, args):
         """Initialize the BidGenerator object.
         Args:
@@ -36,22 +36,28 @@ class BidGenerator:
         Raises:
             Exception: If the bidding strategy is not valid.
         """
-
+        bid = 0
         if bidding_strategy == 'static_low' or bidding_strategy == 'static_high':
             # For both, the bid is the urgency
             bid = self.generate_static_bid(urgency)
             return bid
         if bidding_strategy == 'random':
-            return self.generate_random_bid(balance)
+            bid = self.generate_random_bid(balance)
         if bidding_strategy == 'free-rider':
-            return self.generate_free_rider_bid()
+            bid = self.generate_free_rider_bid()
         if bidding_strategy == 'RL':
-            return self.generate_RL_bid(balance, urgency)
+            bid = self.generate_RL_bid(balance, urgency)
         else:
             raise Exception("ERROR: Invalid bidding strategy: ",
-                            bidding_strategy,  ". Returning random bid.")
+                            bidding_strategy,  ". Returning 0 bid.")
 
-    ### Bidding Strategies
+        if bid >= balance:
+            # Make sure the bid is lower/equal compared to the balance
+            bid = floor(balance, 2)
+
+        return bid
+
+    # Bidding Strategies
     def generate_static_bid(self, urgency):
         """Returns a static bid, which is the urgency
         Args:
@@ -85,7 +91,7 @@ class BidGenerator:
         """
         return self.generate_static_bid(urgency)
 
-    ### New Epoch Functions
+    # New Epoch Functions
     def ready_for_new_epoch(self):
         """Prepares the Bid Generator for the next epoch."""
         # Nothing to update.

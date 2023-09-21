@@ -384,6 +384,9 @@ class MasterKeeper:
 
     def produce_general_metrics(self):
         """Produces the general metrics of all simulations"""
+        # Average number of trips completed per simulation
+        self.calc_average_num_of_trips_completed()
+
         # Time Waited Metrics
         self.calc_time_waited_general_metrics()
         self.calc_time_waited_gini_metric()
@@ -398,6 +401,23 @@ class MasterKeeper:
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
 
     ### Trip Satisfaction Metric ###
+    def calc_average_num_of_trips_completed(self):
+        num_of_trips_per_simulation = []
+        for sim in self.all_simulations_satisfaction_scores:
+            num_of_trips_in_sim = 0 # That disregards the epoch
+            for epoch in sim:
+                if sim[epoch] != None:
+                    num_of_trips_in_sim += len(sim[epoch])
+            num_of_trips_per_simulation.append(num_of_trips_in_sim)
+        
+        print(num_of_trips_per_simulation)
+        mean_text = str(round(np.mean(num_of_trips_per_simulation), 3))
+        std_text = str(round(np.std(num_of_trips_per_simulation), 3))
+
+        self.general_metrics['num_of_trips_completed'] = str(
+            "Mean: " + mean_text + " | SD: " + std_text + " | Description: The mean number of trips completed per simulation. Averaged over sims")
+
+
     def calc_satisfaction_gini_metric(self):
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""

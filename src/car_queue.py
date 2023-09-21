@@ -1,7 +1,7 @@
 """This module contains the CarQueue class, which is used to represent a queue of cars at an intersection.
 This class is also responsible for gathering bids from the queue and making the cars pay their individual fees.
 Lastly, it also keeps track of how long the queue has been inactive (i.e. no cars have left the queue)."""
-from math import nan, exp
+from math import floor, nan
 
 
 class CarQueue:
@@ -244,8 +244,8 @@ class CarQueue:
                 # Default case is that the car pays nothing (This is explicit to avoid division by zero)
                 individual_price = 0
                 if total_submitted_bid > 0:
-                    individual_price = fee * \
-                        queue_bids[i] / total_submitted_bid
+                    individual_price = fee * queue_bids[i] / total_submitted_bid
+                    individual_price = floor(individual_price * 100) / 100 # Round to 2 decimal places
                 self.cars[i].pay_bid(individual_price)
 
             reward = 0
