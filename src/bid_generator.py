@@ -2,6 +2,7 @@
 import random
 from math import floor
 
+
 class BidGenerator:
     """
     This is the BidGenerator class. The role of the generator is to generate bids for the cars, based on the bidding strategy.
@@ -27,33 +28,31 @@ class BidGenerator:
     def __str__(self):
         return f'Bid Generator'
 
-    def generate_bid(self, bidding_strategy, balance, urgency):
+    def generate_bid(self, bidding_strategy, balance, urgency, bid_aggression):
         """Returns a bid, based on the bidding strategy.
         Args:
             bidding_strategy (string): The bidding strategy of the car.
             balance (float): The balance of the car.
             urgency (float): The urgency of the car.
+            bid_aggression (float): The bid aggression of the car.
         Raises:
             Exception: If the bidding strategy is not valid.
         """
         bid = 0
-        if bidding_strategy == 'static_low' or bidding_strategy == 'static_high':
+        if bidding_strategy == 'static':
             # For both, the bid is the urgency
             bid = self.generate_static_bid(urgency)
-            return bid
-        if bidding_strategy == 'random':
+        elif bidding_strategy == 'aggressive':
+            bid = self.generate_aggressive_bid(urgency, bid_aggression)
+        elif bidding_strategy == 'random':
             bid = self.generate_random_bid(balance)
-        if bidding_strategy == 'free-rider':
+        elif bidding_strategy == 'free-rider':
             bid = self.generate_free_rider_bid()
-        if bidding_strategy == 'RL':
+        elif bidding_strategy == 'RL':
             bid = self.generate_RL_bid(balance, urgency)
         else:
             raise Exception("ERROR: Invalid bidding strategy: ",
                             bidding_strategy,  ". Returning 0 bid.")
-
-        if bid >= balance:
-            # Make sure the bid is lower/equal compared to the balance
-            bid = floor(balance, 2)
 
         return bid
 
@@ -66,6 +65,16 @@ class BidGenerator:
             float: A static bid which is the urgency
         """
         return urgency
+
+    def generate_aggressive_bid(self, urgency, bid_aggression):
+        """Returns a aggressive bid, which is the urgency * 1 + bid_aggression (e.g. urgnecy * 1.24)
+        Args:
+            urgency (float): The urgency of the car.
+            bid_aggression (float): The bid aggression of the car.
+        Returns:
+            float: A static bid which is the urgency
+        """
+        return urgency * ( 1 + bid_aggression)
 
     def generate_random_bid(self, balance):
         """Returns a random bid between 0 and the total balance of the car.

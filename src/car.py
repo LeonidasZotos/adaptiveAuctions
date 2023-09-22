@@ -72,6 +72,9 @@ class Car:
         self.balance = 0
         # Urgency is random between 0 and 1, drawn from Gaussian.
         self.urgency = self.set_urgency()
+        # Bidding aggression. This is a value between 0 and 1, which determines how aggressive the car bids over its conservative amount.
+        # Only used if the bidding type is aggressive.
+        self.bidding_aggression = self.set_bidding_aggression()
         # Time spent at the current intersection
         self.time_at_intersection = 0
         # Time spent in the network for the current trip
@@ -118,6 +121,36 @@ class Car:
         """
         return self.urgency
 
+    def set_urgency(self):
+        """Sets the urgency of the car, depending on the bidding type
+        Returns: 
+            urgency (float): The urgency of the car
+        """
+        urgency = 0
+        # Random float from gaussian with mean 0.25, and sigma 0.2
+        mu_v = 0.5
+        sigma_v = 0.2
+        urgency = np.random.normal(mu_v, sigma_v)
+        while urgency < 0 or urgency > 1:
+            urgency = np.random.normal(mu_v, sigma_v)
+
+        return round(urgency, 1)  # 1 decimal place
+
+    def set_bidding_aggression(self):
+        """Sets the bidding aggression of the car. This is a value between 0 and 1, which determines how aggressive the car bids over its conservative amount.
+        Returns: 
+            bidding_aggression (float): The bidding aggression of the car
+        """
+        aggression = 0
+        # Aggression is random between 0 and 1, drawn from Gaussian with mean 0.25 and sigma 0.1
+        mu_v = 0.5
+        sigma_v = 0.2
+        aggression = np.random.normal(mu_v, sigma_v)
+        while aggression < 0 or aggression > 1:
+            aggression = np.random.normal(mu_v, sigma_v)
+
+        return round(aggression, 1)  # 1 decimal place
+
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         Args:
@@ -161,6 +194,10 @@ class Car:
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
         # print("final balance", round(self.balance), 2)
         return SmallCar(self), score
+
+    def has_balance(self):
+        """Returns True if balance > 0, False otherwise"""
+        return self.balance > 0
 
     ### General state functions ###
     def reset_final_destination(self):
@@ -223,33 +260,6 @@ class Car:
         # Return the next destination queue
         return self.next_destination_queue
 
-    def set_urgency(self):
-        """Sets the urgency of the car, depending on the bidding type
-        Returns: 
-            urgency (float): The urgency of the car
-        """
-        urgency = 0
-        if self.bidding_type == 'static_low':
-            # Random float from gaussian with mean 0.25, and sigma 0.2
-            mu_v = 0.25
-            sigma_v = 0.2
-            valuation = np.random.normal(mu_v, sigma_v)
-            urgency = valuation
-            while valuation < 0 or valuation > 1:
-                valuation = np.random.normal(mu_v, sigma_v)
-                urgency = valuation
-        elif self.bidding_type == 'static_high':
-            # Random float from gaussian with mean 0.75, and sigma 0.2
-            mu_v = 0.75
-            sigma_v = 0.2
-            valuation = np.random.normal(mu_v, sigma_v)
-            urgency = valuation
-            while valuation < 0 or valuation > 1:
-                valuation = np.random.normal(mu_v, sigma_v)
-                urgency = valuation
-
-        return round(urgency, 1) # 1 decimal place
-
     def reset_car(self, car_queue_id):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
            next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
@@ -276,10 +286,10 @@ class Car:
             Exception: If the car tries to submit a negative bid, an exception is raised.
         """
         self.submitted_bid = self.bid_generator.generate_bid(
-            self.bidding_type, self.balance, self.urgency)
+            self.bidding_type, self.balance, self.urgency, self.bidding_aggression)
         # If there is not enough balance, bid entire balance.
-        if self.submitted_bid > self.balance:
-            self.submitted_bid = self.balance
+        if self.submitted_bid >= self.balance:
+            self.submitted_bid = floor(self.balance * 100) / 100
         if self.submitted_bid < 0:
             raise Exception("ERROR: Car {} tried to submit a negative bid {}".format(
                 self.id, self.submitted_bid))
@@ -339,6 +349,7 @@ class SmallCar:
         self.bid_generator = Car.bid_generator
         self.balance = Car.balance
         self.urgency = Car.urgency
+        self.bidding_aggression = Car.bidding_aggression
         self.time_at_intersection = Car.time_at_intersection
         self.time_in_traffic_network = Car.time_in_traffic_network
         self.distance_travelled_in_trip = Car.distance_travelled_in_trip
