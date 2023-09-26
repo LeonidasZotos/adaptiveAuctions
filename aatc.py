@@ -96,14 +96,14 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--credit_balance",
-        default=inf,
+        default=5,
         type=float_range(1, inf),
         help="Initial & Renewal credit balance for each car. Defaults to infinity. Must be a float between 1 and infinity."
     )
 
     run_parser.add_argument(
         "--wage_time",
-        default=1,
+        default=10,
         choices=range(1, 101),
         metavar="[1-100]",
         type=int,
