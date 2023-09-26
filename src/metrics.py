@@ -128,6 +128,9 @@ class MasterKeeper:
         self.all_sims_winners_bid_ranks_means = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
 
+        ####### Misc. #######
+        self.all_sims_broke_agents_history = np.zeros(self.args.num_of_epochs)
+
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
         Args:
@@ -196,6 +199,8 @@ class MasterKeeper:
                 if valid_indices[i, j]:
                     self.all_sims_winners_bid_ranks_means[i][j].append(
                         means[i, j])
+        ### Misc. ###
+        self.all_sims_broke_agents_history += sim_metrics_keeper.broke_history
 
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
@@ -237,6 +242,9 @@ class MasterKeeper:
         self.plot_adaptive_auction_parameters_valuations_per_intersection()
         # Create a barplot with the mean bid and inact rank of the winner per intersection
         self.plot_mean_bid_and_inact_rank_per_intersection()
+        
+        ### Misc. ###
+        self.plot_broke_agents_percentage_history()
 
     def produce_general_metrics_DEPRECATED(self):
         """Produces the general metrics of all simulations"""
@@ -525,7 +533,7 @@ class MasterKeeper:
         random_bidding_results = {}
         free_rider_bidding_results = {}
         RL_bidding_results = {}
-        epochs = [] # A list of all epochs in which cars completed their trip
+        epochs = []  # A list of all epochs in which cars completed their trip
 
         for result_dict in self.all_simulations_satisfaction_scores:
             for epoch in result_dict:
@@ -1151,6 +1159,21 @@ class MasterKeeper:
             np.save(self.export_location + "/average_gini_time_waited_per_intersection_history.npy",
                     average_gini_time_waited_per_intersection)
 
+    ### Misc. Metrics ###
+    def plot_broke_agents_percentage_history(self):
+        """Plot a history of the average percentage of agents that have a balance of 0"""
+        avg_percentage_broke_angets = np.divide(
+            self.all_sims_broke_agents_history, self.args.num_of_simulations)
+        
+        # Create a single plot for the entire grid
+        plt.plot(avg_percentage_broke_angets)
+        plt.title('Average Percentage of Broke Agents')
+        plt.xlabel('Epoch')
+        plt.ylabel('Average Percentage of Broke Agents')
+        plt.savefig(self.args.results_folder +
+                    '/average_percentage_broke_agents_history.png')
+        plt.clf()
+
 
 class SimulationMetrics:
     """
@@ -1178,6 +1201,7 @@ class SimulationMetrics:
             If there was no car that completed a trip in an epoch, there is no entry for that epoch.
         ready_for_new_epoch(): Prepares the metrics keeper for the next epoch
         retrieve_end_of_simulation_metrics(): Retrieves the metrics at the end of the simulation
+        check_if_gridlocked(): Checks if the simulation is gridlocked
     """
 
     def __init__(self, args, grid):
@@ -1229,6 +1253,9 @@ class SimulationMetrics:
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
         self.auction_parameters_counts_per_intersection = [
             [[] for _ in range(args.grid_size)] for _ in range(args.grid_size)]
+
+        ### Misc. ###
+        self.broke_history = []
 
     def check_if_gridlocked(self):
         # If a queue has been inactive for more than half of the simulation, it is considered gridlocked
@@ -1290,3 +1317,6 @@ class SimulationMetrics:
             )
             self.winners_bid_ranks_per_intersection_means[x_cord][y_cord] = intersection.calc_and_get_mean_winners_bid_ranks(
             )
+
+        ### Misc. ###
+        self.broke_history = self.grid.get_broke_history()

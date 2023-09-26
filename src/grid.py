@@ -35,6 +35,7 @@ class Grid:
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
 
+    ### General Functions ###
     def __init__(self, args):
         """ Initialize the Grid object
         Args:
@@ -45,6 +46,7 @@ class Grid:
         self.all_intersections = []
         self.all_car_queues = []
         self.all_cars = []
+        self.broke_history = []
 
         intersection_auction_modifier = AuctionModifier(
             self.args, 'same')
@@ -70,12 +72,21 @@ class Grid:
     def __str__(self):
         return f'Grid of size: {self.args.grid_size}, with car queue capacity: {self.args.queue_capacity}'
 
+    ### Getters ###
     def get_all_intersections_and_car_queues(self):
         """Returns a tuple of all intersections and car queues in the grid
         Returns:
             tuple: (list of intersections, list of car queues)
         """
         return self.all_intersections, self.all_car_queues
+
+    def get_percentage_of_broke_agents(self):
+        """Returns the percentage of agents that have a balance of 0"""
+        return len([car for car in self.all_cars if not car.has_balance()]) / len(self.all_cars)
+
+    def get_broke_history(self):
+        """Returns the history of the percentage of agents that have a balance of 0"""
+        return self.broke_history
 
     ### Printing functions ###
     def print_grid(self, epoch):
@@ -169,7 +180,6 @@ class Grid:
         return satisfaction_scores
 
     ### Movement functions ###
-
     def move_cars(self):
         """ Moves all cars in the grid based on the epoch_movements"""
         # First, calculate all movements that need to be made
@@ -242,3 +252,4 @@ class Grid:
     def ready_for_new_epoch(self):
         """ Clears the class variables that are epoch-specific (e.g. epoch_movements)"""
         self.epoch_movements = []
+        self.broke_history.append(self.get_percentage_of_broke_agents())
