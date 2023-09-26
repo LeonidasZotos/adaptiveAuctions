@@ -525,6 +525,7 @@ class MasterKeeper:
         random_bidding_results = {}
         free_rider_bidding_results = {}
         RL_bidding_results = {}
+        epochs = [] # A list of all epochs in which cars completed their trip
 
         for result_dict in self.all_simulations_satisfaction_scores:
             for epoch in result_dict:
@@ -532,39 +533,42 @@ class MasterKeeper:
                     bidding_type = car_copy.bidding_type
                     # Static bidding
                     if bidding_type == 'static':
+                        epochs.append(epoch)
                         if epoch in static_bidding_results:
                             static_bidding_results[epoch].append(score)
                         else:
                             static_bidding_results[epoch] = [score]
+                    # Aggressive bidding
                     elif bidding_type == 'aggressive':
+                        epochs.append(epoch)
                         if epoch in aggressive_bidding_results:
                             aggressive_bidding_results[epoch].append(score)
                         else:
                             aggressive_bidding_results[epoch] = [score]
                     # Random bidding
                     elif bidding_type == 'random':
+                        epochs.append(epoch)
                         if epoch in random_bidding_results:
                             random_bidding_results[epoch].append(score)
                         else:
                             random_bidding_results[epoch] = [score]
                     # Free-rider bidding
                     elif bidding_type == 'free-rider':
+                        epochs.append(epoch)
                         if epoch in free_rider_bidding_results:
                             free_rider_bidding_results[epoch].append(score)
                         else:
                             free_rider_bidding_results[epoch] = [score]
                     # RL bidding
                     elif bidding_type == 'RL':
+                        epochs.append(epoch)
                         if epoch in RL_bidding_results:
                             RL_bidding_results[epoch].append(score)
                         else:
                             RL_bidding_results[epoch] = [score]
 
-        # Create a list of all epochs in which cars completed their trip
-        epochs = []
-        for epoch in static_bidding_results:
-            if static_bidding_results[epoch] != None or aggressive_bidding_results[epoch] != None or random_bidding_results[epoch] != None or free_rider_bidding_results[epoch] != None or RL_bidding_results[epoch] != None:
-                epochs.append(epoch)
+        # Remove duplicate epochs. Epochs stores the epochs in which any car completed a trip.
+        epochs = list(set(epochs))
 
         # Remove outliers if necessary:
         if filter_outliers == True:
