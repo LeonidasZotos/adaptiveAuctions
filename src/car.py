@@ -46,7 +46,6 @@ class Car:
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
     ### General Functions ###
-
     def __init__(self, args, id, parent_car_queue, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
@@ -141,15 +140,16 @@ class Car:
         Returns: 
             bidding_aggression (float): The bidding aggression of the car
         """
-        aggression = 0
-        # Aggression is random between 0 and 1, drawn from Gaussian with mean 0.25 and sigma 0.1
-        mu_v = 0.5
-        sigma_v = 0.2
-        aggression = np.random.normal(mu_v, sigma_v)
-        while aggression < 0 or aggression > 1:
-            aggression = np.random.normal(mu_v, sigma_v)
+        bid_aggression = 0
+        # Aggression is random between 0 and 2, drawn from Gaussian with mean 1.5 and sigma 0.5
+        # In the end, the bid is calculated as: bid = urgency * (1 + bidding_aggression), so urgency * 2 up to urgency * 3
+        mu_v = 1.5
+        sigma_v = 0.5
+        bid_aggression = np.random.normal(mu_v, sigma_v)
+        while bid_aggression < 1 or bid_aggression > 2:
+            bid_aggression = np.random.normal(mu_v, sigma_v)
 
-        return round(aggression, 1)  # 1 decimal place
+        return round(bid_aggression, 1)  # 1 decimal place
 
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.

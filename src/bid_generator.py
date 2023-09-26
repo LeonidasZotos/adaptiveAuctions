@@ -1,6 +1,5 @@
 """This module contains the BidGenerator class, which contains the modofier that is used to modify the bidding behaviour of the cars"""
 import random
-from math import floor
 
 
 class BidGenerator:
@@ -74,7 +73,7 @@ class BidGenerator:
         Returns:
             float: A static bid which is the urgency
         """
-        return urgency * ( 1 + bid_aggression)
+        return urgency * (1 + bid_aggression)
 
     def generate_random_bid(self, balance):
         """Returns a random bid between 0 and the total balance of the car.
