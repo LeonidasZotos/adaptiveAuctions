@@ -118,7 +118,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--adaptive_auction_action_selection",
-        default="e_greedy_exp_decay",
+        default="ucb1",
         choices=["boltzmann", "e_greedy_decay", "e_greedy_exp_decay",
                  "ucb1", "reverse_sigmoid_decay", "random"],
         type=str,
@@ -128,11 +128,11 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--bid_calculation_rule",
-        default="non-linear",
-        choices=["linear", "non-linear"],
+        default="linear",
+        choices=["linear", "multiplicative", "non-linear"],
         type=str,
-        help="This is the way the bid is calculated. If linear, the formula is : bid + (inact_rank * delay_boost). If non-linear, the formula is : bid + (inact_rank/(1-delay_boost)).\
-        Defaults to linear. Must be one of 'linear' or 'non-linear'."
+        help="This is the way the bid is calculated. If linear, the formula is: bid + (inact_rank * delay_boost). If non-linear, the formula is: bid + (inact_rank/(1-delay_boost)).\
+        If multiplicative, the formula is: bid * inact_rank * delay_boost. Defaults to linear. Must be one of 'linear', 'multiplicative' or 'non-linear'."
     )
 
     run_parser.add_argument(

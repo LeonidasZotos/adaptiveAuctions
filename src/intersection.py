@@ -406,7 +406,18 @@ class Intersection:
 
         final_bids = {}
         # One modified/final bid per queue. Small noise is added to avoid ties.
-        if self.args.bid_calculation_rule == "non-linear":
+        if self.args.bid_calculation_rule == "linear":
+            for key in summed_bids.keys():
+                queue = utils.get_car_queue_from_intersection(self, key)
+                final_bids[key] = summed_bids[key] + \
+                    (queue.get_inact_rank() * queue_delay_boost) + \
+                    random.uniform(0, 0.00001)
+        elif self.args.bid_calculation_rule == "multiplicative":
+            for key in summed_bids.keys():
+                queue = utils.get_car_queue_from_intersection(self, key)
+                final_bids[key] = summed_bids[key] * queue.get_inact_rank() * \
+                    queue_delay_boost + random.uniform(0, 0.00001)
+        elif self.args.bid_calculation_rule == "non-linear":
             for key in summed_bids.keys():
                 queue = utils.get_car_queue_from_intersection(self, key)
                 if queue_delay_boost != 1:
@@ -415,12 +426,6 @@ class Intersection:
                 else:  # Avoid division by 0
                     final_bids[key] = (summed_bids[key] + (queue.get_inact_rank() /
                                                            (1 - 0.9999))) + random.uniform(0, 0.00001)
-        else:
-            for key in summed_bids.keys():
-                queue = utils.get_car_queue_from_intersection(self, key)
-                final_bids[key] = summed_bids[key] + \
-                    (queue.get_inact_rank() * queue_delay_boost) + \
-                    random.uniform(0, 0.00001)
 
         # Winning queue is the queue with the highest bid. They pay the 2nd highest bid/price.
         # Order the bids in descending order. Since python 3.7 dictionaries are ordered.

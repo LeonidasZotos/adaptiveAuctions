@@ -46,6 +46,7 @@ class Car:
         ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
     """
     ### General Functions ###
+
     def __init__(self, args, id, parent_car_queue, bidding_type, bid_generator):
         """ Initialize the Car object
         Args:
@@ -141,12 +142,12 @@ class Car:
             bidding_aggression (float): The bidding aggression of the car
         """
         bid_aggression = 0
-        # Aggression is random between 0 and 2, drawn from Gaussian with mean 1.5 and sigma 0.5
-        # In the end, the bid is calculated as: bid = urgency * (1 + bidding_aggression), so urgency * 2 up to urgency * 3
-        mu_v = 1.5
+        # Aggression is random between 2 and 3, drawn from Gaussian with mean 2.5 and sigma 0.5
+        # In the end, the bid is calculated as: bid = urgency * bidding_aggression, so urgency * 2 up to urgency * 3
+        mu_v = 2.5
         sigma_v = 0.5
         bid_aggression = np.random.normal(mu_v, sigma_v)
-        while bid_aggression < 1 or bid_aggression > 2:
+        while bid_aggression < 2 or bid_aggression > 3:
             bid_aggression = np.random.normal(mu_v, sigma_v)
 
         return round(bid_aggression, 1)  # 1 decimal place

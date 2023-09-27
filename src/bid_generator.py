@@ -66,14 +66,14 @@ class BidGenerator:
         return urgency
 
     def generate_aggressive_bid(self, urgency, bid_aggression):
-        """Returns a aggressive bid, which is the urgency * 1 + bid_aggression (e.g. urgnecy * 1.24)
+        """Returns a aggressive bid, which is the urgency * bid_aggression (e.g. urgnecy * 1.24)
         Args:
             urgency (float): The urgency of the car.
             bid_aggression (float): The bid aggression of the car.
         Returns:
             float: A static bid which is the urgency
         """
-        return urgency * (1 + bid_aggression)
+        return urgency * bid_aggression
 
     def generate_random_bid(self, balance):
         """Returns a random bid between 0 and the total balance of the car.
