@@ -98,7 +98,7 @@ def remove_outliers(data, restriction=0.1):
     """Removes outliers from a list of data, using the z-score
     Args:
         data (list): A list of data
-        restriction (float, optional): The restriction of the outlier removal. Lower restriction leads to more aggressive filtering. Defaults to 0.1.
+        restriction (float, optional): The restriction of the outlier removal. Lower restriction leads to more heterogeneous filtering. Defaults to 0.1.
     Returns:
         list: A list of data with outliers removed
     """

@@ -528,8 +528,8 @@ class MasterKeeper:
             filter_outliers (bool): Whether to filter out outliers from the results
         """
 
-        static_bidding_results = {}
-        aggressive_bidding_results = {}
+        homogeneous_bidding_results = {}
+        heterogeneous_bidding_results = {}
         random_bidding_results = {}
         free_rider_bidding_results = {}
         RL_bidding_results = {}
@@ -539,20 +539,20 @@ class MasterKeeper:
             for epoch in result_dict:
                 for (car_copy, score) in result_dict[epoch]:
                     bidding_type = car_copy.bidding_type
-                    # Static bidding
-                    if bidding_type == 'static':
+                    # Homogeneous bidding
+                    if bidding_type == 'homogeneous':
                         epochs.append(epoch)
-                        if epoch in static_bidding_results:
-                            static_bidding_results[epoch].append(score)
+                        if epoch in homogeneous_bidding_results:
+                            homogeneous_bidding_results[epoch].append(score)
                         else:
-                            static_bidding_results[epoch] = [score]
-                    # Aggressive bidding
-                    elif bidding_type == 'aggressive':
+                            homogeneous_bidding_results[epoch] = [score]
+                    # Heterogeneous bidding
+                    elif bidding_type == 'heterogeneous':
                         epochs.append(epoch)
-                        if epoch in aggressive_bidding_results:
-                            aggressive_bidding_results[epoch].append(score)
+                        if epoch in heterogeneous_bidding_results:
+                            heterogeneous_bidding_results[epoch].append(score)
                         else:
-                            aggressive_bidding_results[epoch] = [score]
+                            heterogeneous_bidding_results[epoch] = [score]
                     # Random bidding
                     elif bidding_type == 'random':
                         epochs.append(epoch)
@@ -581,14 +581,14 @@ class MasterKeeper:
         # Remove outliers if necessary:
         if filter_outliers == True:
             for epoch in epochs:
-                # Static bidding:
-                if epoch in static_bidding_results:
-                    static_bidding_results[epoch] = utils.remove_outliers(
-                        static_bidding_results[epoch])
-                # Aggressive bidding
-                if epoch in aggressive_bidding_results:
-                    aggressive_bidding_results[epoch] = utils.remove_outliers(
-                        aggressive_bidding_results[epoch])
+                # Homogeneous bidding:
+                if epoch in homogeneous_bidding_results:
+                    homogeneous_bidding_results[epoch] = utils.remove_outliers(
+                        homogeneous_bidding_results[epoch])
+                # Heterogeneous bidding
+                if epoch in heterogeneous_bidding_results:
+                    heterogeneous_bidding_results[epoch] = utils.remove_outliers(
+                        heterogeneous_bidding_results[epoch])
                 # Random bidding:
                 if epoch in random_bidding_results:
                     random_bidding_results[epoch] = utils.remove_outliers(
@@ -603,25 +603,25 @@ class MasterKeeper:
                         RL_bidding_results[epoch])
 
         # Create a list of all average satisfaction scores
-        static_bidding_average_satisfaction_scores = []
-        aggressive_bidding_average_satisfaction_scores = []
+        homogeneous_bidding_average_satisfaction_scores = []
+        heterogeneous_bidding_average_satisfaction_scores = []
         random_bidding_average_satisfaction_scores = []
         free_rider_bidding_average_satisfaction_scores = []
         RL_bidder_average_satisfaction_scores = []
 
         for epoch in epochs:
-            # Static bidding:
-            if epoch in static_bidding_results:
-                static_bidding_average_satisfaction_scores.append(
-                    sum(static_bidding_results[epoch]) / len(static_bidding_results[epoch]))
+            # Homogeneous bidding:
+            if epoch in homogeneous_bidding_results:
+                homogeneous_bidding_average_satisfaction_scores.append(
+                    sum(homogeneous_bidding_results[epoch]) / len(homogeneous_bidding_results[epoch]))
             else:
-                static_bidding_average_satisfaction_scores.append(nan)
-            # Aggressive bidding:
-            if epoch in aggressive_bidding_results:
-                aggressive_bidding_average_satisfaction_scores.append(
-                    sum(aggressive_bidding_results[epoch]) / len(aggressive_bidding_results[epoch]))
+                homogeneous_bidding_average_satisfaction_scores.append(nan)
+            # Heterogeneous bidding:
+            if epoch in heterogeneous_bidding_results:
+                heterogeneous_bidding_average_satisfaction_scores.append(
+                    sum(heterogeneous_bidding_results[epoch]) / len(heterogeneous_bidding_results[epoch]))
             else:
-                aggressive_bidding_average_satisfaction_scores.append(nan)
+                heterogeneous_bidding_average_satisfaction_scores.append(nan)
             # Random bidding:
             if epoch in random_bidding_results:
                 random_bidding_average_satisfaction_scores.append(
@@ -642,24 +642,24 @@ class MasterKeeper:
                 RL_bidder_average_satisfaction_scores.append(nan)
 
         # Create a list of all standard deviations of satisfaction scores
-        static_bidding_sd = []
-        aggressive_bidding_sd = []
+        homogeneous_bidding_sd = []
+        heterogeneous_bidding_sd = []
         random_bidding_sd = []
         free_rider_bidding_sd = []
         RL_bidder_sd = []
         for epoch in epochs:
-            # Static bidding:
-            if epoch in static_bidding_results:
-                static_bidding_sd.append(
-                    np.std(static_bidding_results[epoch]))
+            # Homogeneous bidding:
+            if epoch in homogeneous_bidding_results:
+                homogeneous_bidding_sd.append(
+                    np.std(homogeneous_bidding_results[epoch]))
             else:
-                static_bidding_sd.append(nan)
-            # Aggressive bidding:
-            if epoch in aggressive_bidding_results:
-                aggressive_bidding_sd.append(
-                    np.std(aggressive_bidding_results[epoch]))
+                homogeneous_bidding_sd.append(nan)
+            # Heterogeneous bidding:
+            if epoch in heterogeneous_bidding_results:
+                heterogeneous_bidding_sd.append(
+                    np.std(heterogeneous_bidding_results[epoch]))
             else:
-                aggressive_bidding_sd.append(nan)
+                heterogeneous_bidding_sd.append(nan)
             # Random bidding:
             if epoch in random_bidding_results:
                 random_bidding_sd.append(
@@ -681,13 +681,13 @@ class MasterKeeper:
 
         # Remove the first WARMUP_EPOCHS
         epochs = epochs[WARMUP_EPOCHS:]
-        static_bidding_average_satisfaction_scores = static_bidding_average_satisfaction_scores[
+        homogeneous_bidding_average_satisfaction_scores = homogeneous_bidding_average_satisfaction_scores[
             WARMUP_EPOCHS:]
-        static_bidding_sd = static_bidding_sd[WARMUP_EPOCHS:]
+        homogeneous_bidding_sd = homogeneous_bidding_sd[WARMUP_EPOCHS:]
 
-        aggressive_bidding_average_satisfaction_scores = aggressive_bidding_average_satisfaction_scores[
+        heterogeneous_bidding_average_satisfaction_scores = heterogeneous_bidding_average_satisfaction_scores[
             WARMUP_EPOCHS:]
-        aggressive_bidding_sd = aggressive_bidding_sd[WARMUP_EPOCHS:]
+        heterogeneous_bidding_sd = heterogeneous_bidding_sd[WARMUP_EPOCHS:]
 
         random_bidding_average_satisfaction_scores = random_bidding_average_satisfaction_scores[
             WARMUP_EPOCHS:]
@@ -701,12 +701,12 @@ class MasterKeeper:
 
         if with_std == True:
             # Plot the average satisfaction score per epoch, per bidding type & with error bars
-            if len(static_bidding_results) > 0:
-                plt.errorbar(epochs, static_bidding_average_satisfaction_scores,
-                             yerr=static_bidding_sd, fmt='o', label='Static bidding')
-            if len(aggressive_bidding_results) > 0:
-                plt.errorbar(epochs, aggressive_bidding_average_satisfaction_scores,
-                             yerr=aggressive_bidding_sd, fmt='o', label='Aggressive bidding')
+            if len(homogeneous_bidding_results) > 0:
+                plt.errorbar(epochs, homogeneous_bidding_average_satisfaction_scores,
+                             yerr=homogeneous_bidding_sd, fmt='o', label='Homogeneous bidding')
+            if len(heterogeneous_bidding_results) > 0:
+                plt.errorbar(epochs, heterogeneous_bidding_average_satisfaction_scores,
+                             yerr=heterogeneous_bidding_sd, fmt='o', label='Heterogeneous bidding')
             if len(random_bidding_results) > 0:
                 plt.errorbar(epochs, random_bidding_average_satisfaction_scores,
                              yerr=random_bidding_sd, fmt='o', label='Random bidding')
@@ -718,12 +718,12 @@ class MasterKeeper:
                              yerr=RL_bidder_sd, fmt='o', label='RL bidding')
         else:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
-            if len(static_bidding_results) > 0:
+            if len(homogeneous_bidding_results) > 0:
                 plt.plot(
-                    epochs, static_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Static bidding', markersize=1.5)
-            if len(aggressive_bidding_results) > 0:
+                    epochs, homogeneous_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Homogeneous bidding', markersize=1.5)
+            if len(heterogeneous_bidding_results) > 0:
                 plt.plot(
-                    epochs, aggressive_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Aggressive bidding', markersize=1.5)
+                    epochs, heterogeneous_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Heterogeneous bidding', markersize=1.5)
             if len(random_bidding_results) > 0:
                 plt.plot(
                     epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding', markersize=1.5)
@@ -747,8 +747,8 @@ class MasterKeeper:
             export_results (bool): Whether to export the results to a .csv file
             filter_outliers (bool): Whether to filter out outliers from the results
         """
-        all_static_bidding_results = []
-        all_aggressive_bidding_results = []
+        all_homogeneous_bidding_results = []
+        all_heterogeneous_bidding_results = []
         all_random_bidding_results = []
         all_free_rider_bidding_results = []
         all_RL_bidding_results = []
@@ -757,11 +757,11 @@ class MasterKeeper:
             for epoch in result_dict:
                 for (car_copy, score) in result_dict[epoch]:
                     bidding_type = car_copy.bidding_type
-                    # Static bidding
-                    if bidding_type == 'static':
-                        all_static_bidding_results.append(score)
-                    if bidding_type == 'aggressive':
-                        all_aggressive_bidding_results.append(score)
+                    # Homogeneous bidding
+                    if bidding_type == 'homogeneous':
+                        all_homogeneous_bidding_results.append(score)
+                    if bidding_type == 'heterogeneous':
+                        all_heterogeneous_bidding_results.append(score)
                     # Random bidding
                     elif bidding_type == 'random':
                         all_random_bidding_results.append(score)
@@ -774,12 +774,12 @@ class MasterKeeper:
 
         # Remove outliers if necessary:
         if filter_outliers == True:
-            if len(all_static_bidding_results) > 0:
-                all_static_bidding_results = utils.remove_outliers(
-                    all_static_bidding_results)
-            if len(all_aggressive_bidding_results) > 0:
-                all_aggressive_bidding_results = utils.remove_outliers(
-                    all_aggressive_bidding_results)
+            if len(all_homogeneous_bidding_results) > 0:
+                all_homogeneous_bidding_results = utils.remove_outliers(
+                    all_homogeneous_bidding_results)
+            if len(all_heterogeneous_bidding_results) > 0:
+                all_heterogeneous_bidding_results = utils.remove_outliers(
+                    all_heterogeneous_bidding_results)
             if len(all_random_bidding_results) > 0:
                 all_random_bidding_results = utils.remove_outliers(
                     all_random_bidding_results)
@@ -791,12 +791,12 @@ class MasterKeeper:
                     all_RL_bidding_results)
 
         # Create a histogram of all satisfaction scores, per bidding type
-        if len(all_static_bidding_results) > 0:
-            plt.hist(all_static_bidding_results, bins=30,
-                     alpha=0.5, label='Static bidding')
-        if len(all_aggressive_bidding_results) > 0:
-            plt.hist(all_aggressive_bidding_results, bins=30,
-                     alpha=0.5, label='Aggressive bidding')
+        if len(all_homogeneous_bidding_results) > 0:
+            plt.hist(all_homogeneous_bidding_results, bins=30,
+                     alpha=0.5, label='Homogeneous bidding')
+        if len(all_heterogeneous_bidding_results) > 0:
+            plt.hist(all_heterogeneous_bidding_results, bins=30,
+                     alpha=0.5, label='Heterogeneous bidding')
         if len(all_random_bidding_results) > 0:
             plt.hist(all_random_bidding_results, bins=30,
                      alpha=0.5, label='Random bidding')

@@ -8,10 +8,10 @@ class BidGenerator:
     Attributes:
         args (argparse.Namespace): Arguments parsed from the command line
     Functions:
-        generate_static_bid(urgency): Returns a static bid which is the urgency
+        generate_homogeneous_bid(urgency): Returns a homogeneous bid which is the urgency
         generate_random_bid(balance): Returns a random bid between 0 and the total balance of the car
         generate_free_rider_bid(): Returns a bid of 0 (free-riding)
-        generate_RL_bid(balance, urgency): TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
+        generate_RL_bid(balance, urgency): TODO: Returns a bid, based on the RL bidding strategy. For now, return homogeneous bid
         generate_bid(bidding_strategy, balance, urgency): Returns a bid, based on the bidding strategy
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
@@ -38,11 +38,11 @@ class BidGenerator:
             Exception: If the bidding strategy is not valid.
         """
         bid = 0
-        if bidding_strategy == 'static':
+        if bidding_strategy == 'homogeneous':
             # For both, the bid is the urgency
-            bid = self.generate_static_bid(urgency)
-        elif bidding_strategy == 'aggressive':
-            bid = self.generate_aggressive_bid(urgency, bid_aggression)
+            bid = self.generate_homogeneous_bid(urgency)
+        elif bidding_strategy == 'heterogeneous':
+            bid = self.generate_heterogeneous_bid(urgency, bid_aggression)
         elif bidding_strategy == 'random':
             bid = self.generate_random_bid(balance)
         elif bidding_strategy == 'free-rider':
@@ -56,22 +56,22 @@ class BidGenerator:
         return bid
 
     # Bidding Strategies
-    def generate_static_bid(self, urgency):
-        """Returns a static bid, which is the urgency
+    def generate_homogeneous_bid(self, urgency):
+        """Returns a homogeneous bid, which is the urgency
         Args:
             urgency (float): The urgency of the car.
         Returns:
-            float: A static bid which is the urgency
+            float: A homogeneous bid which is the urgency
         """
         return urgency
 
-    def generate_aggressive_bid(self, urgency, bid_aggression):
-        """Returns a aggressive bid, which is the urgency * bid_aggression (e.g. urgnecy * 1.24)
+    def generate_heterogeneous_bid(self, urgency, bid_aggression):
+        """Returns a heterogeneous bid, which is the urgency * bid_aggression (e.g. urgnecy * 1.24)
         Args:
             urgency (float): The urgency of the car.
             bid_aggression (float): The bid aggression of the car.
         Returns:
-            float: A static bid which is the urgency
+            float: A homogeneous bid which is the urgency
         """
         return urgency * bid_aggression
 
@@ -92,12 +92,12 @@ class BidGenerator:
         return 0
 
     def generate_RL_bid(self, balance, urgency):
-        """TODO: Returns a bid, based on the RL bidding strategy. For now, return static bid
+        """TODO: Returns a bid, based on the RL bidding strategy. For now, return homogeneous bid
         Args:
             balance (float): The balance of the car.
             urgency (float): The urgency of the car.
         """
-        return self.generate_static_bid(urgency)
+        return self.generate_homogeneous_bid(urgency)
 
     # New Epoch Functions
     def ready_for_new_epoch(self):

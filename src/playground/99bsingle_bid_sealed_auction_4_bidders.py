@@ -148,8 +148,8 @@ class Bidder:
         return self.valuation > reserve_price
 
     def submit_bid(self):
-        # The bidder bids more aggressively if they just lost an auction. The opposite is true if they just won an auction.
-        # In any case, they bid more aggressively due to the initial loss aversion
+        # The bidder bids more heterogeneously if they just lost an auction. The opposite is true if they just won an auction.
+        # In any case, they bid more heterogeneously due to the initial loss aversion
         if self.just_won_auction:
             # If the bidder just won an auction, loss aversion is decreased.
             self.aversion = max(

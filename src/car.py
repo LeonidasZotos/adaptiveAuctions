@@ -15,7 +15,7 @@ class Car:
         id (str): The ID of the car, e.g. 1
         car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
         parent_car_queue (CarQueue): The car queue that the car is currently in.
-        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
+        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'homogeneous'.
         bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         final_destination (str): The ID of the final destination intersection (e.g. 22, for intersection (2,2)).
         next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), South car queue).
@@ -53,7 +53,7 @@ class Car:
             args (argparse.Namespace): Arguments parsed from the command line
             id (str): The ID of the car, e.g. 1
             parent_car_queue (CarQueue): The car queue that the car is currently in.
-            bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'static' or RL.
+            bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'homogeneous' or RL.
             bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
         """
         self.args = args
@@ -72,8 +72,8 @@ class Car:
         self.balance = 0
         # Urgency is random between 0 and 1, drawn from Gaussian.
         self.urgency = self.set_urgency()
-        # Bidding aggression. This is a value between 0 and 1, which determines how aggressive the car bids over its conservative amount.
-        # Only used if the bidding type is aggressive.
+        # Bidding aggression. This is a value between 0 and 1, which determines how heterogeneous the car bids over its conservative amount.
+        # Only used if the bidding type is heterogeneous.
         self.bidding_aggression = self.set_bidding_aggression()
         # Time spent at the current intersection
         self.time_at_intersection = 0
@@ -137,7 +137,7 @@ class Car:
         return round(urgency, 1)  # 1 decimal place
 
     def set_bidding_aggression(self):
-        """Sets the bidding aggression of the car. This is a value between 0 and 1, which determines how aggressive the car bids over its conservative amount.
+        """Sets the bidding aggression of the car. This is a value between 0 and 1, which determines how heterogeneous the car bids over its conservative amount.
         Returns: 
             bidding_aggression (float): The bidding aggression of the car
         """
@@ -331,7 +331,7 @@ class SmallCar:
     The SmallCar class is a small version of the Car class, which only contains the essential car info. This class is used for evaluation purposes, 
     so that no full copies of cars are kept.
     Attributes:
-        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'static'.
+        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'homogeneous'.
         bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         balance (float): The balance of the car. This is the amount of credit the car has left.
         urgency (float): The urgency of the car. This represents the driver's urgency.
