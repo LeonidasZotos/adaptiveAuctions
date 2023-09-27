@@ -127,12 +127,16 @@ class Car:
             urgency (float): The urgency of the car
         """
         urgency = 0
-        # Random float from gaussian with mean 0.25, and sigma 0.2
-        mu_v = 0.5
-        sigma_v = 0.2
-        urgency = np.random.normal(mu_v, sigma_v)
-        while urgency < 0 or urgency > 1:
+        if self.args.bidders_urgency_distribution ==  'gaussian':
+            # Random float from gaussian with mean 0.25, and sigma 0.2
+            mu_v = 0.5
+            sigma_v = 0.2
             urgency = np.random.normal(mu_v, sigma_v)
+            while urgency < 0 or urgency > 1:
+                urgency = np.random.normal(mu_v, sigma_v)
+        elif self.args.bidders_urgency_distribution == 'beta':
+            # Random float from beta with alpha 1 and beta 0.75
+            urgency = np.random.beta(1, 0.75)
 
         return round(urgency, 1)  # 1 decimal place
 

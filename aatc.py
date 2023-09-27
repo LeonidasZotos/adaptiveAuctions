@@ -220,6 +220,14 @@ if __name__ == '__main__':
             """)
 
     run_parser.add_argument(
+        '--bidders_urgency_distribution',
+        default="gaussian",
+        choices=["gaussian", "beta"],
+        type=str,
+        help="Type of distribution from which the bidders's urgency is sampled. Defaults to 'gaussian'. Must be one of 'gaussian' or 'beta'."
+    )
+
+    run_parser.add_argument(
         "--results_folder",
         default="results/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         type=str,
