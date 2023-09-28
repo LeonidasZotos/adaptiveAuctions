@@ -402,6 +402,7 @@ class MasterKeeper:
         self.calc_time_waited_gini_metric()
 
         # Satisfaction Metrics:
+        self.calc_average_trip_satisfaction()
         self.calc_satisfaction_gini_metric()
 
         # Export the calculated metrics into a .txt file
@@ -411,20 +412,6 @@ class MasterKeeper:
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
 
     ### Trip Satisfaction Metric ###
-    def calc_average_num_of_trips_completed(self):
-        num_of_trips_per_simulation = []
-        for sim in self.all_simulations_satisfaction_scores:
-            num_of_trips_in_sim = 0  # That disregards the epoch
-            for epoch in sim:
-                if sim[epoch] != None:
-                    num_of_trips_in_sim += len(sim[epoch])
-            num_of_trips_per_simulation.append(num_of_trips_in_sim)
-
-        mean_text = str(round(np.mean(num_of_trips_per_simulation), 3))
-        std_text = str(round(np.std(num_of_trips_per_simulation), 3))
-
-        self.general_metrics['num_of_trips_completed'] = str(
-            "Mean: " + mean_text + " | SD: " + std_text + " | Description: The mean number of trips completed per simulation. Averaged over sims")
 
     def calc_satisfaction_gini_metric(self):
         def remove_car_copies_from_dict(dict):
@@ -817,7 +804,32 @@ class MasterKeeper:
                     '/histogram_satisfaction_scores_by_bidding_type.png')
         plt.clf()
 
+    def calc_average_trip_satisfaction(self):
+        """Calculates the average trip satisfaction score over all simulations"""
+
+        def remove_car_copies_from_dict(dict):
+            """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
+            return [score for (_, score) in dict]
+
+        all_mean_satisfactions = []
+        # First, combine all dictionaries into one dictionary
+        for result_dict in self.all_simulations_satisfaction_scores:
+            sim_satisfactions = []
+            for epoch in result_dict:\
+                sim_satisfactions.append(remove_car_copies_from_dict(
+                    result_dict[epoch]))
+            sim_satisfactions_flat = [
+                item for sublist in sim_satisfactions for item in sublist]
+            all_mean_satisfactions.append(np.mean(sim_satisfactions_flat))
+        
+        mean = np.mean(all_mean_satisfactions)
+        sd = np.std(all_mean_satisfactions)
+        mean_text = str(np.round(mean, 3))
+        std_text = str(np.round(sd, 3))
+        self.general_metrics['Average Trip Satisfaction'] = str(
+            "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average trip satisfaction. Averaged over sims.")
     ### Congestion Metric ###
+
     def plot_congestion_heatmap_average(self):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
@@ -883,7 +895,6 @@ class MasterKeeper:
             "Mean: \n" + mean_text + "\nSD:\n" + std_text + "\nDescription: Average congestion per intersection. Averaged over sims")
 
     ### Winner Worthiness/Auction Reward Metric ###
-
     def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
@@ -1192,6 +1203,21 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_percentage_broke_agents_history.png')
         plt.clf()
+
+    def calc_average_num_of_trips_completed(self):
+        num_of_trips_per_simulation = []
+        for sim in self.all_simulations_satisfaction_scores:
+            num_of_trips_in_sim = 0  # That disregards the epoch
+            for epoch in sim:
+                if sim[epoch] != None:
+                    num_of_trips_in_sim += len(sim[epoch])
+            num_of_trips_per_simulation.append(num_of_trips_in_sim)
+
+        mean_text = str(round(np.mean(num_of_trips_per_simulation), 3))
+        std_text = str(round(np.std(num_of_trips_per_simulation), 3))
+
+        self.general_metrics['num_of_trips_completed'] = str(
+            "Mean: " + mean_text + " | SD: " + std_text + " | Description: The mean number of trips completed per simulation. Averaged over sims")
 
 
 class SimulationMetrics:
