@@ -242,7 +242,7 @@ class MasterKeeper:
         self.plot_adaptive_auction_parameters_valuations_per_intersection()
         # Create a barplot with the mean bid and inact rank of the winner per intersection
         self.plot_mean_bid_and_inact_rank_per_intersection()
-        
+
         ### Misc. ###
         self.plot_broke_agents_percentage_history()
 
@@ -392,6 +392,8 @@ class MasterKeeper:
 
     def produce_general_metrics(self):
         """Produces the general metrics of all simulations"""
+        # Congestion Metrics
+        self.calc_central_congestion()
         # Average number of trips completed per simulation
         self.calc_average_num_of_trips_completed()
 
@@ -864,7 +866,24 @@ class MasterKeeper:
             np.save(self.export_location + "/average_throughput_per_intersection.npy",
                     average_throughput_per_intersection)
 
+    def calc_central_congestion(self):
+        """Calculate the average congestion in the central intersection"""
+
+        average_congestion_per_intersection = np.divide(
+            self.total_population_per_intersection_all_sims, self.args.num_of_epochs)
+        average_congestion_per_intersection = np.divide(
+            average_congestion_per_intersection, (self.args.queue_capacity * 4))
+
+        mean = np.mean(average_congestion_per_intersection, axis=0)
+        sd = np.std(average_congestion_per_intersection, axis=0)
+
+        mean_text = str(np.round(mean, 3))
+        std_text = str(np.round(sd, 3))
+        self.general_metrics['Average congestion per intersection'] = str(
+            "Mean: \n" + mean_text + "\nSD:\n" + std_text + "\nDescription: Average congestion per intersection. Averaged over sims")
+
     ### Winner Worthiness/Auction Reward Metric ###
+
     def plot_reward_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
@@ -1164,7 +1183,7 @@ class MasterKeeper:
         """Plot a history of the average percentage of agents that have a balance of 0"""
         avg_percentage_broke_angets = np.divide(
             self.all_sims_broke_agents_history, self.args.num_of_simulations)
-        
+
         # Create a single plot for the entire grid
         plt.plot(avg_percentage_broke_angets)
         plt.title('Average Percentage of Broke Agents')
