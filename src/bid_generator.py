@@ -16,7 +16,7 @@ class BidGenerator:
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
 
-    # General Functions
+    ### General Functions ###
     def __init__(self, args):
         """Initialize the BidGenerator object.
         Args:
@@ -55,7 +55,7 @@ class BidGenerator:
 
         return bid
 
-    # Bidding Strategies
+    ### Bidding Strategies ###
     def generate_homogeneous_bid(self, urgency):
         """Returns a homogeneous bid, which is the urgency
         Args:
@@ -99,7 +99,7 @@ class BidGenerator:
         """
         return self.generate_homogeneous_bid(urgency)
 
-    # New Epoch Functions
+    ### New Epoch Functions ###
     def ready_for_new_epoch(self):
         """Prepares the Bid Generator for the next epoch."""
         # Nothing to update.

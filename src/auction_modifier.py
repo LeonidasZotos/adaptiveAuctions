@@ -87,7 +87,7 @@ class AuctionModifier:
         """
         return self.params_and_expected_rewards["possible_param_combs"], self.params_and_expected_rewards["expected_rewards"], self.params_and_expected_rewards["counts"]
 
-# Initialisation Functions
+    ### Initialisation Functions ###
     def init_params_and_expected_rewards_dict(self):
         possible_queue_delay_boosts = []
         # Create all possible parameter combinations based on the level of discretization.
@@ -247,7 +247,7 @@ class AuctionModifier:
                                          'received_rewards': np.array([], ndmin=2)
                                          }
 
-# Update Rule Functions
+    ### Update Rule Functions ###
     def update_expected_rewards(self, last_tried_auction_params, reward):
         self.last_tried_param = last_tried_auction_params
         if self.args.adaptive_auction_update_rule == 'simple_bandit':
@@ -290,7 +290,7 @@ class AuctionModifier:
         self.params_and_expected_rewards['counts'][self.params_and_expected_rewards['possible_param_combs'].index(
             last_tried_auction_params)] += 1
 
-# Action Selection/Parameter Generation Functions
+    ### Action Selection/Parameter Generation Functions ###
     def select_auction_params(self):
         """Returns the auction parameters for the next auction, using the chosen action selection algorithm.
         """
@@ -472,7 +472,7 @@ class AuctionModifier:
 
         return chosen_params[0][0]
 
-# General Functions
+    ### General Functions ###
     def ready_for_new_epoch(self):
         """Prepares the Auction Modifier for the next epoch."""
         # Nothing to update.

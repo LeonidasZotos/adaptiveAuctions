@@ -412,7 +412,6 @@ class MasterKeeper:
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
 
     ### Trip Satisfaction Metric ###
-
     def calc_satisfaction_gini_metric(self):
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
@@ -828,8 +827,8 @@ class MasterKeeper:
         std_text = str(np.round(sd, 3))
         self.general_metrics['Average Trip Satisfaction'] = str(
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average trip satisfaction. Averaged over sims.")
-    ### Congestion Metric ###
 
+    ### Congestion Metric ###
     def plot_congestion_heatmap_average(self):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
@@ -1218,7 +1217,6 @@ class MasterKeeper:
 
         self.general_metrics['num_of_trips_completed'] = str(
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: The mean number of trips completed per simulation. Averaged over sims")
-
 
 class SimulationMetrics:
     """
