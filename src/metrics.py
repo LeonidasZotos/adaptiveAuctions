@@ -7,7 +7,7 @@ from math import nan
 import src.utils as utils
 
 NUM_OF_ADAPT_PARAMS = 1
-WARMUP_EPOCHS = 30
+WARMUP_EPOCHS = 0
 
 
 class MasterKeeper:
