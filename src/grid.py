@@ -30,7 +30,7 @@ class Grid:
             executes the movements that are possible, max 1 per intersection
         execute_movement(origin_queue_id, destination_queue_id): Executes a movement (i.e. moves a car from one queue to another)
         spawn_cars(): Spawns cars in the grid with the given congestion rate
-        respawn_cars(): Respawns cars that have reached their destination somewhere else. Returns a list of scores, that 
+        respawn_cars(epoch): Respawns cars that have reached their destination somewhere else. Returns a list of scores, that 
             represent how well the trip went (based on time spent & urgency). Metric used for evaluation.
         ready_for_new_epoch: Clear the class variables that are epoch-specific (e.g. epoch_movements)
     """
@@ -152,7 +152,7 @@ class Grid:
                 number_of_spawns -= 1
         return self.all_cars
 
-    def respawn_cars(self):
+    def respawn_cars(self, epoch):
         """Respawns cars that have reached their destination somewhere else, with new characteristics (e.g. destination, urgency)
         Args:
             grid_size (int): The size of the grid. This is needed to know which intersections are valid places to spawn cars
@@ -174,7 +174,7 @@ class Grid:
                 # Append copy of car and satisfaction score to list
                 satisfaction_scores.append(car.calc_satisfaction_score())
                 # Reset the car (new destination, new queue, new balance)
-                car.reset_car(random_queue.id)
+                car.reset_car(random_queue.id, epoch)
 
                 random_queue.add_car(car)
         return satisfaction_scores

@@ -39,7 +39,7 @@ class Car:
         reset_final_destination(): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
         update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
             we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
-        reset_car(car_queue_id): Reset the car to a new state. E.g. Used when the car is (re)spawned.
+        reset_car(car_queue_id, epoch): Reset the car to a new state. E.g. Used when the car is (re)spawned.
         submit_bid: Submit a bid to the auction.
         pay_bid(price): Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
             The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
@@ -127,7 +127,7 @@ class Car:
             urgency (float): The urgency of the car
         """
         urgency = 0
-        if self.args.bidders_urgency_distribution ==  'gaussian':
+        if self.args.bidders_urgency_distribution == 'gaussian':
             # Random float from gaussian with mean 0.25, and sigma 0.2
             mu_v = 0.5
             sigma_v = 0.2
@@ -205,18 +205,36 @@ class Car:
         return self.balance > 0
 
     ### General state functions ###
-    def reset_final_destination(self):
+    def reset_final_destination(self, epoch=0):
         """Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
            The new destination is randomly picked and canot be the same as the current intersection.
         """
-
-        # Randomly pick a destination intersection
-        x = random.randint(0, self.args.grid_size - 1)
-        y = random.randint(0, self.args.grid_size - 1)
-        self.final_destination = str(x) + str(y)
+        all_intersections = []
+        for i in range(self.args.grid_size):
+            for j in range(self.args.grid_size):
+                all_intersections.append(str(i) + str(j))
+                    
+        if self.args.with_hotspots:
+            # Here, we keep the same distribution, but we shuffle the choices. In this way, the hotspots change every 20 epochs.
+            # Binomial Distribution parameters
+            hotspot_change_interval = 50
+            mean = 5
+            std_dev = 1
+            options = np.arange(0, self.args.grid_size ** 2)
+            probs = (1 / (std_dev * np.sqrt(2 * np.pi))) * np.exp(-((options - mean) ** 2) / (2 * std_dev ** 2))
+            probs /= probs.sum()
+            # Now that the probability distribution is fixed, shuffled the options.
+            seed = round(epoch/hotspot_change_interval, 0)
+            np.random.seed(int(seed)) # Seed changes every hotspot_change_interval epochs.
+            np.random.shuffle(options)
+            np.random.seed(None) # Reset the seed.
+            self.final_destination = all_intersections[np.random.choice(options, p=probs)]
+        else:
+            self.final_destination = random.choice(all_intersections)
+           
         if self.car_queue_id[:-1] == self.final_destination:
             # If the car is already at its final destination, pick a new one.
-            self.reset_final_destination()
+            self.reset_final_destination(epoch)
 
     def update_next_destination_queue(self):
         """Update the next destination queue of the car. E.g. When the car participates in an auction,
@@ -265,7 +283,7 @@ class Car:
         # Return the next destination queue
         return self.next_destination_queue
 
-    def reset_car(self, car_queue_id):
+    def reset_car(self, car_queue_id, epoch):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
            next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
         Args:
@@ -273,7 +291,7 @@ class Car:
             grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
         """
         self.car_queue_id = car_queue_id
-        self.reset_final_destination()
+        self.reset_final_destination(epoch)
         self.next_destination_queue = self.update_next_destination_queue()
         self.urgency = self.set_urgency()
         self.submitted_bid = 0

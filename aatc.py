@@ -95,6 +95,11 @@ if __name__ == '__main__':
     )
 
     run_parser.add_argument(
+        '--with_hotspots',
+        action=argparse.BooleanOptionalAction,
+        help="""If enabled, there are periodic hotspots to increase congestion in different places.""")
+
+    run_parser.add_argument(
         "--wage_time",
         default=10,
         choices=range(1, 101),

@@ -72,7 +72,7 @@ class Simulator:
         self.grid.move_cars()
 
         # Second, respawn cars that have reached their destination somewhere else, and store their satisfaction scores for evaluation
-        satisfaction_scores = self.grid.respawn_cars()
+        satisfaction_scores = self.grid.respawn_cars(epoch)
         self.metrics_keeper.add_satisfaction_scores(epoch, satisfaction_scores)
 
         # Prepare all entities for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
