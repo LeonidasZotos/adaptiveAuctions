@@ -213,13 +213,17 @@ class MasterKeeper:
         ### General, non-plot, Metrics ###
         self.produce_general_metrics()
 
+        if self.args.sweep_mode:
+            # If this is activated, don't produce any plots
+            return
+        
         ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
         self.plot_satisfaction_scores_overall_average()
         # Create a graph of all satisfaction scores, per bidding type, over all simulations
         self.plot_satisfaction_scores_by_bidding_type()
         # Create a histogram of all satisfaction scores, over all simulations, per bidding type
-        self.histogram_satisfaction_scores_by_bidding_type()
+        self.plot_histogram_satisfaction_scores_by_bidding_type()
 
         ### Congestion Metrics ###
         # Create a heatmap of the average throughput per intersection, over all simulations
@@ -410,6 +414,13 @@ class MasterKeeper:
             for metric in self.general_metrics:
                 f.write(
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
+                
+        # Print some overall metrics from the dictionary:
+        print("End of Simulation Main Metrics:")
+        print("Average Time waited: " + str(self.general_metrics['grid_average_time_waited']))
+        print("Max Time waited: " + str(self.general_metrics['grid_max_time_waited']))
+        print("Average Trip Satisfaction: " + str(self.general_metrics['Average Trip Satisfaction']))
+        print("----------------------------------")
 
     ### Trip Satisfaction Metric ###
     def calc_satisfaction_gini_metric(self):
@@ -729,7 +740,7 @@ class MasterKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-    def histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
+    def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file

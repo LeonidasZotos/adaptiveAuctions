@@ -242,6 +242,11 @@ if __name__ == '__main__':
         '--print_grid',
         action=argparse.BooleanOptionalAction,
         help="""If present, the grid will be printed after each epoch.""")
+    
+    run_parser.add_argument(
+        '--sweep_mode',
+        action=argparse.BooleanOptionalAction,
+        help="""If present, no plots are generated to save time.""")
 
     # Clean command
     clean_parser = subparsers.add_parser(

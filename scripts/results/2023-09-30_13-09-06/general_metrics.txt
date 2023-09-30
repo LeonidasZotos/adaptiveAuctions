@@ -1,0 +1,57 @@
+Average congestion per intersection: 
+Mean: 
+[[0.016 0.075 0.018]
+ [0.116 0.216 0.029]
+ [0.02  0.123 0.013]]
+SD:
+[[0.003 0.039 0.006]
+ [0.085 0.072 0.011]
+ [0.006 0.062 0.003]]
+Description: Average congestion per intersection. Averaged over sims
+=====================
+num_of_trips_completed: 
+Mean: 299.0 | SD: 16.044 | Description: The mean number of trips completed per simulation. Averaged over sims
+=====================
+agent_average_time_waited: 
+Mean: 0.303 | SD: 0.079 | Description: Average average time waited regardless of intersection. Averaged over sims
+=====================
+agent_max_time_waited: 
+Mean: 0.801 | SD: 0.199 | Description: Average max time waited regardless of intersection. Averaged over sims
+=====================
+intersection_average_time_waited: 
+Mean: 
+[[0.034 0.355 0.041]
+ [0.382 1.048 0.116]
+ [0.058 0.664 0.024]]
+SD:
+[[0.02  0.225 0.028]
+ [0.174 0.468 0.077]
+ [0.054 0.703 0.012]]
+Description: Average average time waited per intersection. Averaged over sims
+=====================
+intersection_max_time_waited: 
+Mean: 
+[[0.115 0.98  0.154]
+ [1.086 2.526 0.359]
+ [0.197 1.704 0.089]]
+SD:
+[[0.058 0.553 0.094]
+ [0.438 1.166 0.21 ]
+ [0.17  1.746 0.043]]
+Description: Average max time waited per intersection. Averaged over sims
+=====================
+grid_average_time_waited: 
+Mean: 0.303 | SD: 0.335 | Description: Average average time waited of averages of intersections. Averaged over intersections
+=====================
+grid_max_time_waited: 
+Mean: 0.801 | SD: 0.807 | Description: Average max time waited of averages of intersections. Averaged over intersections
+=====================
+time_waited_avg_gini: 
+Mean: 0.191 | SD: 0.016 | Description: The average of the GINI coefficients of all intersections. Averaged over sims
+=====================
+Average Trip Satisfaction: 
+Mean: 0.162 | SD: 0.009 | Description: Average average trip satisfaction. Averaged over sims.
+=====================
+satisfacation_avg_gini: 
+Mean: 0.395 | SD: 0.016 | Description: The Gini coefficient of all satisfaction scores of the simulation. Averaged over sims
+=====================
