@@ -157,6 +157,7 @@ cython_debug/
 
 # The results folder
 results/*
+scripts/results/*
 
 #  The .vscode folder
 .vscode/*
