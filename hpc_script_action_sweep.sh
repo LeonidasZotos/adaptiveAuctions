@@ -1,10 +1,10 @@
 #!/bin/bash
-#SBATCH --time=02:00:00
+#SBATCH --time=12:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
 #SBATCH --job-name=discretisation_sweep
-#SBATCH --mem=32GB
+#SBATCH --mem=128GB
 
 module purge
 module load Python/3.9.6-GCCcore-11.2.0
