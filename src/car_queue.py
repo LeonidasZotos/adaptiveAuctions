@@ -244,8 +244,10 @@ class CarQueue:
                 # Default case is that the car pays nothing (This is explicit to avoid division by zero)
                 individual_price = 0
                 if total_submitted_bid > 0:
-                    individual_price = fee * queue_bids[i] / total_submitted_bid
-                    individual_price = floor(individual_price * 100) / 100 # Round to 2 decimal places
+                    individual_price = fee * \
+                        queue_bids[i] / total_submitted_bid
+                    # Round to 2 decimal places
+                    individual_price = floor(individual_price * 1000) / 1000
                 self.cars[i].pay_bid(individual_price)
 
             reward = 0

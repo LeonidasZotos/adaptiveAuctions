@@ -1,5 +1,6 @@
 """This module contains the BidGenerator class, which contains the modofier that is used to modify the bidding behaviour of the cars"""
 import random
+from math import floor
 
 
 class BidGenerator:
@@ -53,7 +54,7 @@ class BidGenerator:
             raise Exception("ERROR: Invalid bidding strategy: ",
                             bidding_strategy,  ". Returning 0 bid.")
 
-        return bid
+        return floor(bid * 100) / 100
 
     ### Bidding Strategies ###
     def generate_homogeneous_bid(self, urgency):

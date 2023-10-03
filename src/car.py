@@ -213,7 +213,7 @@ class Car:
         for i in range(self.args.grid_size):
             for j in range(self.args.grid_size):
                 all_intersections.append(str(i) + str(j))
-                    
+
         if self.args.with_hotspots:
             # Here, we keep the same distribution, but we shuffle the choices. In this way, the hotspots change every 20 epochs.
             # Binomial Distribution parameters
@@ -221,17 +221,20 @@ class Car:
             mean = 5
             std_dev = 1
             options = np.arange(0, self.args.grid_size ** 2)
-            probs = (1 / (std_dev * np.sqrt(2 * np.pi))) * np.exp(-((options - mean) ** 2) / (2 * std_dev ** 2))
+            probs = (1 / (std_dev * np.sqrt(2 * np.pi))) * \
+                np.exp(-((options - mean) ** 2) / (2 * std_dev ** 2))
             probs /= probs.sum()
             # Now that the probability distribution is fixed, shuffled the options.
             seed = round(epoch/hotspot_change_interval, 0)
-            np.random.seed(int(seed)) # Seed changes every hotspot_change_interval epochs.
+            # Seed changes every hotspot_change_interval epochs.
+            np.random.seed(int(seed))
             np.random.shuffle(options)
-            np.random.seed(None) # Reset the seed.
-            self.final_destination = all_intersections[np.random.choice(options, p=probs)]
+            np.random.seed(None)  # Reset the seed.
+            self.final_destination = all_intersections[np.random.choice(
+                options, p=probs)]
         else:
             self.final_destination = random.choice(all_intersections)
-           
+
         if self.car_queue_id[:-1] == self.final_destination:
             # If the car is already at its final destination, pick a new one.
             self.reset_final_destination(epoch)
@@ -328,8 +331,11 @@ class Car:
             Exception: If the price is higher than the balance, an exception is raised.
             Exception: If the balance is negative, an exception is raised.
         """
+        if price > self.submitted_bid:
+            # This can happen in very rare cases (1 in a million or so)
+            price = self.submitted_bid
         try:
-            assert price <= self.balance
+            assert price <= self.balancecl
         except AssertionError:
             print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {}, bidded: {})".format(
                 self.id, price, self.balance, self.submitted_bid))
