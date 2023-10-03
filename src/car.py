@@ -335,7 +335,7 @@ class Car:
             # This can happen in very rare cases (1 in a million or so)
             price = self.submitted_bid
         try:
-            assert price <= self.balancecl
+            assert price <= self.balance
         except AssertionError:
             print("ERROR: Car {} had to pay more than its balance (price: {}, balance: {}, bidded: {})".format(
                 self.id, price, self.balance, self.submitted_bid))
