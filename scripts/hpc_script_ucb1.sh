@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --time=48:00:00
+#SBATCH --time=12:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=128
-#SBATCH --job-name=ucb1_sweep
+#SBATCH --job-name=ucb1_sweep_new
 #SBATCH --mem=128GB
 
 module purge
