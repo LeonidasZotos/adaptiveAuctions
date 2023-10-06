@@ -13,7 +13,7 @@ source $HOME/.envs/cars/bin/activate
  
 adaptive_auction_update_rule=("simple_bandit" "svr")
 adaptive_auction_action_selection=("e_greedy_exp_decay")
-action_selection_hyperparameters=("0 1 0.999" "0 1 0.998" "0 1 0.999" "0 1 0.998" "0 1 0.997" "0 1 0.996" "0 1 0.995" "0 1 0.99" "0 1 0.98" "0 1 0.97" "0 1 0.95" "1 1 0.999" "1 1 0.998" "1 1 0.999" "1 1 0.998" "1 1 0.997" "1 1 0.996" "1 1 0.995" "1 1 0.99" "1 1 0.98" "1 1 0.97" "1 1 0.95")
+action_selection_hyperparameters=("0 1 0.999" "0 1 0.998" "0 1 0.997" "0 1 0.996" "0 1 0.995" "0 1 0.99" "0 1 0.98" "0 1 0.97" "0 1 0.95" "1 1 0.999" "1 1 0.998" "1 1 0.997" "1 1 0.996" "1 1 0.995" "1 1 0.99" "1 1 0.98" "1 1 0.97" "1 1 0.95")
 discretisation_min=20
 discretisation_max=30
 epochs=10000
