@@ -13,7 +13,7 @@ source $HOME/.envs/cars/bin/activate
  
 adaptive_auction_update_rule=("simple_bandit" "svr")
 adaptive_auction_action_selection=("ucb1")
-action_selection_hyperparameters=("0 0.01" "0 0.05" "0 0.1" "0 0.2" "0 0.5" "0.5 0.01" "0.5 0.05" "0.5 0.1" "0.5 0.2" "0.5 0.5")
+action_selection_hyperparameters=("0 0.01" "0 0.05" "0 0.1" "0 0.2" "0 0.5" "1 0.01" "1 0.05" "1 0.1" "1 0.2" "1 0.5")
 discretisation_min=20
 discretisation_max=30
 epochs=10000
