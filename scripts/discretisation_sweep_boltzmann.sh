@@ -1,9 +1,20 @@
 #!/bin/bash
-# This script is most probably used to check if the hpc_script works locally, before sending it to the cluster.
- discretisation_min=25
-discretisation_max=28
-epochs=50
-num_of_simulations=10
+#SBATCH --time=10:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=128
+#SBATCH --job-name=discretisation_boltzmann_sweep
+#SBATCH --mem=128GB
+
+module purge
+module load Python/3.9.6-GCCcore-11.2.0
+ 
+source $HOME/.envs/cars/bin/activate
+ 
+discretisation_min=25
+discretisation_max=35
+epochs=10000
+num_of_simulations=256
 
 
 for var4 in $(eval echo "{$discretisation_min..$discretisation_max}")
@@ -13,3 +24,9 @@ command="python3 ../aatc.py run --sweep_mode --num_of_simulations $num_of_simula
 echo "Executing: $command"
 eval $command
 done
+
+
+deactivate
+
+
+
