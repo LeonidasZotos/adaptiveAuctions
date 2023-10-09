@@ -145,16 +145,19 @@ class Car:
         Returns: 
             bidding_aggression (float): The bidding aggression of the car
         """
-        bid_aggression = 0
-        # Aggression is random between 2 and 3, drawn from Gaussian with mean 2.5 and sigma 0.5
-        # In the end, the bid is calculated as: bid = urgency * bidding_aggression, so urgency * 2 up to urgency * 3
-        mu_v = 2.5
-        sigma_v = 0.5
-        bid_aggression = np.random.normal(mu_v, sigma_v)
-        while bid_aggression < 2 or bid_aggression > 3:
-            bid_aggression = np.random.normal(mu_v, sigma_v)
+        bidding_aggression = 0
+        if self.bidding_type != 'RL':
+            # Aggression is random between 2 and 3, drawn from Gaussian with mean 2.5 and sigma 0.5
+            # In the end, the bid is calculated as: bid = urgency * bidding_aggression, so urgency * 2 up to urgency * 3
+            mu_v = 2.5
+            sigma_v = 0.5
+            bidding_aggression = np.random.normal(mu_v, sigma_v)
+            while bidding_aggression < 2 or bidding_aggression > 3:
+                bidding_aggression = np.random.normal(mu_v, sigma_v)
+        else:
+            bidding_aggression = self.bid_generator.generate_RL_bidding_aggression()
 
-        return round(bid_aggression, 1)  # 1 decimal place
+        return round(bidding_aggression, 2)  # 1 decimal place
 
     def set_balance(self, new_balance):
         """ Set the balance of the car to the given balance. E.g. Used for the wage distribution.
@@ -286,17 +289,21 @@ class Car:
         # Return the next destination queue
         return self.next_destination_queue
 
-    def reset_car(self, car_queue_id, epoch):
+    def reset_car(self, car_queue_id, epoch, satisfaction_score):
         """Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination, 
            next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
         Args:
             car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
             grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
         """
+        if self.bidding_type == 'RL':
+            self.bid_generator.update_expected_rewards(
+                self.bidding_aggression, satisfaction_score[1])
         self.car_queue_id = car_queue_id
         self.reset_final_destination(epoch)
         self.next_destination_queue = self.update_next_destination_queue()
         self.urgency = self.set_urgency()
+        self.bidding_aggression = self.set_bidding_aggression()
         self.submitted_bid = 0
         self.time_at_intersection = 0
         self.time_in_traffic_network = 0
@@ -312,7 +319,7 @@ class Car:
             Exception: If the car tries to submit a negative bid, an exception is raised.
         """
         self.submitted_bid = self.bid_generator.generate_bid(
-            self.bidding_type, self.balance, self.urgency, self.bidding_aggression)
+            self.balance, self.urgency, self.bidding_aggression)
         # If there is not enough balance, bid entire balance.
         if self.submitted_bid >= self.balance:
             self.submitted_bid = floor(self.balance * 100) / 100

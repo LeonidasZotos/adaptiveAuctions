@@ -126,7 +126,7 @@ class Grid:
             self.args.grid_size * 4 * self.args.queue_capacity
         number_of_spawns = int(total_spots * self.args.congestion_rate)
         # Create a default BidGenerator object, which will be used if shared_bid_generator is True
-        bid_generator = BidGenerator(self.args)
+        # bid_generator = BidGenerator(self.args, )
 
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
@@ -136,11 +136,11 @@ class Grid:
             random_queue = random.choice(random_intersection.get_car_queues())
             # If the queue has capacity, spawn a car
             if random_queue.has_capacity():
-                # If shared_bid_generator is False, create a new BidGenerator object for each car
-                if not self.args.shared_bid_generator:
-                    bid_generator = BidGenerator(self.args)
                 bidding_type = random.choices(
                     ['homogeneous', 'heterogeneous', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
+                # If shared_bid_generator is False, create a new BidGenerator object for each car
+                # if not self.args.shared_bid_generator:
+                bid_generator = BidGenerator(self.args, bidding_type)
                 # Create a new car, number_of_spawns is actually the ID.
                 car = Car(self.args, number_of_spawns,
                           random_queue, bidding_type, bid_generator)
@@ -173,8 +173,9 @@ class Grid:
                     [queue for queue in self.all_car_queues if queue.has_capacity()])
                 # Append copy of car and satisfaction score to list
                 satisfaction_scores.append(car.calc_satisfaction_score())
+                last_satisfaction_score = satisfaction_scores[-1]
                 # Reset the car (new destination, new queue, new balance)
-                car.reset_car(random_queue.id, epoch)
+                car.reset_car(random_queue.id, epoch, last_satisfaction_score)
 
                 random_queue.add_car(car)
         return satisfaction_scores

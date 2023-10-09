@@ -191,7 +191,7 @@ class AuctionModifier:
                 raise Exception(
                     "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
 
-        self.action_selection_e_greedy_decay_params = {'epsilon_decay': epsilon_decay,
+        self.action_selection_e_greedy_exp_decay_params = {'epsilon_decay': epsilon_decay,
                                                        'current_epsilon': initial_epsilon,
                                                        }
 
@@ -390,13 +390,13 @@ class AuctionModifier:
     def select_auction_params_e_greedy_exp_decay(self):
         """Generates the auction parameters for the next auction, using the e_greedy exponential decay algorithm."""
         # First, reduce the temperature based on the decay. Once the temperature is equal to 0, stop decreasing it.
-        self.action_selection_e_greedy_decay_params[
-            'current_epsilon'] *= self.action_selection_e_greedy_decay_params['epsilon_decay']
-        if (self.action_selection_e_greedy_decay_params['current_epsilon'] < 0.001):
-            self.action_selection_e_greedy_decay_params['current_epsilon'] = 0
-        epsilon = self.action_selection_e_greedy_decay_params['current_epsilon']
-        # Calculate the e_greedy probabilities.
-        e_greedy_probabilities = [
+        self.action_selection_e_greedy_exp_decay_params[
+            'current_epsilon'] *= self.action_selection_e_greedy_exp_decay_params['epsilon_decay']
+        if (self.action_selection_e_greedy_exp_decay_params['current_epsilon'] < 0.001):
+            self.action_selection_e_greedy_exp_decay_params['current_epsilon'] = 0
+        epsilon = self.action_selection_e_greedy_exp_decay_params['current_epsilon']
+        # Calculate the e_greedy_exp_decay probabilities.
+        e_greedy_exp_probabilities = [
             0] * len(self.params_and_expected_rewards['possible_param_combs'])
 
         # Find the best parameter combination.
@@ -404,17 +404,17 @@ class AuctionModifier:
             max(self.params_and_expected_rewards['expected_rewards']))
 
         # Set the probability of the best parameter combination to 1 - epsilon.
-        e_greedy_probabilities[best_param_comb_index] = 1 - epsilon
+        e_greedy_exp_probabilities[best_param_comb_index] = 1 - epsilon
 
         # Set the probability of the rest of the parameter combinations to epsilon.
-        for prob_index, _ in enumerate(e_greedy_probabilities):
+        for prob_index, _ in enumerate(e_greedy_exp_probabilities):
             if prob_index != best_param_comb_index:
-                e_greedy_probabilities[prob_index] = epsilon / \
-                    (len(e_greedy_probabilities) - 1)
+                e_greedy_exp_probabilities[prob_index] = epsilon / \
+                    (len(e_greedy_exp_probabilities) - 1)
 
         # Last, choose a parameter set based on the calculated probabilities.
         chosen_params = random.choices(
-            self.params_and_expected_rewards['possible_param_combs'], weights=e_greedy_probabilities)
+            self.params_and_expected_rewards['possible_param_combs'], weights=e_greedy_exp_probabilities)
 
         return chosen_params[0][0]
 
