@@ -2,7 +2,8 @@
 Repository for the Master Thesis "Adaptive Auctions for Traffic Coordination"
 
 ## Action Selection Parameter Sweep
-The sweep was run with the following parameters:
+The sweep was run with the following parameters. Discretisation was found not to matter too much (any value between 20-30 gives the same results)
+(MIN_MAX_DELAY_BOOSTS = [0, 20])
 - --num_of_simulations == 256
 - --num_of_epochs == 10000
 - --all_cars_bid == True

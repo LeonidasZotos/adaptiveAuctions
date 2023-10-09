@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--adaptive_auction_action_selection",
-        default="ucb1",
+        default="boltzmann",
         choices=["boltzmann", "e_greedy_decay", "e_greedy_exp_decay",
                  "ucb1", "reverse_sigmoid_decay", "random"],
         type=str,
@@ -165,11 +165,11 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--adaptive_auction_discretization",
-        default=23,
+        default=25,
         choices=range(1, 1001),
         metavar="[1-1000]",
         type=int,
-        help="Number of discrete values to check for each parameter of the adaptive auction. Defaults to 5. Must be an integer between 1 and 100."
+        help="Number of discrete values to check for each parameter of the adaptive auction. Defaults to 25. Must be an integer between 1 and 100."
     )
 
     run_parser.add_argument(
