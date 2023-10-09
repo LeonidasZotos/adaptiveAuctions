@@ -4,7 +4,7 @@
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=128
 #SBATCH --job-name=adaptive_vs_random_vs_zero
-#SBATCH --mem=512GB
+#SBATCH --mem=256GB
 
 module purge
 module load Python/3.9.6-GCCcore-11.2.0
