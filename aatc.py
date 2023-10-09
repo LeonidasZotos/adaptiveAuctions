@@ -124,7 +124,7 @@ if __name__ == '__main__':
         "--adaptive_auction_action_selection",
         default="boltzmann",
         choices=["boltzmann", "e_greedy_decay", "e_greedy_exp_decay",
-                 "ucb1", "reverse_sigmoid_decay", "random", "random"],
+                 "ucb1", "reverse_sigmoid_decay", "random", "zero"],
         type=str,
         help="Type of auction modifier action selection. Defaults to 'e_greedy_decay'. Must be one of 'boltzmann',\
         'e_greedy_decay', 'e_greedy_exp_decay', 'ucb1', 'reverse_sigmoid_decay', 'random' or 'zero'."
@@ -216,7 +216,7 @@ if __name__ == '__main__':
     run_parser.add_argument(
         '--bidders_proportion',
         nargs=5,
-        default=[1, 1, 0, 0, 0],
+        default=[5, 0, 0, 0, 1],
         type=int,
         help="""Proportion for the types of bidders to use, should be a list of integers.
             Order: [homogeneous, heterogeneous, random, free-riders & RL]
