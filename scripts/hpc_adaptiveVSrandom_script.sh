@@ -2,7 +2,7 @@
 #SBATCH --time=10:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
-#SBATCH --cpus-per-task=64
+#SBATCH --cpus-per-task=128
 #SBATCH --job-name=adaptive_vs_random2
 #SBATCH --mem=256GB
 
