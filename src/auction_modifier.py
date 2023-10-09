@@ -317,6 +317,9 @@ class AuctionModifier:
             elif self.args.adaptive_auction_action_selection == 'random':
                 chosen_param = random.choice(
                     self.params_and_expected_rewards['possible_param_combs'])[0]
+                
+            elif self.args.adaptive_auction_action_selection == 'zero':
+                chosen_param = 0
         else:
             # Not time to try a new parameter yet.
             chosen_param = self.last_tried_param[0]
