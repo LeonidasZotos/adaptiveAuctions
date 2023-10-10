@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
-#SBATCH --job-name=adaptive
+#SBATCH --job-name=zero
 #SBATCH --mem=128GB
 
 module purge
