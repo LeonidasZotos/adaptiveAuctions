@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=128
-#SBATCH --job-name=e_greedy_exp_decay_sweep
+#SBATCH --job-name=e_greedy_exp_decay_sweep_new
 #SBATCH --mem=128GB
 
 module purge
