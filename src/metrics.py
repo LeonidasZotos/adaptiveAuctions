@@ -1058,14 +1058,17 @@ class MasterKeeper:
     ### Misc. Metrics ###
     def plot_broke_agents_percentage_history(self):
         """Plot a history of the average percentage of agents that have a balance of 0"""
-        avg_percentage_broke_angets = np.divide(
+        avg_percentage_broke_agents = np.divide(
             self.all_sims_broke_agents_history, self.args.num_of_simulations)
 
         # Create a single plot for the entire grid
-        plt.plot(avg_percentage_broke_angets)
-        plt.title('Average Percentage of Broke Agents')
+        # make the plot font quite big
+        plt.rcParams.update({'font.size': 30})
+        plt.plot(avg_percentage_broke_agents)
+        plt.title('Average Percentage of Agents with 0 balance over time \n (adaptive bidders)')
         plt.xlabel('Epoch')
-        plt.ylabel('Average Percentage of Broke Agents')
+        plt.ylim(0, 0.5)
+        plt.ylabel('Average Percentage of Agents with 0 balance')
         plt.savefig(self.args.results_folder +
                     '/average_percentage_broke_agents_history.png')
         plt.clf()

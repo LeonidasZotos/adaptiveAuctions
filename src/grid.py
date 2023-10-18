@@ -82,7 +82,17 @@ class Grid:
 
     def get_percentage_of_broke_agents(self):
         """Returns the percentage of agents that have a balance of 0"""
-        return len([car for car in self.all_cars if not car.has_balance()]) / len(self.all_cars)
+        type_to_check = "RL"  # "both" or the type of bidder, e.g. "homogeneous"
+        percentage = 0
+        if type_to_check == "both":
+            percentage = len(
+                [car for car in self.all_cars if not car.has_balance()]) / len(self.all_cars)
+        else:
+            # Bidder population must be half/half for this to work properly!!
+            percentage = len([car for car in self.all_cars if (not car.has_balance(
+            ) and car.bidding_type == type_to_check)]) / (len(self.all_cars)/2)
+
+        return percentage
 
     def get_broke_history(self):
         """Returns the history of the percentage of agents that have a balance of 0"""

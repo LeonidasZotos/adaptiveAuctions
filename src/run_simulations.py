@@ -47,11 +47,15 @@ def run(args):
                     for simulation_id in range(num_of_simulations)]
 
     print("Number of Processing cores available: ", pool._processes)
-
-    with tqdm(total=num_of_simulations) as pbar:
+    show_progress_bar = True
+    if show_progress_bar:
+        with tqdm(total=num_of_simulations) as pbar:
+            for results_keeper in pool.imap(run_simulation, args_and_ids):
+                master_metrics_keeper.store_simulation_results(results_keeper)
+                pbar.update()
+    else :
         for results_keeper in pool.imap(run_simulation, args_and_ids):
             master_metrics_keeper.store_simulation_results(results_keeper)
-            pbar.update()
 
     pool.close()
     pool.join()

@@ -147,8 +147,9 @@ class Car:
         """
         bidding_aggression = 0
         if self.bidding_type != 'RL':
+            # Homogeneous agents don't use this. This is only for heterogeneous agents effectively
             # Aggression is random between 2 and 3, drawn from Gaussian with mean 2.5 and sigma 0.5
-            # In the end, the bid is calculated as: bid = urgency * bidding_aggression, so urgency * 2 up to urgency * 3
+            # In the end, the bid is calculated as: bid = urgency, so urgency * 2 up to urgency * 3
             mu_v = 2.5
             sigma_v = 0.5
             bidding_aggression = np.random.normal(mu_v, sigma_v)
@@ -221,7 +222,7 @@ class Car:
             # Here, we keep the same distribution, but we shuffle the choices. In this way, the hotspots change every 20 epochs.
             # Binomial Distribution parameters
             hotspot_change_interval = 50
-            mean = 5
+            mean = round(self.args.grid_size ** 2)
             std_dev = 1
             options = np.arange(0, self.args.grid_size ** 2)
             probs = (1 / (std_dev * np.sqrt(2 * np.pi))) * \
