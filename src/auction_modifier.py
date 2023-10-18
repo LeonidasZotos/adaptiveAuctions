@@ -10,12 +10,12 @@ from sklearn.svm import SVR
 # Boltzmann: uninformed_score, initial_temperature
 # E-greedy_decay: uninformed_score, initial_epsilon
 # E-greedy_exp_decay: uninformed_score, initial_epsilon, epsilon_decay (multiplier)
-# UCB1: uninformed score, exploration_factor
+# UCB1: Does not have a hyperparameter. Go to the function to change the uninformed score
 # Reverse Sigmoid Decay: uninformed score, percent_of_exploration
 BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [1, 0.001],
                                     'e_greedy_decay': [1, 0.01],
                                     'e_greedy_exp_decay': [0, 1, 0.95],
-                                    'ucb1': [1, 0.01],
+                                    'ucb1': [],
                                     'reverse_sigmoid_decay': [0, 0.05]}
 
 MIN_MAX_DELAY_BOOSTS = [0, 20]
@@ -192,8 +192,8 @@ class AuctionModifier:
                     "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
 
         self.action_selection_e_greedy_exp_decay_params = {'epsilon_decay': epsilon_decay,
-                                                       'current_epsilon': initial_epsilon,
-                                                       }
+                                                           'current_epsilon': initial_epsilon,
+                                                           }
 
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
@@ -201,20 +201,8 @@ class AuctionModifier:
     def init_action_selection_ucb1_params_dict(self):
         """Initializes the parameters for the ucb1 action selection
         uninformed_score: The initial score for each parameter combination.
-        exploration_factor: The exploration factor used for the algorithm
         """
-        uninformed_score, exploration_factor = 0, 0
-        if self.args.action_selection_hyperparameters is None:
-            uninformed_score, exploration_factor = BEST_PARAMETERS_ACTION_SELECTION['ucb1']
-
-        else:
-            if len(self.args.action_selection_hyperparameters) == len(BEST_PARAMETERS_ACTION_SELECTION[
-                    'ucb1']):
-                uninformed_score, exploration_factor = self.args.action_selection_hyperparameters
-            else:
-                raise Exception(
-                    "ERROR: Looks like the action_selection_hyperparameters are not the right number for this type of action selection.")
-        self.action_selection_ucb1_params['exploration_factor'] = exploration_factor
+        uninformed_score = 0
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
@@ -317,7 +305,7 @@ class AuctionModifier:
             elif self.args.adaptive_auction_action_selection == 'random':
                 chosen_param = random.choice(
                     self.params_and_expected_rewards['possible_param_combs'])[0]
-                
+
             elif self.args.adaptive_auction_action_selection == 'zero':
                 chosen_param = 0
         else:
@@ -429,8 +417,9 @@ class AuctionModifier:
         counts = np.array(self.params_and_expected_rewards['counts'])
         num_of_auctions = self.params_and_expected_rewards['number_of_auctions']
 
-        index_of_best_choice = np.argmax(expected_rewards + self.action_selection_ucb1_params[
-            'exploration_factor'] * np.sqrt(2 * np.log(num_of_auctions + 1) / (counts + 1e-6)))  # Add a small epsilon to avoid division by zero
+        # Add a small epsilon to avoid division by zero
+        index_of_best_choice = np.argmax(
+            expected_rewards + np.sqrt(2 * np.log(num_of_auctions + 1) / (counts + 1e-6)))
         choices[index_of_best_choice]
 
         return choices[index_of_best_choice][0]
