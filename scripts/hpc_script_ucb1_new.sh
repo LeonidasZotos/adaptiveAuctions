@@ -1,9 +1,9 @@
 #!/bin/bash
-#SBATCH --time=2:00:00
+#SBATCH --time=1:00:00
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
-#SBATCH --job-name=ucb1_final
+#SBATCH --job-name=ucb1_final_2
 #SBATCH --mem=128GB
 
 module purge
@@ -13,7 +13,7 @@ source $HOME/.envs/cars/bin/activate
  
 adaptive_auction_update_rule=("simple_bandit" "svr")
 adaptive_auction_action_selection=("ucb1")
-action_selection_hyperparameters=("0" "1")
+action_selection_hyperparameters=("1")
 epochs=10000
 num_of_simulations=256
 
