@@ -352,18 +352,36 @@ class MasterKeeper:
             standard_deviations.append(
                 np.std(all_results_dict[epoch]))
 
-        # Remove the first 30 epochs, which are the warm-up epochs
+        # Remove the first WARMUP_EPOCHS
         epochs = epochs[WARMUP_EPOCHS:]
         average_satisfaction_scores = average_satisfaction_scores[WARMUP_EPOCHS:]
         standard_deviations = standard_deviations[WARMUP_EPOCHS:]
 
-        # # Plot the average satisfaction score per epoch, with error bars
+        # Plot the average satisfaction score per epoch, with error bars
         # plt.errorbar(epochs, average_satisfaction_scores,
         #              yerr=standard_deviations, fmt='o', ls='none')
-
+        plt.figure(figsize=(14, 9))
+        smoothed_satisfaction_scores = utils.smooth_data(average_satisfaction_scores)
+        smoothed_standard_deviations = utils.smooth_data(standard_deviations)
+        
+        
+        low = np.array(smoothed_satisfaction_scores) - np.array(smoothed_standard_deviations)
+        high = np.array(smoothed_satisfaction_scores) + np.array(smoothed_standard_deviations)
+        # # for each value of low that is higher than the high, switch them around
+        # for i in range(len(low)):
+        #     if low[i] > high[i]:
+        #         temp = low[i]
+        #         low[i] = high[i]
+        #         high[i] = temp
+        # add one to all values
+        print("high: " + str(np.round(high,3)))
+        print("lows: " + str(np.round(low,3)))
+        print("values: " + str(np.round(smoothed_satisfaction_scores,3)))
         # Plot the average satisfaction score per epoch, without error bars, using a yscale of 0-1
-        plt.plot(epochs, average_satisfaction_scores,
+        plt.plot(epochs, smoothed_satisfaction_scores,
                  'o', ls='none', markersize=1.5)
+        plt.fill_between(epochs, low,
+                         high, alpha=0.2,  interpolate=False)
         plt.xlabel('Epoch')
         plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
         plt.title('Average Satisfaction Score per Epoch')

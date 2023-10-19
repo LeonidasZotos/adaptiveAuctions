@@ -1,6 +1,5 @@
 """A module containing utility functions, such as finding objects in lists, and removing outliers from data."""
 
-
 def get_intersection(intersections, intersection_id):
     """Returns the intersection object given an intersection id
     Args:
@@ -116,3 +115,11 @@ def remove_outliers(data, restriction=0.1):
     if len(filtered_data) == 0:
         return data
     return filtered_data
+
+def smooth_data(list, window_size=5):
+    smoothed_data = []
+    for i in range(len(list)):
+        start = max(0, i - window_size // 2)
+        end = min(len(list), i + window_size // 2 + 1)
+        smoothed_data.append(sum(list[start:end]) / (end - start))
+    return smoothed_data
