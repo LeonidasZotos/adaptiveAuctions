@@ -54,7 +54,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--num_of_epochs",
-        default=1000,
+        default=10000,
         choices=range(1, 100001),
         metavar="[1-100000]",
         type=int,
@@ -122,7 +122,7 @@ if __name__ == '__main__':
 
     run_parser.add_argument(
         "--adaptive_auction_action_selection",
-        default="boltzmann",
+        default="e_greedy_exp_decay",
         choices=["boltzmann", "e_greedy_decay", "e_greedy_exp_decay",
                  "ucb1", "reverse_sigmoid_decay", "random", "zero"],
         type=str,

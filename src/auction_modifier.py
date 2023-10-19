@@ -202,7 +202,7 @@ class AuctionModifier:
         """Initializes the parameters for the ucb1 action selection
         uninformed_score: The initial score for each parameter combination.
         """
-        uninformed_score = 0
+        uninformed_score = 1
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
