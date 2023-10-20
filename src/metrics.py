@@ -286,7 +286,7 @@ class MasterKeeper:
         print("----------------------------------")
 
     ### Trip Satisfaction Metric ###
-    def calc_satisfaction_gini_metric(self): #DONE
+    def calc_satisfaction_gini_metric(self):  # DONE
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
             return [score for (_, score) in dict]
@@ -320,7 +320,8 @@ class MasterKeeper:
         self.general_metrics['satisfacation_avg_gini'] = str(
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The Gini coefficient of all satisfaction scores of the simulation. Averaged over sims")
 
-    def plot_satisfaction_scores_overall_average(self, export_results=True): #DONE
+    # DONE
+    def plot_satisfaction_scores_overall_average(self, export_results=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
             export_results (bool): Whether to export the results to a .npy file
@@ -374,7 +375,7 @@ class MasterKeeper:
                          np.array(smoothed_satisfaction_scores) + np.array(smoothed_standard_deviations), alpha=0.2,  interpolate=True)
         plt.xlabel('Epoch')
         plt.ylabel('Average Trip Satisfaction Score \n (the higher, the better)')
-        plt.title('Average Trip Satisfaction Score per Epoch')
+        plt.title('History of Average Trip Satisfaction Score')
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score.png')
         plt.clf()
@@ -382,7 +383,8 @@ class MasterKeeper:
             np.save(self.export_location + "/average_satisfaction_score.npy",
                     average_satisfaction_scores)
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False): #DONE
+    # DONE
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -636,7 +638,7 @@ class MasterKeeper:
             if len(RL_bidding_results) > 0:
                 plt.plot(
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
-        plt.title('Average Trip Satisfaction Score per Epoch, per Bidding Type')
+        plt.title('History of Average Trip Satisfaction Score per Bidding Type')
         plt.xlabel('Epoch')
         plt.ylabel('Average Trip Satisfaction Score \n (the higher, the better)')
         plt.legend()
@@ -644,7 +646,8 @@ class MasterKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-    def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False): #DEPRECATED
+    # DEPRECATED
+    def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -718,7 +721,7 @@ class MasterKeeper:
                     '/histogram_satisfaction_scores_by_bidding_type.png')
         plt.clf()
 
-    def calc_average_trip_satisfaction(self): #DONE
+    def calc_average_trip_satisfaction(self):  # DONE
         """Calculates the average trip satisfaction score over all simulations"""
 
         def remove_car_copies_from_dict(dict):
@@ -744,7 +747,7 @@ class MasterKeeper:
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average trip satisfaction. Averaged over sims.")
 
     ### Congestion Metric ###
-    def plot_congestion_heatmap_average(self): #DONE
+    def plot_congestion_heatmap_average(self):  # DONE
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -759,32 +762,46 @@ class MasterKeeper:
             average_congestion_per_intersection, self.args.num_of_epochs)
         average_congestion_per_intersection = np.divide(
             average_congestion_per_intersection, (self.args.queue_capacity * 4))
-        
+
         cbar_kws = {'label': 'Congestion Scale'}
-        ax = sns.heatmap(average_congestion_per_intersection, annot=True, cbar_kws=cbar_kws)
+        ax = sns.heatmap(average_congestion_per_intersection,
+                         annot=True, cbar_kws=cbar_kws)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
                title='Average Congestion per Intersection \n')
         plt.savefig(self.args.results_folder +
                     '/average_congestion_heatmap.png')
         plt.clf()
 
-    def plot_throughput_per_intersection_history(self, export_results=True):
+    def plot_throughput_per_intersection_history(self, export_results=True): #DONE
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
         average_throughput_per_intersection = np.divide(
             total_throughput_history_summed_sims, len(self.total_throughput_history_per_intersection_all_sims))
+        standard_deviation_throughput_per_intersection = np.std(
+            self.total_throughput_history_per_intersection_all_sims, axis=0)
         # Remove the first x epochs from the history, because they are part of the warm-up period
         # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection.
+        
+        plt.rcParams.update({'font.size': 20})
         fig, axs = plt.subplots(
             average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_throughput_per_intersection.shape[0]):
             for j in range(average_throughput_per_intersection.shape[1]):
+                average_throughput_per_intersection[i, j] = utils.smooth_data(
+                    average_throughput_per_intersection[i, j])
+                standard_deviation_throughput_per_intersection[i, j] = utils.smooth_data(
+                    standard_deviation_throughput_per_intersection[i, j])
                 axs[i, j].plot(
                     average_throughput_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
+                axs[i, j].fill_between(np.arange(0, average_throughput_per_intersection.shape[2] - WARMUP_EPOCHS), average_throughput_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviation_throughput_per_intersection[i, j, WARMUP_EPOCHS:],
+                                       average_throughput_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviation_throughput_per_intersection[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
                 axs[i, j].set_title('[' + str(i) + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Throughput')
+        # add title to the big plot
+        fig.suptitle('\n History of Average Throughput per Intersection', fontsize=30)
+
         plt.savefig(self.args.results_folder +
                     '/average_throughput_per_intersection_history.png')
         plt.clf()
