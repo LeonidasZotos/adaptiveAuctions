@@ -116,7 +116,7 @@ def remove_outliers(data, restriction=0.1):
         return data
     return filtered_data
 
-def smooth_data(list, window_size=5):
+def smooth_data(list, window_size=20):
     smoothed_data = []
     for i in range(len(list)):
         start = max(0, i - window_size // 2)

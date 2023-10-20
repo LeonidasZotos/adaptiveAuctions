@@ -217,6 +217,10 @@ class MasterKeeper:
             # If this is activated, don't produce any plots
             return
         
+        # Set general plot settings
+        plt.figure(figsize=(14, 9))
+        plt.rcParams.update({'font.size': 16})
+        
         ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
         self.plot_satisfaction_scores_overall_average()
@@ -356,19 +360,17 @@ class MasterKeeper:
         average_satisfaction_scores = average_satisfaction_scores[WARMUP_EPOCHS:]
         standard_deviations = standard_deviations[WARMUP_EPOCHS:]
 
-        plt.figure(figsize=(14, 9))
         smoothed_satisfaction_scores = utils.smooth_data(average_satisfaction_scores)
         smoothed_standard_deviations = utils.smooth_data(standard_deviations)
 
         epochs = np.arange(0, len(smoothed_satisfaction_scores))
-        # Plot the average satisfaction score per epoch, without error bars, using a yscale of 0-1
         plt.plot(epochs, smoothed_satisfaction_scores,
                  'o', ls='none', markersize=1.5)
         plt.fill_between(epochs, np.array(smoothed_satisfaction_scores) - np.array(smoothed_standard_deviations),
                          np.array(smoothed_satisfaction_scores) + np.array(smoothed_standard_deviations), alpha=0.2,  interpolate=True)
         plt.xlabel('Epoch')
-        plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
-        plt.title('Average Satisfaction Score per Epoch')
+        plt.ylabel('Average Trip Satisfaction Score \n (the higher, the better)')
+        plt.title('Average Trip Satisfaction Score per Epoch')
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score.png')
         plt.clf()
@@ -376,7 +378,7 @@ class MasterKeeper:
             np.save(self.export_location + "/average_satisfaction_score.npy",
                     average_satisfaction_scores)
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=False, filter_outliers=False):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -559,20 +561,50 @@ class MasterKeeper:
         if with_std == True:
             # Plot the average satisfaction score per epoch, per bidding type & with error bars
             if len(homogeneous_bidding_results) > 0:
-                plt.errorbar(epochs, homogeneous_bidding_average_satisfaction_scores,
-                             yerr=homogeneous_bidding_sd, fmt='o', label='Homogeneous bidding')
+                homogeneous_bidding_average_satisfaction_scores = utils.smooth_data(
+                    homogeneous_bidding_average_satisfaction_scores)
+                homogeneous_bidding_sd = utils.smooth_data(
+                    homogeneous_bidding_sd)
+                epochs = np.arange(0, len(homogeneous_bidding_average_satisfaction_scores))
+                plt.plot(epochs, homogeneous_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Homogeneous bidding')
+                plt.fill_between(epochs, np.array(homogeneous_bidding_average_satisfaction_scores) - np.array(homogeneous_bidding_sd),
+                         np.array(homogeneous_bidding_average_satisfaction_scores) + np.array(homogeneous_bidding_sd), alpha=0.2,  interpolate=True)
             if len(heterogeneous_bidding_results) > 0:
-                plt.errorbar(epochs, heterogeneous_bidding_average_satisfaction_scores,
-                             yerr=heterogeneous_bidding_sd, fmt='o', label='Heterogeneous bidding')
+                heterogeneous_bidding_average_satisfaction_scores = utils.smooth_data(
+                    heterogeneous_bidding_average_satisfaction_scores)
+                heterogeneous_bidding_sd = utils.smooth_data(
+                    heterogeneous_bidding_sd)
+                epochs = np.arange(0, len(heterogeneous_bidding_average_satisfaction_scores))
+                plt.plot(epochs, heterogeneous_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Heterogeneous bidding')
+                plt.fill_between(epochs, np.array(heterogeneous_bidding_average_satisfaction_scores) - np.array(heterogeneous_bidding_sd),
+                            np.array(heterogeneous_bidding_average_satisfaction_scores) + np.array(heterogeneous_bidding_sd), alpha=0.2,  interpolate=True)
             if len(random_bidding_results) > 0:
-                plt.errorbar(epochs, random_bidding_average_satisfaction_scores,
-                             yerr=random_bidding_sd, fmt='o', label='Random bidding')
+                random_bidding_average_satisfaction_scores = utils.smooth_data(
+                    random_bidding_average_satisfaction_scores)
+                random_bidding_sd = utils.smooth_data(
+                    random_bidding_sd)
+                epochs = np.arange(0, len(random_bidding_average_satisfaction_scores))
+                plt.plot(epochs, random_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Random bidding')
+                plt.fill_between(epochs, np.array(random_bidding_average_satisfaction_scores) - np.array(random_bidding_sd),
+                            np.array(random_bidding_average_satisfaction_scores) + np.array(random_bidding_sd), alpha=0.2,  interpolate=True)
             if len(free_rider_bidding_results) > 0:
-                plt.errorbar(epochs, free_rider_bidding_average_satisfaction_scores,
-                             yerr=free_rider_bidding_sd, fmt='o', label='Free-rider bidding')
+                free_rider_bidding_average_satisfaction_scores = utils.smooth_data(
+                    free_rider_bidding_average_satisfaction_scores)
+                free_rider_bidding_sd = utils.smooth_data(
+                    free_rider_bidding_sd)
+                epochs = np.arange(0, len(free_rider_bidding_average_satisfaction_scores))
+                plt.plot(epochs, free_rider_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Free-rider bidding')
+                plt.fill_between(epochs, np.array(free_rider_bidding_average_satisfaction_scores) - np.array(free_rider_bidding_sd),
+                            np.array(free_rider_bidding_average_satisfaction_scores) + np.array(free_rider_bidding_sd), alpha=0.2,  interpolate=True)
             if len(RL_bidding_results) > 0:
-                plt.errorbar(epochs, RL_bidder_average_satisfaction_scores,
-                             yerr=RL_bidder_sd, fmt='o', label='RL bidding')
+                RL_bidder_average_satisfaction_scores = utils.smooth_data(
+                    RL_bidder_average_satisfaction_scores)
+                RL_bidder_sd = utils.smooth_data(
+                    RL_bidder_sd)
+                epochs = np.arange(0, len(RL_bidder_average_satisfaction_scores))
+                plt.plot(epochs, RL_bidder_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Adaptive bidding')
+                plt.fill_between(epochs, np.array(RL_bidder_average_satisfaction_scores) - np.array(RL_bidder_sd),
+                            np.array(RL_bidder_average_satisfaction_scores) + np.array(RL_bidder_sd), alpha=0.2,  interpolate=True)
         else:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
             if len(homogeneous_bidding_results) > 0:
@@ -590,9 +622,9 @@ class MasterKeeper:
             if len(RL_bidding_results) > 0:
                 plt.plot(
                     epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
+        plt.title('Average Trip Satisfaction Score per Epoch, per Bidding Type')
         plt.xlabel('Epoch')
-        plt.ylabel('Average Satisfaction Score \n (the higher, the better)')
-        plt.title('Average Satisfaction Score per Epoch')
+        plt.ylabel('Average Trip Satisfaction Score \n (the higher, the better)')
         plt.legend()
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score_by_bidding_type.png')
