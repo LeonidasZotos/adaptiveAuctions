@@ -218,6 +218,7 @@ class MasterKeeper:
             return
 
         plt.rcParams['figure.dpi'] = 200
+        plt.rcParams['savefig.dpi'] = 200
 
         ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
@@ -834,6 +835,8 @@ class MasterKeeper:
         if export_results == True:
             np.save(self.export_location + "/average_throughput_per_intersection.npy",
                     average_throughput_per_intersection)
+            np.save(self.export_location + "/std_throughput_per_intersection.npy",
+                    standard_deviation_throughput_per_intersection)
 
     def calc_central_congestion(self):
         """Calculate the average congestion in the central intersection"""
@@ -977,6 +980,7 @@ class MasterKeeper:
         plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
         plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
         plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+        plt.rcParams['errorbar.capsize'] = 10  # Error bar capsize
 
         mean_bid_rank_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size))
@@ -1012,7 +1016,7 @@ class MasterKeeper:
                             se_inact_rank_per_intersection[i, j]]
                 # Create a barplot of the bid ranks per intersection
                 axs[i, j].bar(rank_labels, rank_means,
-                              yerr=rank_ses, capsize=5)
+                              yerr=rank_ses)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
         fig.supxlabel('Rank Type\n')
         fig.supylabel('\nAverage Rank Value')
@@ -1188,6 +1192,8 @@ class MasterKeeper:
         if export_results == True:
             np.save(self.export_location + "/average_max_time_waited_per_intersection_history.npy",
                     average_max_time_waited_per_intersection)
+            np.save(self.export_location + "/std_max_time_waited_per_intersection_history.npy",
+                    standard_deviations)
 
     def plot_gini_time_waited_per_intersection_history(self, export_results=True):
         plt.rcParams['figure.titlesize'] = 45  # Title font size
@@ -1230,6 +1236,8 @@ class MasterKeeper:
         if export_results == True:
             np.save(self.export_location + "/average_gini_time_waited_per_intersection_history.npy",
                     average_gini_time_waited_per_intersection)
+            np.save(self.export_location + "/std_gini_time_waited_per_intersection_history.npy",
+                    standard_deviations)
 
     ### Misc. Metrics ###
     def plot_broke_agents_percentage_history(self):
@@ -1243,7 +1251,7 @@ class MasterKeeper:
         plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
         plt.rcParams['legend.fontsize'] = 30  # Figure legend font size
         plt.rcParams['lines.markersize'] = 10  # Figure markersize
-        
+
         avg_percentage_broke_agents = np.divide(
             self.all_sims_broke_agents_history, self.args.num_of_simulations)
 
