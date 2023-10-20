@@ -216,11 +216,11 @@ class MasterKeeper:
         if self.args.sweep_mode:
             # If this is activated, don't produce any plots
             return
-        
+
         # Set general plot settings
         plt.figure(figsize=(14, 9))
         plt.rcParams.update({'font.size': 16})
-        
+
         ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
         self.plot_satisfaction_scores_overall_average()
@@ -274,16 +274,19 @@ class MasterKeeper:
             for metric in self.general_metrics:
                 f.write(
                     metric + ': \n' + str(self.general_metrics[metric]) + '\n=====================\n')
-                
+
         # Print some overall metrics from the dictionary:
         print("End of Simulation Main Metrics:")
-        print("Average Time waited: " + str(self.general_metrics['grid_average_time_waited']))
-        print("Max Time waited: " + str(self.general_metrics['grid_max_time_waited']))
-        print("Average Trip Satisfaction: " + str(self.general_metrics['Average Trip Satisfaction']))
+        print("Average Time waited: " +
+              str(self.general_metrics['grid_average_time_waited']))
+        print("Max Time waited: " +
+              str(self.general_metrics['grid_max_time_waited']))
+        print("Average Trip Satisfaction: " +
+              str(self.general_metrics['Average Trip Satisfaction']))
         print("----------------------------------")
 
     ### Trip Satisfaction Metric ###
-    def calc_satisfaction_gini_metric(self):
+    def calc_satisfaction_gini_metric(self): #DONE
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
             return [score for (_, score) in dict]
@@ -317,7 +320,7 @@ class MasterKeeper:
         self.general_metrics['satisfacation_avg_gini'] = str(
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The Gini coefficient of all satisfaction scores of the simulation. Averaged over sims")
 
-    def plot_satisfaction_scores_overall_average(self, export_results=True):
+    def plot_satisfaction_scores_overall_average(self, export_results=True): #DONE
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
             export_results (bool): Whether to export the results to a .npy file
@@ -360,7 +363,8 @@ class MasterKeeper:
         average_satisfaction_scores = average_satisfaction_scores[WARMUP_EPOCHS:]
         standard_deviations = standard_deviations[WARMUP_EPOCHS:]
 
-        smoothed_satisfaction_scores = utils.smooth_data(average_satisfaction_scores)
+        smoothed_satisfaction_scores = utils.smooth_data(
+            average_satisfaction_scores)
         smoothed_standard_deviations = utils.smooth_data(standard_deviations)
 
         epochs = np.arange(0, len(smoothed_satisfaction_scores))
@@ -378,7 +382,7 @@ class MasterKeeper:
             np.save(self.export_location + "/average_satisfaction_score.npy",
                     average_satisfaction_scores)
 
-    def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False):
+    def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False): #DONE
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
             'ohhh almost 200 lines of code, that's a lot of code for just one function (but here we are)'
@@ -565,46 +569,56 @@ class MasterKeeper:
                     homogeneous_bidding_average_satisfaction_scores)
                 homogeneous_bidding_sd = utils.smooth_data(
                     homogeneous_bidding_sd)
-                epochs = np.arange(0, len(homogeneous_bidding_average_satisfaction_scores))
-                plt.plot(epochs, homogeneous_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Homogeneous bidding')
+                epochs = np.arange(
+                    0, len(homogeneous_bidding_average_satisfaction_scores))
+                plt.plot(epochs, homogeneous_bidding_average_satisfaction_scores,
+                         'o', ls='none', markersize=2, label='Homogeneous bidding')
                 plt.fill_between(epochs, np.array(homogeneous_bidding_average_satisfaction_scores) - np.array(homogeneous_bidding_sd),
-                         np.array(homogeneous_bidding_average_satisfaction_scores) + np.array(homogeneous_bidding_sd), alpha=0.2,  interpolate=True)
+                                 np.array(homogeneous_bidding_average_satisfaction_scores) + np.array(homogeneous_bidding_sd), alpha=0.2,  interpolate=True)
             if len(heterogeneous_bidding_results) > 0:
                 heterogeneous_bidding_average_satisfaction_scores = utils.smooth_data(
                     heterogeneous_bidding_average_satisfaction_scores)
                 heterogeneous_bidding_sd = utils.smooth_data(
                     heterogeneous_bidding_sd)
-                epochs = np.arange(0, len(heterogeneous_bidding_average_satisfaction_scores))
-                plt.plot(epochs, heterogeneous_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Heterogeneous bidding')
+                epochs = np.arange(
+                    0, len(heterogeneous_bidding_average_satisfaction_scores))
+                plt.plot(epochs, heterogeneous_bidding_average_satisfaction_scores,
+                         'o', ls='none', markersize=2, label='Heterogeneous bidding')
                 plt.fill_between(epochs, np.array(heterogeneous_bidding_average_satisfaction_scores) - np.array(heterogeneous_bidding_sd),
-                            np.array(heterogeneous_bidding_average_satisfaction_scores) + np.array(heterogeneous_bidding_sd), alpha=0.2,  interpolate=True)
+                                 np.array(heterogeneous_bidding_average_satisfaction_scores) + np.array(heterogeneous_bidding_sd), alpha=0.2,  interpolate=True)
             if len(random_bidding_results) > 0:
                 random_bidding_average_satisfaction_scores = utils.smooth_data(
                     random_bidding_average_satisfaction_scores)
                 random_bidding_sd = utils.smooth_data(
                     random_bidding_sd)
-                epochs = np.arange(0, len(random_bidding_average_satisfaction_scores))
-                plt.plot(epochs, random_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Random bidding')
+                epochs = np.arange(
+                    0, len(random_bidding_average_satisfaction_scores))
+                plt.plot(epochs, random_bidding_average_satisfaction_scores,
+                         'o', ls='none', markersize=2, label='Random bidding')
                 plt.fill_between(epochs, np.array(random_bidding_average_satisfaction_scores) - np.array(random_bidding_sd),
-                            np.array(random_bidding_average_satisfaction_scores) + np.array(random_bidding_sd), alpha=0.2,  interpolate=True)
+                                 np.array(random_bidding_average_satisfaction_scores) + np.array(random_bidding_sd), alpha=0.2,  interpolate=True)
             if len(free_rider_bidding_results) > 0:
                 free_rider_bidding_average_satisfaction_scores = utils.smooth_data(
                     free_rider_bidding_average_satisfaction_scores)
                 free_rider_bidding_sd = utils.smooth_data(
                     free_rider_bidding_sd)
-                epochs = np.arange(0, len(free_rider_bidding_average_satisfaction_scores))
-                plt.plot(epochs, free_rider_bidding_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Free-rider bidding')
+                epochs = np.arange(
+                    0, len(free_rider_bidding_average_satisfaction_scores))
+                plt.plot(epochs, free_rider_bidding_average_satisfaction_scores,
+                         'o', ls='none', markersize=2, label='Free-rider bidding')
                 plt.fill_between(epochs, np.array(free_rider_bidding_average_satisfaction_scores) - np.array(free_rider_bidding_sd),
-                            np.array(free_rider_bidding_average_satisfaction_scores) + np.array(free_rider_bidding_sd), alpha=0.2,  interpolate=True)
+                                 np.array(free_rider_bidding_average_satisfaction_scores) + np.array(free_rider_bidding_sd), alpha=0.2,  interpolate=True)
             if len(RL_bidding_results) > 0:
                 RL_bidder_average_satisfaction_scores = utils.smooth_data(
                     RL_bidder_average_satisfaction_scores)
                 RL_bidder_sd = utils.smooth_data(
                     RL_bidder_sd)
-                epochs = np.arange(0, len(RL_bidder_average_satisfaction_scores))
-                plt.plot(epochs, RL_bidder_average_satisfaction_scores, 'o', ls='none', markersize=2, label='Adaptive bidding')
+                epochs = np.arange(
+                    0, len(RL_bidder_average_satisfaction_scores))
+                plt.plot(epochs, RL_bidder_average_satisfaction_scores,
+                         'o', ls='none', markersize=2, label='Adaptive bidding')
                 plt.fill_between(epochs, np.array(RL_bidder_average_satisfaction_scores) - np.array(RL_bidder_sd),
-                            np.array(RL_bidder_average_satisfaction_scores) + np.array(RL_bidder_sd), alpha=0.2,  interpolate=True)
+                                 np.array(RL_bidder_average_satisfaction_scores) + np.array(RL_bidder_sd), alpha=0.2,  interpolate=True)
         else:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
             if len(homogeneous_bidding_results) > 0:
@@ -630,7 +644,7 @@ class MasterKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-    def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
+    def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False): #DEPRECATED
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -704,7 +718,7 @@ class MasterKeeper:
                     '/histogram_satisfaction_scores_by_bidding_type.png')
         plt.clf()
 
-    def calc_average_trip_satisfaction(self):
+    def calc_average_trip_satisfaction(self): #DONE
         """Calculates the average trip satisfaction score over all simulations"""
 
         def remove_car_copies_from_dict(dict):
@@ -715,13 +729,13 @@ class MasterKeeper:
         # First, combine all dictionaries into one dictionary
         for result_dict in self.all_simulations_satisfaction_scores:
             sim_satisfactions = []
-            for epoch in result_dict:\
+            for epoch in result_dict:
                 sim_satisfactions.append(remove_car_copies_from_dict(
                     result_dict[epoch]))
             sim_satisfactions_flat = [
                 item for sublist in sim_satisfactions for item in sublist]
             all_mean_satisfactions.append(np.mean(sim_satisfactions_flat))
-        
+
         mean = np.mean(all_mean_satisfactions)
         sd = np.std(all_mean_satisfactions)
         mean_text = str(np.round(mean, 3))
@@ -730,7 +744,7 @@ class MasterKeeper:
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average trip satisfaction. Averaged over sims.")
 
     ### Congestion Metric ###
-    def plot_congestion_heatmap_average(self):
+    def plot_congestion_heatmap_average(self): #DONE
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -745,10 +759,11 @@ class MasterKeeper:
             average_congestion_per_intersection, self.args.num_of_epochs)
         average_congestion_per_intersection = np.divide(
             average_congestion_per_intersection, (self.args.queue_capacity * 4))
-
-        ax = sns.heatmap(average_congestion_per_intersection, annot=True)
+        
+        cbar_kws = {'label': 'Congestion Scale'}
+        ax = sns.heatmap(average_congestion_per_intersection, annot=True, cbar_kws=cbar_kws)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
-               title='Average Congestion per Intersection')
+               title='Average Congestion per Intersection \n')
         plt.savefig(self.args.results_folder +
                     '/average_congestion_heatmap.png')
         plt.clf()
@@ -760,7 +775,7 @@ class MasterKeeper:
         average_throughput_per_intersection = np.divide(
             total_throughput_history_summed_sims, len(self.total_throughput_history_per_intersection_all_sims))
         # Remove the first x epochs from the history, because they are part of the warm-up period
-        # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection. In total there are as many subplots as intersections
+        # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection.
         fig, axs = plt.subplots(
             average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_throughput_per_intersection.shape[0]):
@@ -1099,7 +1114,8 @@ class MasterKeeper:
         # make the plot font quite big
         plt.rcParams.update({'font.size': 30})
         plt.plot(avg_percentage_broke_agents)
-        plt.title('Average Percentage of Agents with 0 balance over time \n (adaptive bidders)')
+        plt.title(
+            'Average Percentage of Agents with 0 balance over time \n (adaptive bidders)')
         plt.xlabel('Epoch')
         plt.ylim(0, 0.5)
         plt.ylabel('Average Percentage of Agents with 0 balance')
@@ -1121,6 +1137,7 @@ class MasterKeeper:
 
         self.general_metrics['num_of_trips_completed'] = str(
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: The mean number of trips completed per simulation. Averaged over sims")
+
 
 class SimulationMetrics:
     """
