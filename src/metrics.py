@@ -286,13 +286,13 @@ class MasterKeeper:
         print("----------------------------------")
 
     ### Trip Satisfaction Metric ###
-    def calc_satisfaction_gini_metric(self):  # DONE
+    def calc_satisfaction_gini_metric(self):
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
             return [score for (_, score) in dict]
 
         def calc_gini(x):
-            """Calculates the GINI coeffecient of a list of numbers.
+            """Calculates the Gini coeffecient of a list of numbers.
             Source: https://www.statology.org/gini-coefficient-python/
             """
             x = np.array(x)
@@ -320,7 +320,6 @@ class MasterKeeper:
         self.general_metrics['satisfacation_avg_gini'] = str(
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The Gini coefficient of all satisfaction scores of the simulation. Averaged over sims")
 
-    # DONE
     def plot_satisfaction_scores_overall_average(self, export_results=True):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations.
         Args:
@@ -383,7 +382,6 @@ class MasterKeeper:
             np.save(self.export_location + "/average_satisfaction_score.npy",
                     average_satisfaction_scores)
 
-    # DONE
     def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
             for each bidding type, represented by a different color.
@@ -646,7 +644,6 @@ class MasterKeeper:
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
 
-    # DEPRECATED
     def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
         Args:
@@ -721,7 +718,7 @@ class MasterKeeper:
                     '/histogram_satisfaction_scores_by_bidding_type.png')
         plt.clf()
 
-    def calc_average_trip_satisfaction(self):  # DONE
+    def calc_average_trip_satisfaction(self):
         """Calculates the average trip satisfaction score over all simulations"""
 
         def remove_car_copies_from_dict(dict):
@@ -747,7 +744,7 @@ class MasterKeeper:
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average trip satisfaction. Averaged over sims.")
 
     ### Congestion Metric ###
-    def plot_congestion_heatmap_average(self):  # DONE
+    def plot_congestion_heatmap_average(self):
         """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
         Args:
             export_results (bool): Whether to export the results to a .csv file
@@ -772,7 +769,7 @@ class MasterKeeper:
                     '/average_congestion_heatmap.png')
         plt.clf()
 
-    def plot_throughput_per_intersection_history(self, export_results=True): #DONE
+    def plot_throughput_per_intersection_history(self, export_results=True):
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
@@ -782,7 +779,7 @@ class MasterKeeper:
             self.total_throughput_history_per_intersection_all_sims, axis=0)
         # Remove the first x epochs from the history, because they are part of the warm-up period
         # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection.
-        
+
         plt.rcParams.update({'font.size': 20})
         fig, axs = plt.subplots(
             average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
@@ -796,11 +793,11 @@ class MasterKeeper:
                     average_throughput_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
                 axs[i, j].fill_between(np.arange(0, average_throughput_per_intersection.shape[2] - WARMUP_EPOCHS), average_throughput_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviation_throughput_per_intersection[i, j, WARMUP_EPOCHS:],
                                        average_throughput_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviation_throughput_per_intersection[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
-                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Throughput')
-        # add title to the big plot
-        fig.suptitle('\n History of Average Throughput per Intersection', fontsize=30)
+        fig.suptitle(
+            '\n History of Average Throughput per Intersection', fontsize=30)
 
         plt.savefig(self.args.results_folder +
                     '/average_throughput_per_intersection_history.png')
@@ -835,16 +832,28 @@ class MasterKeeper:
         with np.errstate(invalid='ignore'):
             average_reward_per_intersection = np.divide(total_reward_history_summed_sims,
                                                         self.count_of_reward_measurements_per_intersection)
+        standard_deviation_reward_per_intersection = np.std(
+            self.reward_history_per_simulation_all_sims, axis=0)
+
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
+        plt.rcParams.update({'font.size': 20})
         fig, axs = plt.subplots(
             average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_reward_per_intersection.shape[0]):
             for j in range(average_reward_per_intersection.shape[1]):
-                axs[i, j].plot(
-                    average_reward_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
-                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                average_reward_per_intersection[i, j] = utils.smooth_data(
+                    average_reward_per_intersection[i, j])
+                standard_deviation_reward_per_intersection[i, j] = utils.smooth_data(
+                    standard_deviation_reward_per_intersection[i, j])
+                axs[i, j].plot(average_reward_per_intersection[i,
+                               j, WARMUP_EPOCHS:], 'o', markersize=1.5)
+                axs[i, j].fill_between(np.arange(0, average_reward_per_intersection.shape[2] - WARMUP_EPOCHS), average_reward_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviation_reward_per_intersection[i, j, WARMUP_EPOCHS:],
+                                       average_reward_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviation_reward_per_intersection[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
+                axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Auction Reward')
+        fig.suptitle(
+            '\n History of Average Auction Reward per Intersection', fontsize=30)
         plt.savefig(self.args.results_folder +
                     '/average_reward_per_intersection_history.png')
         plt.clf()
@@ -862,7 +871,6 @@ class MasterKeeper:
                 self.sum_auction_parameters_valuations_per_intersection, number_of_non_gridlocked_sims)
             average_count_per_parameter_set_per_intersection = np.divide(
                 self.sum_auction_parameters_counts_per_intersection, number_of_non_gridlocked_sims)
-
             parameter_space_1d = np.reshape(
                 self.auction_parameters_space, (self.args.adaptive_auction_discretization, NUM_OF_ADAPT_PARAMS))
             rewards_1d = np.reshape(
@@ -877,9 +885,11 @@ class MasterKeeper:
                 for j in range(self.args.grid_size):
                     axs[i, j].scatter(
                         parameter_space_1d[:, 0], rewards_1d[i, j, :], s=counts_1d[i, j, :], marker="o")
-                    axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                    axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                     axs[i, j].set_xlabel('Delay Boost')
                     axs[i, j].set_ylabel('Average Reward')
+            fig.suptitle(
+                '\n Average Reward per Delay Boost Value per Intersection', fontsize=30)
             plt.savefig(self.args.results_folder +
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
@@ -891,7 +901,6 @@ class MasterKeeper:
                         parameter_space_1d)
                 np.save(self.export_location + "/average_reward_per_parameter_set_per_intersection_counts.npy",
                         counts_1d)
-
         elif NUM_OF_ADAPT_PARAMS == 2:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
             average_reward_per_parameter_set_per_intersection = np.divide(
@@ -908,7 +917,7 @@ class MasterKeeper:
                 for j in range(self.args.grid_size):
                     ax = fig.add_subplot(self.args.grid_size, self.args.grid_size, i *
                                          self.args.grid_size + j + 1, projection='3d')
-                    ax.set_title('[' + str(i) + str(j) + ']')
+                    axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                     ax.set_xlabel('Delay Boost')
                     ax.set_ylabel('QueueLength Boost')
                     ax.set_zlabel('Average Reward')
@@ -918,7 +927,7 @@ class MasterKeeper:
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
 
-    def plot_mean_bid_and_inact_rank_per_intersection(self):
+    def plot_mean_bid_and_inact_rank_per_intersection(self):  
         mean_bid_rank_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size))
         se_bid_rank_per_intersection = np.zeros(
@@ -942,7 +951,7 @@ class MasterKeeper:
                 se_inact_rank_per_intersection[i, j] = np.std(
                     self.all_sims_winners_inact_ranks_means[i][j]) / np.sqrt(len(self.all_sims_winners_inact_ranks_means[i][j]))
 
-        rank_labels = ['bid_rank', 'inact_rank']
+        rank_labels = ['Bid Rank', 'Time Waited \n Rank']
         fig, axs = plt.subplots(
             self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
         for i in range(self.args.grid_size):
@@ -954,14 +963,16 @@ class MasterKeeper:
                 # Create a barplot of the bid ranks per intersection
                 axs[i, j].bar(rank_labels, rank_means,
                               yerr=rank_ses, capsize=5)
-                axs[i, j].set_title('[' + str(i) + str(j) + ']')
-                axs[i, j].set_ylabel('Average Rank')
+                axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
+                axs[i, j].set_ylabel('Average Rank Value')
+        plt.suptitle(
+            '\n Average Bid Rank and Time Waited Rank of Winner per Intersection', fontsize=30)
         plt.savefig(self.args.results_folder +
                     '/winner_bid_inact_rank_per_intersection.png')
         plt.clf()
 
     ### Time Waited Metric ###
-    def calc_time_waited_general_metrics(self):
+    def calc_time_waited_general_metrics(self):  
         # Agent Level
         # Average time waited regardless of intersection. Average over sims
         average_time_waited_per_simulation = []
@@ -1030,7 +1041,7 @@ class MasterKeeper:
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
-    def calc_time_waited_gini_metric(self):
+    def calc_time_waited_gini_metric(self):  
         average_gini_time_waited_history_sims = np.mean(
             self.gini_time_waited_history_per_intersection_all_sims, axis=3)  # Average over epochs
         mean_gini_per_simulation = []
@@ -1040,8 +1051,9 @@ class MasterKeeper:
         mean_gini_text = str(round(np.mean(mean_gini_per_simulation), 3))
         std_gini_text = str(round(np.std(mean_gini_per_simulation), 3))
         self.general_metrics['time_waited_avg_gini'] = str(
-            "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The average of the GINI coefficients of all intersections. Averaged over sims")
+            "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The average of the Gini coefficients of all intersections. Averaged over sims")
 
+    
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -1051,16 +1063,26 @@ class MasterKeeper:
         with np.errstate(invalid='ignore'):
             average_average_time_waited_per_intersection = np.divide(
                 total_average_time_waited_history_summed_sims, self.count_of_average_time_waited_measurements_per_intersection)
+        standard_deviations = np.std(
+            self.average_time_waited_history_per_intersection_all_sims, axis=0)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the average_time_waited history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_average_time_waited_per_intersection.shape[0], average_average_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_average_time_waited_per_intersection.shape[0]):
             for j in range(average_average_time_waited_per_intersection.shape[1]):
+                average_average_time_waited_per_intersection[i, j] = utils.smooth_data(
+                    average_average_time_waited_per_intersection[i, j])
+                standard_deviations[i, j] = utils.smooth_data(
+                    standard_deviations[i, j])
                 axs[i, j].plot(
                     average_average_time_waited_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
-                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].fill_between(np.arange(0, average_average_time_waited_per_intersection.shape[2] - WARMUP_EPOCHS), average_average_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviations[i, j, WARMUP_EPOCHS:],
+                                       average_average_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviations[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
+                axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Average Time Waited')
+        fig.suptitle(
+            '\n History of Average Time Waited per Intersection', fontsize=30)
         plt.savefig(self.args.results_folder +
                     '/average_average_time_waited_per_intersection_history.png')
         plt.clf()
@@ -1068,6 +1090,7 @@ class MasterKeeper:
             np.save(self.export_location + "/average_average_time_waited_per_intersection_history.npy",
                     average_average_time_waited_per_intersection)
 
+    
     def plot_max_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -1077,16 +1100,26 @@ class MasterKeeper:
         with np.errstate(invalid='ignore'):
             average_max_time_waited_per_intersection = np.divide(
                 total_max_time_waited_history_summed_sims, self.count_of_max_time_waited_measurements_per_intersection)
+        standard_deviations = np.std(
+            self.max_time_waited_history_per_intersection_all_sims, axis=0)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the max_time_waited history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_max_time_waited_per_intersection.shape[0], average_max_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_max_time_waited_per_intersection.shape[0]):
             for j in range(average_max_time_waited_per_intersection.shape[1]):
+                average_max_time_waited_per_intersection[i, j] = utils.smooth_data(
+                    average_max_time_waited_per_intersection[i, j])
+                standard_deviations[i, j] = utils.smooth_data(
+                    standard_deviations[i, j])
                 axs[i, j].plot(
                     average_max_time_waited_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
-                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].fill_between(np.arange(0, average_max_time_waited_per_intersection.shape[2] - WARMUP_EPOCHS), average_max_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviations[i, j, WARMUP_EPOCHS:],
+                                       average_max_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviations[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
+                axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel('Average Max Time Waited')
+        fig.suptitle(
+            '\n History of Average Max Time Waited per Intersection', fontsize=30)
         plt.savefig(self.args.results_folder +
                     '/average_max_time_waited_per_intersection_history.png')
         plt.clf()
@@ -1094,6 +1127,7 @@ class MasterKeeper:
             np.save(self.export_location + "/average_max_time_waited_per_intersection_history.npy",
                     average_max_time_waited_per_intersection)
 
+    
     def plot_gini_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -1103,17 +1137,27 @@ class MasterKeeper:
         with np.errstate(invalid='ignore'):
             average_gini_time_waited_per_intersection = np.divide(
                 total_gini_time_waited_history_summed_sims, self.count_of_gini_time_waited_measurements_per_intersection)
+        standard_deviations = np.std(
+            self.gini_time_waited_history_per_intersection_all_sims, axis=0)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the gini history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
             average_gini_time_waited_per_intersection.shape[0], average_gini_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
         for i in range(average_gini_time_waited_per_intersection.shape[0]):
             for j in range(average_gini_time_waited_per_intersection.shape[1]):
+                average_gini_time_waited_per_intersection[i, j] = utils.smooth_data(
+                    average_gini_time_waited_per_intersection[i, j])
+                standard_deviations[i, j] = utils.smooth_data(
+                    standard_deviations[i, j])
                 axs[i, j].plot(
                     average_gini_time_waited_per_intersection[i, j, WARMUP_EPOCHS:], 'o', markersize=1.5)
-                axs[i, j].set_title('[' + str(i) + str(j) + ']')
+                axs[i, j].fill_between(np.arange(0, average_gini_time_waited_per_intersection.shape[2] - WARMUP_EPOCHS), average_gini_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviations[i, j, WARMUP_EPOCHS:],
+                                       average_gini_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviations[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
+                axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
                 axs[i, j].set_xlabel('Epoch')
                 axs[i, j].set_ylabel(
-                    'Average GINI Coefficient (based on time waited)')
+                    'Average Gini Coefficient')
+        plt.suptitle(
+            '\n History of Average Gini Coefficient (Based on Time Waited) per Intersection', fontsize=30)
         plt.savefig(self.args.results_folder +
                     '/average_gini_time_waited_per_intersection_history.png')
         plt.clf()
