@@ -973,7 +973,7 @@ class MasterKeeper:
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
 
-    def plot_mean_bid_and_inact_rank_per_intersection(self):
+    def plot_mean_bid_and_inact_rank_per_intersection(self, export_results=True):
         plt.rcParams['figure.titlesize'] = 45  # Title font size
         plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
         plt.rcParams['axes.titlesize'] = 30  # Title font size
@@ -1024,6 +1024,14 @@ class MasterKeeper:
             '\n Average Bid Rank and Time Waited Rank of Winner per Intersection')
         plt.savefig(self.args.results_folder +
                     '/winner_bid_inact_rank_per_intersection.png')
+        np.save(self.export_location + "/mean_bid_rank_per_intersection.npy",
+                mean_bid_rank_per_intersection)
+        np.save(self.export_location + "/se_bid_rank_per_intersection.npy",
+                se_bid_rank_per_intersection)
+        np.save(self.export_location + "/mean_inact_rank_per_intersection.npy",
+                mean_inact_rank_per_intersection)
+        np.save(self.export_location + "/se_inact_rank_per_intersection.npy",
+                se_inact_rank_per_intersection)
         plt.clf()
 
     ### Time Waited Metric ###
