@@ -217,9 +217,7 @@ class MasterKeeper:
             # If this is activated, don't produce any plots
             return
 
-        # Set general plot settings
-        plt.figure(figsize=(14, 9))
-        plt.rcParams.update({'font.size': 16})
+        plt.rcParams['figure.dpi'] = 200
 
         ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
@@ -325,6 +323,14 @@ class MasterKeeper:
         Args:
             export_results (bool): Whether to export the results to a .npy file
         """
+        plt.rcParams['figure.titlesize'] = 50  # Title font size
+        plt.rcParams['figure.labelsize'] = 50  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 50  # Title font size
+        plt.rcParams['axes.labelsize'] = 40  # Axes labels font size
+        plt.rcParams['xtick.labelsize'] = 30  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 30  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+        plt.rcParams['lines.markersize'] = 10  # Figure markersize
 
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
@@ -369,18 +375,20 @@ class MasterKeeper:
 
         epochs = np.arange(0, len(smoothed_satisfaction_scores))
         plt.plot(epochs, smoothed_satisfaction_scores,
-                 'o', ls='none', markersize=1.5)
+                 'o', ls='none')
         plt.fill_between(epochs, np.array(smoothed_satisfaction_scores) - np.array(smoothed_standard_deviations),
                          np.array(smoothed_satisfaction_scores) + np.array(smoothed_standard_deviations), alpha=0.2,  interpolate=True)
         plt.xlabel('Epoch')
         plt.ylabel('Average Trip Satisfaction Score \n (the higher, the better)')
-        plt.title('History of Average Trip Satisfaction Score')
+        plt.title('History of Average Trip Satisfaction Score\n')
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score.png')
         plt.clf()
         if export_results == True:
             np.save(self.export_location + "/average_satisfaction_score.npy",
-                    average_satisfaction_scores)
+                    smoothed_satisfaction_scores)
+            np.save(self.export_location + "/std_satisfaction_score.npy",
+                    smoothed_standard_deviations)
 
     def plot_satisfaction_scores_by_bidding_type(self, with_std=True, filter_outliers=False):
         """Creates a graph of the average satisfaction score per epoch, with error bars, averaged over all simulations,
@@ -390,6 +398,15 @@ class MasterKeeper:
             with_std (bool): Whether to include the standard deviation in the plot
             filter_outliers (bool): Whether to filter out outliers from the results
         """
+        plt.rcParams['figure.titlesize'] = 50  # Title font size
+        plt.rcParams['figure.labelsize'] = 50  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 50  # Title font size
+        plt.rcParams['axes.labelsize'] = 40  # Axes labels font size
+        plt.rcParams['xtick.labelsize'] = 30  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 30  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+        plt.rcParams['legend.fontsize'] = 30  # Figure legend font size
+        plt.rcParams['lines.markersize'] = 10  # Figure markersize
 
         homogeneous_bidding_results = {}
         heterogeneous_bidding_results = {}
@@ -572,7 +589,7 @@ class MasterKeeper:
                 epochs = np.arange(
                     0, len(homogeneous_bidding_average_satisfaction_scores))
                 plt.plot(epochs, homogeneous_bidding_average_satisfaction_scores,
-                         'o', ls='none', markersize=2, label='Homogeneous bidding')
+                         'o', ls='none', label='Homogeneous bidding')
                 plt.fill_between(epochs, np.array(homogeneous_bidding_average_satisfaction_scores) - np.array(homogeneous_bidding_sd),
                                  np.array(homogeneous_bidding_average_satisfaction_scores) + np.array(homogeneous_bidding_sd), alpha=0.2,  interpolate=True)
             if len(heterogeneous_bidding_results) > 0:
@@ -583,7 +600,7 @@ class MasterKeeper:
                 epochs = np.arange(
                     0, len(heterogeneous_bidding_average_satisfaction_scores))
                 plt.plot(epochs, heterogeneous_bidding_average_satisfaction_scores,
-                         'o', ls='none', markersize=2, label='Heterogeneous bidding')
+                         'o', ls='none', label='Heterogeneous bidding')
                 plt.fill_between(epochs, np.array(heterogeneous_bidding_average_satisfaction_scores) - np.array(heterogeneous_bidding_sd),
                                  np.array(heterogeneous_bidding_average_satisfaction_scores) + np.array(heterogeneous_bidding_sd), alpha=0.2,  interpolate=True)
             if len(random_bidding_results) > 0:
@@ -594,7 +611,7 @@ class MasterKeeper:
                 epochs = np.arange(
                     0, len(random_bidding_average_satisfaction_scores))
                 plt.plot(epochs, random_bidding_average_satisfaction_scores,
-                         'o', ls='none', markersize=2, label='Random bidding')
+                         'o', ls='none', label='Random bidding')
                 plt.fill_between(epochs, np.array(random_bidding_average_satisfaction_scores) - np.array(random_bidding_sd),
                                  np.array(random_bidding_average_satisfaction_scores) + np.array(random_bidding_sd), alpha=0.2,  interpolate=True)
             if len(free_rider_bidding_results) > 0:
@@ -605,7 +622,7 @@ class MasterKeeper:
                 epochs = np.arange(
                     0, len(free_rider_bidding_average_satisfaction_scores))
                 plt.plot(epochs, free_rider_bidding_average_satisfaction_scores,
-                         'o', ls='none', markersize=2, label='Free-rider bidding')
+                         'o', ls='none', label='Free-rider bidding')
                 plt.fill_between(epochs, np.array(free_rider_bidding_average_satisfaction_scores) - np.array(free_rider_bidding_sd),
                                  np.array(free_rider_bidding_average_satisfaction_scores) + np.array(free_rider_bidding_sd), alpha=0.2,  interpolate=True)
             if len(RL_bidding_results) > 0:
@@ -616,30 +633,31 @@ class MasterKeeper:
                 epochs = np.arange(
                     0, len(RL_bidder_average_satisfaction_scores))
                 plt.plot(epochs, RL_bidder_average_satisfaction_scores,
-                         'o', ls='none', markersize=2, label='Adaptive bidding')
+                         'o', ls='none', label='Adaptive bidding')
                 plt.fill_between(epochs, np.array(RL_bidder_average_satisfaction_scores) - np.array(RL_bidder_sd),
                                  np.array(RL_bidder_average_satisfaction_scores) + np.array(RL_bidder_sd), alpha=0.2,  interpolate=True)
         else:
             # Plot the average satisfaction score per epoch, per bidding type (without error bars)
             if len(homogeneous_bidding_results) > 0:
                 plt.plot(
-                    epochs, homogeneous_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Homogeneous bidding', markersize=1.5)
+                    epochs, homogeneous_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Homogeneous bidding')
             if len(heterogeneous_bidding_results) > 0:
                 plt.plot(
-                    epochs, heterogeneous_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Heterogeneous bidding', markersize=1.5)
+                    epochs, heterogeneous_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Heterogeneous bidding')
             if len(random_bidding_results) > 0:
                 plt.plot(
-                    epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding', markersize=1.5)
+                    epochs, random_bidding_average_satisfaction_scores, 'o', linestyle='None', label='Random bidding')
             if len(free_rider_bidding_results) > 0:
                 plt.plot(epochs, free_rider_bidding_average_satisfaction_scores,
-                         'o', linestyle='None', label='Free-rider bidding', markersize=1.5)
+                         'o', linestyle='None', label='Free-rider bidding')
             if len(RL_bidding_results) > 0:
                 plt.plot(
-                    epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding', markersize=1.5)
-        plt.title('History of Average Trip Satisfaction Score per Bidding Type')
+                    epochs, RL_bidder_average_satisfaction_scores, 'o', linestyle='None', label='RL bidding')
+
+        plt.title('History of Average Trip Satisfaction Score per Bidding Type\n')
         plt.xlabel('Epoch')
         plt.ylabel('Average Trip Satisfaction Score \n (the higher, the better)')
-        plt.legend()
+        plt.legend(markerscale=2)
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
@@ -745,12 +763,17 @@ class MasterKeeper:
 
     ### Congestion Metric ###
     def plot_congestion_heatmap_average(self):
-        """Creates a heatmap of the average congestion per epoch per intersection, over all simulations
-        Args:
-            export_results (bool): Whether to export the results to a .csv file
-        """
-        # Create heatmap of average congestion per intersection
+        """Creates a heatmap of the average congestion per epoch per intersection, over all simulations"""
+        sns.set(font_scale=3.5)
+        # It really is unclear which of the below seaborn uses.
+        plt.rcParams['figure.titlesize'] = 50  # Title font size
+        plt.rcParams['figure.labelsize'] = 50  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 60  # Title font size
+        plt.rcParams['xtick.labelsize'] = 35  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 35  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 30)  # Figure size
 
+        # Create heatmap of average congestion per intersection
         total_population_per_intersection = np.sum(
             self.total_population_per_intersection_all_sims, axis=0)
         average_congestion_per_intersection = np.divide(
@@ -759,17 +782,24 @@ class MasterKeeper:
             average_congestion_per_intersection, self.args.num_of_epochs)
         average_congestion_per_intersection = np.divide(
             average_congestion_per_intersection, (self.args.queue_capacity * 4))
-
         cbar_kws = {'label': 'Congestion Scale'}
         ax = sns.heatmap(average_congestion_per_intersection,
                          annot=True, cbar_kws=cbar_kws)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
-               title='Average Congestion per Intersection \n')
+               title='Average Congestion per Intersection\n')
         plt.savefig(self.args.results_folder +
                     '/average_congestion_heatmap.png')
         plt.clf()
+        sns.set(font_scale=1)  # Revert to normal
+        sns.set_style("whitegrid", {'axes.grid': False})
 
     def plot_throughput_per_intersection_history(self, export_results=True):
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_throughput_history_summed_sims = np.sum(
             self.total_throughput_history_per_intersection_all_sims, axis=0)
@@ -779,10 +809,8 @@ class MasterKeeper:
             self.total_throughput_history_per_intersection_all_sims, axis=0)
         # Remove the first x epochs from the history, because they are part of the warm-up period
         # Create a plot with subplots for each intersection. Each subplot is a graph of the throughput history of that intersection.
-
-        plt.rcParams.update({'font.size': 20})
         fig, axs = plt.subplots(
-            average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+            average_throughput_per_intersection.shape[0], average_throughput_per_intersection.shape[1], sharex=True, sharey=True)
         for i in range(average_throughput_per_intersection.shape[0]):
             for j in range(average_throughput_per_intersection.shape[1]):
                 average_throughput_per_intersection[i, j] = utils.smooth_data(
@@ -794,10 +822,10 @@ class MasterKeeper:
                 axs[i, j].fill_between(np.arange(0, average_throughput_per_intersection.shape[2] - WARMUP_EPOCHS), average_throughput_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviation_throughput_per_intersection[i, j, WARMUP_EPOCHS:],
                                        average_throughput_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviation_throughput_per_intersection[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel('Average Throughput')
+        fig.supxlabel('Epoch\n')
+        fig.supylabel('\nAverage Throughput')
         fig.suptitle(
-            '\n History of Average Throughput per Intersection', fontsize=30)
+            '\n History of Average Throughput per Intersection')
 
         plt.savefig(self.args.results_folder +
                     '/average_throughput_per_intersection_history.png')
@@ -823,8 +851,15 @@ class MasterKeeper:
         self.general_metrics['Average congestion per intersection'] = str(
             "Mean: \n" + mean_text + "\nSD:\n" + std_text + "\nDescription: Average congestion per intersection. Averaged over sims")
 
-    ### Winner Worthiness/Auction Reward Metric ###
+    ### Auction Reward Metric ###
     def plot_reward_per_intersection_history(self, export_results=True):
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_reward_history_summed_sims = np.sum(
             self.reward_history_per_simulation_all_sims, axis=0)
@@ -836,9 +871,8 @@ class MasterKeeper:
             self.reward_history_per_simulation_all_sims, axis=0)
 
         # Create a plot with subplots for each intersection. Each subplot is a graph of the reward history of that intersection. In total there are as many subplots as intersections
-        plt.rcParams.update({'font.size': 20})
         fig, axs = plt.subplots(
-            average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+            average_reward_per_intersection.shape[0], average_reward_per_intersection.shape[1], sharex=True, sharey=True)
         for i in range(average_reward_per_intersection.shape[0]):
             for j in range(average_reward_per_intersection.shape[1]):
                 average_reward_per_intersection[i, j] = utils.smooth_data(
@@ -850,10 +884,10 @@ class MasterKeeper:
                 axs[i, j].fill_between(np.arange(0, average_reward_per_intersection.shape[2] - WARMUP_EPOCHS), average_reward_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviation_reward_per_intersection[i, j, WARMUP_EPOCHS:],
                                        average_reward_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviation_reward_per_intersection[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel('Average Auction Reward')
+        fig.supxlabel('Epoch\n')
+        fig.supylabel('\nAverage Auction Reward')
         fig.suptitle(
-            '\n History of Average Auction Reward per Intersection', fontsize=30)
+            '\n History of Average Auction Reward per Intersection')
         plt.savefig(self.args.results_folder +
                     '/average_reward_per_intersection_history.png')
         plt.clf()
@@ -861,9 +895,17 @@ class MasterKeeper:
         if export_results == True:
             np.save(self.export_location + "/average_reward_per_intersection_history.npy",
                     average_reward_per_intersection)
+            np.save(self.export_location + "/std_reward_per_intersection_history.npy",
+                    standard_deviation_reward_per_intersection)
 
     def plot_adaptive_auction_parameters_valuations_per_intersection(self, export_results=True):
         """Creates a plot of subplots for each intersection. Each subplot is a 2 or 3d subplot of the evaluation per parameter set."""
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
         number_of_non_gridlocked_sims = self.args.num_of_simulations - self.num_of_gridlocks
         if NUM_OF_ADAPT_PARAMS == 1:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
@@ -880,16 +922,17 @@ class MasterKeeper:
 
             # Create a plot of subplots for each intersection. Each subplot is a 2d subplot of the evaluation per parameter set.
             fig, axs = plt.subplots(
-                self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
+                self.args.grid_size, self.args.grid_size, sharex=True, sharey=True)
             for i in range(self.args.grid_size):
                 for j in range(self.args.grid_size):
                     axs[i, j].scatter(
                         parameter_space_1d[:, 0], rewards_1d[i, j, :], s=counts_1d[i, j, :], marker="o")
                     axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                    axs[i, j].set_xlabel('Delay Boost')
-                    axs[i, j].set_ylabel('Average Reward')
+
+            fig.supxlabel('Delay Boost\n')
+            fig.supylabel('\nAverage Auction Reward')
             fig.suptitle(
-                '\n Average Reward per Delay Boost Value per Intersection', fontsize=30)
+                '\n Average Reward per Delay Boost Value per Intersection')
             plt.savefig(self.args.results_folder +
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
@@ -912,7 +955,7 @@ class MasterKeeper:
                 average_reward_per_parameter_set_per_intersection, (self.args.grid_size, self.args.grid_size, self.args.adaptive_auction_discretization, self.args.adaptive_auction_discretization))
 
             # Create a plot of subplots for each intersection. Each subplot is a 3d subplot of the evaluation per parameter set.
-            fig = plt.figure(figsize=(20, 20))
+            fig = plt.figure()
             for i in range(self.args.grid_size):
                 for j in range(self.args.grid_size):
                     ax = fig.add_subplot(self.args.grid_size, self.args.grid_size, i *
@@ -928,6 +971,13 @@ class MasterKeeper:
             plt.clf()
 
     def plot_mean_bid_and_inact_rank_per_intersection(self):
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+
         mean_bid_rank_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size))
         se_bid_rank_per_intersection = np.zeros(
@@ -953,7 +1003,7 @@ class MasterKeeper:
 
         rank_labels = ['Bid Rank', 'Time Waited \n Rank']
         fig, axs = plt.subplots(
-            self.args.grid_size, self.args.grid_size, sharex=True, sharey=True, figsize=(20, 20))
+            self.args.grid_size, self.args.grid_size, sharex=True, sharey=True)
         for i in range(self.args.grid_size):
             for j in range(self.args.grid_size):
                 rank_means = [mean_bid_rank_per_intersection[i, j],
@@ -964,9 +1014,10 @@ class MasterKeeper:
                 axs[i, j].bar(rank_labels, rank_means,
                               yerr=rank_ses, capsize=5)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                axs[i, j].set_ylabel('Average Rank Value')
-        plt.suptitle(
-            '\n Average Bid Rank and Time Waited Rank of Winner per Intersection', fontsize=30)
+        fig.supxlabel('Rank Type\n')
+        fig.supylabel('\nAverage Rank Value')
+        fig.suptitle(
+            '\n Average Bid Rank and Time Waited Rank of Winner per Intersection')
         plt.savefig(self.args.results_folder +
                     '/winner_bid_inact_rank_per_intersection.png')
         plt.clf()
@@ -1054,6 +1105,12 @@ class MasterKeeper:
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The average of the Gini coefficients of all intersections. Averaged over sims")
 
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_average_time_waited_history_summed_sims = np.sum(
@@ -1066,7 +1123,7 @@ class MasterKeeper:
             self.average_time_waited_history_per_intersection_all_sims, axis=0)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the average_time_waited history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
-            average_average_time_waited_per_intersection.shape[0], average_average_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+            average_average_time_waited_per_intersection.shape[0], average_average_time_waited_per_intersection.shape[1], sharex=True, sharey=True)
         for i in range(average_average_time_waited_per_intersection.shape[0]):
             for j in range(average_average_time_waited_per_intersection.shape[1]):
                 average_average_time_waited_per_intersection[i, j] = utils.smooth_data(
@@ -1078,10 +1135,10 @@ class MasterKeeper:
                 axs[i, j].fill_between(np.arange(0, average_average_time_waited_per_intersection.shape[2] - WARMUP_EPOCHS), average_average_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviations[i, j, WARMUP_EPOCHS:],
                                        average_average_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviations[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel('Average Average Time Waited')
+        fig.supxlabel('Epoch\n')
+        fig.supylabel('\nAverage Average Time Waited')
         fig.suptitle(
-            '\n History of Average Time Waited per Intersection', fontsize=30)
+            '\n History of Average Time Waited per Intersection')
         plt.savefig(self.args.results_folder +
                     '/average_average_time_waited_per_intersection_history.png')
         plt.clf()
@@ -1090,6 +1147,13 @@ class MasterKeeper:
                     average_average_time_waited_per_intersection)
 
     def plot_max_time_waited_per_intersection_history(self, export_results=True):
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_max_time_waited_history_summed_sims = np.sum(
@@ -1102,7 +1166,7 @@ class MasterKeeper:
             self.max_time_waited_history_per_intersection_all_sims, axis=0)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the max_time_waited history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
-            average_max_time_waited_per_intersection.shape[0], average_max_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+            average_max_time_waited_per_intersection.shape[0], average_max_time_waited_per_intersection.shape[1], sharex=True, sharey=True)
         for i in range(average_max_time_waited_per_intersection.shape[0]):
             for j in range(average_max_time_waited_per_intersection.shape[1]):
                 average_max_time_waited_per_intersection[i, j] = utils.smooth_data(
@@ -1114,10 +1178,10 @@ class MasterKeeper:
                 axs[i, j].fill_between(np.arange(0, average_max_time_waited_per_intersection.shape[2] - WARMUP_EPOCHS), average_max_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviations[i, j, WARMUP_EPOCHS:],
                                        average_max_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviations[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel('Average Max Time Waited')
+        fig.supxlabel('Epoch\n')
+        fig.supylabel('\nAverage Max Time Waited')
         fig.suptitle(
-            '\n History of Average Max Time Waited per Intersection', fontsize=30)
+            '\n History of Average Max Time Waited per Intersection')
         plt.savefig(self.args.results_folder +
                     '/average_max_time_waited_per_intersection_history.png')
         plt.clf()
@@ -1126,6 +1190,12 @@ class MasterKeeper:
                     average_max_time_waited_per_intersection)
 
     def plot_gini_time_waited_per_intersection_history(self, export_results=True):
+        plt.rcParams['figure.titlesize'] = 45  # Title font size
+        plt.rcParams['figure.labelsize'] = 35  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 30  # Title font size
+        plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
         total_gini_time_waited_history_summed_sims = np.sum(
@@ -1138,7 +1208,7 @@ class MasterKeeper:
             self.gini_time_waited_history_per_intersection_all_sims, axis=0)
         # Create a plot with subplots for each intersection. Each subplot is a graph of the gini history of that intersection. In total there are as many subplots as intersections
         fig, axs = plt.subplots(
-            average_gini_time_waited_per_intersection.shape[0], average_gini_time_waited_per_intersection.shape[1], sharex=True, sharey=True, figsize=(20, 20))
+            average_gini_time_waited_per_intersection.shape[0], average_gini_time_waited_per_intersection.shape[1], sharex=True, sharey=True)
         for i in range(average_gini_time_waited_per_intersection.shape[0]):
             for j in range(average_gini_time_waited_per_intersection.shape[1]):
                 average_gini_time_waited_per_intersection[i, j] = utils.smooth_data(
@@ -1150,11 +1220,10 @@ class MasterKeeper:
                 axs[i, j].fill_between(np.arange(0, average_gini_time_waited_per_intersection.shape[2] - WARMUP_EPOCHS), average_gini_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] - standard_deviations[i, j, WARMUP_EPOCHS:],
                                        average_gini_time_waited_per_intersection[i, j, WARMUP_EPOCHS:] + standard_deviations[i, j, WARMUP_EPOCHS:], alpha=0.2,  interpolate=True)
                 axs[i, j].set_title('[' + str(i) + ',' + str(j) + ']')
-                axs[i, j].set_xlabel('Epoch')
-                axs[i, j].set_ylabel(
-                    'Average Gini Coefficient')
-        plt.suptitle(
-            '\n History of Average Gini Coefficient (Based on Time Waited) per Intersection', fontsize=30)
+        fig.supxlabel('Epoch\n')
+        fig.supylabel('\nAverage Gini Coefficient')
+        fig.suptitle(
+            '\n History of Average Gini Coefficient per Intersection (Based on Time Waited)')
         plt.savefig(self.args.results_folder +
                     '/average_gini_time_waited_per_intersection_history.png')
         plt.clf()
@@ -1165,6 +1234,16 @@ class MasterKeeper:
     ### Misc. Metrics ###
     def plot_broke_agents_percentage_history(self):
         """Plot a history of the average percentage of agents that have a balance of 0"""
+        plt.rcParams['figure.titlesize'] = 50  # Title font size
+        plt.rcParams['figure.labelsize'] = 50  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 50  # Title font size
+        plt.rcParams['axes.labelsize'] = 40  # Axes labels font size
+        plt.rcParams['xtick.labelsize'] = 30  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 30  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+        plt.rcParams['legend.fontsize'] = 30  # Figure legend font size
+        plt.rcParams['lines.markersize'] = 10  # Figure markersize
+        
         avg_percentage_broke_agents = np.divide(
             self.all_sims_broke_agents_history, self.args.num_of_simulations)
 
