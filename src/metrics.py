@@ -1,4 +1,4 @@
-"""A class to keep track of the metrics of the simulation and create relevant graphs."""
+"""A class to keep track of the metrics of the simulation and create relevant graphs and calculate relevantmetrics"""
 import os
 import seaborn as sns
 import numpy as np
@@ -927,7 +927,7 @@ class MasterKeeper:
                         '/average_reward_per_parameter_set_per_intersection.png')
             plt.clf()
 
-    def plot_mean_bid_and_inact_rank_per_intersection(self):  
+    def plot_mean_bid_and_inact_rank_per_intersection(self):
         mean_bid_rank_per_intersection = np.zeros(
             (self.args.grid_size, self.args.grid_size))
         se_bid_rank_per_intersection = np.zeros(
@@ -972,7 +972,7 @@ class MasterKeeper:
         plt.clf()
 
     ### Time Waited Metric ###
-    def calc_time_waited_general_metrics(self):  
+    def calc_time_waited_general_metrics(self):
         # Agent Level
         # Average time waited regardless of intersection. Average over sims
         average_time_waited_per_simulation = []
@@ -1041,7 +1041,7 @@ class MasterKeeper:
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
-    def calc_time_waited_gini_metric(self):  
+    def calc_time_waited_gini_metric(self):
         average_gini_time_waited_history_sims = np.mean(
             self.gini_time_waited_history_per_intersection_all_sims, axis=3)  # Average over epochs
         mean_gini_per_simulation = []
@@ -1053,7 +1053,6 @@ class MasterKeeper:
         self.general_metrics['time_waited_avg_gini'] = str(
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The average of the Gini coefficients of all intersections. Averaged over sims")
 
-    
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -1090,7 +1089,6 @@ class MasterKeeper:
             np.save(self.export_location + "/average_average_time_waited_per_intersection_history.npy",
                     average_average_time_waited_per_intersection)
 
-    
     def plot_max_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0
@@ -1127,7 +1125,6 @@ class MasterKeeper:
             np.save(self.export_location + "/average_max_time_waited_per_intersection_history.npy",
                     average_max_time_waited_per_intersection)
 
-    
     def plot_gini_time_waited_per_intersection_history(self, export_results=True):
         # The first x epochs are part of the warm-up period, so they are not included in the results
         # Divide by the number of measurements per intersection to calculate the average. If there are no measurements, the average is 0

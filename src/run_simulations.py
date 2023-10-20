@@ -53,7 +53,7 @@ def run(args):
             for results_keeper in pool.imap(run_simulation, args_and_ids):
                 master_metrics_keeper.store_simulation_results(results_keeper)
                 pbar.update()
-    else :
+    else:
         for results_keeper in pool.imap(run_simulation, args_and_ids):
             master_metrics_keeper.store_simulation_results(results_keeper)
 

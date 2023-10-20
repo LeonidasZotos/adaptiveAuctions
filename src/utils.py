@@ -1,5 +1,6 @@
 """A module containing utility functions, such as finding objects in lists, and removing outliers from data."""
 
+
 def get_intersection(intersections, intersection_id):
     """Returns the intersection object given an intersection id
     Args:
@@ -116,6 +117,7 @@ def remove_outliers(data, restriction=0.1):
         return data
     return filtered_data
 
+
 def smooth_data(lst, window_size=20):
     import math
     smoothed_data = []
@@ -123,9 +125,11 @@ def smooth_data(lst, window_size=20):
         start = max(0, i - window_size // 2)
         end = min(len(lst), i + window_size // 2 + 1)
         # Filter out None or NA values from the sublist
-        sublist = [value for value in lst[start:end] if value is not None and not math.isnan(value)]
+        sublist = [value for value in lst[start:end]
+                   if value is not None and not math.isnan(value)]
         if sublist:
             smoothed_data.append(sum(sublist) / len(sublist))
         else:
-            smoothed_data.append(None)  # If all values are None or NA, you can choose to set the result to None.
+            # If all values are None or NA, you can choose to set the result to None.
+            smoothed_data.append(None)
     return smoothed_data
