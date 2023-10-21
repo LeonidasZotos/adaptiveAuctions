@@ -5,6 +5,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from math import nan
 import src.utils as utils
+from scipy.stats import ttest_ind
 
 NUM_OF_ADAPT_PARAMS = 1
 WARMUP_EPOCHS = 0
@@ -288,7 +289,7 @@ class MasterKeeper:
         print("----------------------------------")
 
     ### Trip Satisfaction Metric ###
-    def calc_satisfaction_gini_metric(self):  # DONE
+    def calc_satisfaction_gini_metric(self):
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
             return [score for (_, score) in dict]
@@ -666,6 +667,20 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
+        
+        # Also do a t-test since we are here[only works if we have both homogeneous and RL bidding]: 
+        if len(homogeneous_bidding_results) > 0 and len(RL_bidding_results) > 0:
+            print("T-test between homogeneous and adaptive bidding: ")
+            result = ttest_ind(homogeneous_bidding_average_satisfaction_scores, RL_bidder_average_satisfaction_scores)
+            print(result)
+            print("Homogeneous bidding mean: " + str(round(np.mean(homogeneous_bidding_average_satisfaction_scores),3)) + "(SD: " + str(round(np.std(homogeneous_bidding_average_satisfaction_scores),3)) + ")")
+            print("Adaptive bidding mean: " + str(round(np.mean(RL_bidder_average_satisfaction_scores),3)) + "(SD: " + str(round(np.std(RL_bidder_average_satisfaction_scores),3)) + ")")
+            if result[1] < 0.05:
+                print("The difference between the means is significant")
+            else:
+                print("The difference between the means is not significant")
+            print("----------------------------------")
+
 
     def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
@@ -844,7 +859,7 @@ class MasterKeeper:
             np.save(self.export_location + "/std_throughput_per_intersection.npy",
                     standard_deviation_throughput_per_intersection)
 
-    def calc_central_congestion(self):  # DONE
+    def calc_central_congestion(self):
         """Calculate the average congestion in the central intersection"""
 
         average_congestion_per_intersection = np.divide(
@@ -1044,7 +1059,7 @@ class MasterKeeper:
         plt.clf()
 
     ### Time Waited Metric ###
-    def calc_time_waited_general_metrics(self):  # DONE
+    def calc_time_waited_general_metrics(self):
         # Agent Level
         # Average time waited regardless of intersection. Average over sims
         average_time_waited_per_simulation = []
@@ -1125,7 +1140,7 @@ class MasterKeeper:
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
-    def calc_time_waited_gini_metric(self):  # DONE
+    def calc_time_waited_gini_metric(self):
         average_gini_time_waited_history_sims = np.mean(
             self.gini_time_waited_history_per_intersection_all_sims, axis=3)  # Average over epochs
         mean_gini_per_simulation = []
@@ -1299,7 +1314,7 @@ class MasterKeeper:
                     '/average_percentage_broke_agents_history.png')
         plt.clf()
 
-    def calc_average_num_of_trips_completed(self):  # DONE
+    def calc_average_num_of_trips_completed(self):
         num_of_trips_per_simulation = []
         for sim in self.all_simulations_satisfaction_scores:
             num_of_trips_in_sim = 0  # That disregards the epoch
