@@ -247,6 +247,10 @@ if __name__ == '__main__':
         '--sweep_mode',
         action=argparse.BooleanOptionalAction,
         help="""If present, no plots are generated to save time.""")
+    run_parser.add_argument(
+        '--low_dpi',
+        action=argparse.BooleanOptionalAction,
+        help="""If enabled, all plots are created with low dpi for efficiency""")
 
     # Clean command
     clean_parser = subparsers.add_parser(

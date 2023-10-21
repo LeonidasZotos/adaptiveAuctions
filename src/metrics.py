@@ -216,9 +216,12 @@ class MasterKeeper:
         if self.args.sweep_mode:
             # If this is activated, don't produce any plots
             return
-
-        plt.rcParams['figure.dpi'] = 200
-        plt.rcParams['savefig.dpi'] = 200
+        if self.args.low_dpi:
+            plt.rcParams['figure.dpi'] = 10
+            plt.rcParams['savefig.dpi'] = 10
+        else:
+            plt.rcParams['figure.dpi'] = 200
+            plt.rcParams['savefig.dpi'] = 200
 
         ### Satisfaction Metrics ###
         # Create a graph of all satisfaction scores, over all simulations
@@ -838,7 +841,7 @@ class MasterKeeper:
             np.save(self.export_location + "/std_throughput_per_intersection.npy",
                     standard_deviation_throughput_per_intersection)
 
-    def calc_central_congestion(self):
+    def calc_central_congestion(self): # DONE
         """Calculate the average congestion in the central intersection"""
 
         average_congestion_per_intersection = np.divide(
@@ -846,6 +849,9 @@ class MasterKeeper:
         average_congestion_per_intersection = np.divide(
             average_congestion_per_intersection, (self.args.queue_capacity * 4))
 
+        # Export for stat analysis
+        np.save(self.export_location + "/stat_average_congestion_per_intersection.npy",
+                average_congestion_per_intersection)
         mean = np.mean(average_congestion_per_intersection, axis=0)
         sd = np.std(average_congestion_per_intersection, axis=0)
 
@@ -1043,6 +1049,8 @@ class MasterKeeper:
             average_time_waited_per_simulation.append(np.mean(sim))
         mean_text = str(round(np.mean(average_time_waited_per_simulation), 3))
         std_text = str(round(np.std(average_time_waited_per_simulation), 3))
+        np.save(self.export_location + "/stat_average_time_waited_per_simulation_agent.npy",
+                average_time_waited_per_simulation)
         self.general_metrics['agent_average_time_waited'] = str(
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average time waited regardless of intersection. Averaged over sims")
         # Max time waited regardless of intersection. Average over sims
@@ -1051,6 +1059,8 @@ class MasterKeeper:
             max_time_waited_per_simulation.append(np.mean(sim))
         max_text = str(round(np.mean(max_time_waited_per_simulation), 3))
         std_text = str(round(np.std(max_time_waited_per_simulation), 3))
+        np.save(self.export_location + "/stat_max_time_waited_per_simulation_agent.npy",
+                max_time_waited_per_simulation)
         self.general_metrics['agent_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited regardless of intersection. Averaged over sims")
 
@@ -1064,6 +1074,8 @@ class MasterKeeper:
             average_time_waited_per_simulation_per_intersection, axis=0), 3))
         std_text = str(np.round(np.std(
             average_time_waited_per_simulation_per_intersection, axis=0), 3))
+        np.save(self.export_location + "/stat_average_time_waited_per_intersection.npy",
+                average_time_waited_per_simulation_per_intersection)
         self.general_metrics['intersection_average_time_waited'] = str(
             "Mean: \n" + mean_text + "\nSD:\n" + std_text + "\nDescription: Average average time waited per intersection. Averaged over sims")
 
@@ -1076,6 +1088,8 @@ class MasterKeeper:
             max_time_waited_per_simulation_per_intersection, axis=0), 3))
         std_text = str(np.round(np.std(
             max_time_waited_per_simulation_per_intersection, axis=0), 3))
+        np.save(self.export_location + "/stat_max_time_waited_per_intersection.npy",
+                max_time_waited_per_simulation_per_intersection)
         self.general_metrics['intersection_max_time_waited'] = str(
             "Mean: \n" + max_text + "\nSD:\n" + std_text + "\nDescription: Average max time waited per intersection. Averaged over sims")
 
@@ -1089,6 +1103,8 @@ class MasterKeeper:
             average_time_waited_per_simulation_per_intersection, axis=0)
         mean_text = str(np.round(np.mean(mean_per_intersection), 3))
         std_text = str(np.round(np.std(mean_per_intersection), 3))
+        np.save(self.export_location + "/stat_average_time_waited_grid.npy",
+                average_time_waited_per_simulation_per_intersection)
         self.general_metrics['grid_average_time_waited'] = str(
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: Average average time waited of averages of intersections. Averaged over intersections")
 
@@ -1101,6 +1117,8 @@ class MasterKeeper:
             max_time_waited_per_simulation_per_intersection, axis=0)
         max_text = str(np.round(np.mean(max_per_intersection), 3))
         std_text = str(np.round(np.std(max_per_intersection), 3))
+        np.save(self.export_location + "/stat_max_time_waited_grid.npy",
+                max_time_waited_per_simulation_per_intersection)
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
@@ -1276,7 +1294,7 @@ class MasterKeeper:
                     '/average_percentage_broke_agents_history.png')
         plt.clf()
 
-    def calc_average_num_of_trips_completed(self):
+    def calc_average_num_of_trips_completed(self): # DONE
         num_of_trips_per_simulation = []
         for sim in self.all_simulations_satisfaction_scores:
             num_of_trips_in_sim = 0  # That disregards the epoch
@@ -1284,7 +1302,10 @@ class MasterKeeper:
                 if sim[epoch] != None:
                     num_of_trips_in_sim += len(sim[epoch])
             num_of_trips_per_simulation.append(num_of_trips_in_sim)
-
+        
+        # Export for statistical analysis
+        np.save(self.export_location + "/stat_num_of_trips_per_simulation.npy",
+                num_of_trips_per_simulation)
         mean_text = str(round(np.mean(num_of_trips_per_simulation), 3))
         std_text = str(round(np.std(num_of_trips_per_simulation), 3))
 
