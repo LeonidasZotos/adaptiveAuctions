@@ -288,7 +288,7 @@ class MasterKeeper:
         print("----------------------------------")
 
     ### Trip Satisfaction Metric ###
-    def calc_satisfaction_gini_metric(self):
+    def calc_satisfaction_gini_metric(self):  # DONE
         def remove_car_copies_from_dict(dict):
             """Removes the car copies from the dictionary, so that it only contains the satisfaction scores"""
             return [score for (_, score) in dict]
@@ -318,7 +318,8 @@ class MasterKeeper:
 
         mean_gini_text = str(round(np.mean(gini_per_simulation), 3))
         std_gini_text = str(round(np.std(gini_per_simulation), 3))
-
+        np.save(self.export_location + "/stat_satisfaction_gini.npy",
+                gini_per_simulation)
         self.general_metrics['satisfacation_avg_gini'] = str(
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The Gini coefficient of all satisfaction scores of the simulation. Averaged over sims")
 
@@ -760,6 +761,8 @@ class MasterKeeper:
 
         mean = np.mean(all_mean_satisfactions)
         sd = np.std(all_mean_satisfactions)
+        np.save(self.export_location + "/stat_satisfaction_mean.npy",
+                all_mean_satisfactions)
         mean_text = str(np.round(mean, 3))
         std_text = str(np.round(sd, 3))
         self.general_metrics['Average Trip Satisfaction'] = str(
@@ -841,7 +844,7 @@ class MasterKeeper:
             np.save(self.export_location + "/std_throughput_per_intersection.npy",
                     standard_deviation_throughput_per_intersection)
 
-    def calc_central_congestion(self): # DONE
+    def calc_central_congestion(self):  # DONE
         """Calculate the average congestion in the central intersection"""
 
         average_congestion_per_intersection = np.divide(
@@ -1041,7 +1044,7 @@ class MasterKeeper:
         plt.clf()
 
     ### Time Waited Metric ###
-    def calc_time_waited_general_metrics(self):
+    def calc_time_waited_general_metrics(self):  # DONE
         # Agent Level
         # Average time waited regardless of intersection. Average over sims
         average_time_waited_per_simulation = []
@@ -1122,7 +1125,7 @@ class MasterKeeper:
         self.general_metrics['grid_max_time_waited'] = str(
             "Mean: " + max_text + " | SD: " + std_text + " | Description: Average max time waited of averages of intersections. Averaged over intersections")
 
-    def calc_time_waited_gini_metric(self):
+    def calc_time_waited_gini_metric(self):  # DONE
         average_gini_time_waited_history_sims = np.mean(
             self.gini_time_waited_history_per_intersection_all_sims, axis=3)  # Average over epochs
         mean_gini_per_simulation = []
@@ -1131,7 +1134,9 @@ class MasterKeeper:
                 np.mean(sim))  # Average over intersections
         mean_gini_text = str(round(np.mean(mean_gini_per_simulation), 3))
         std_gini_text = str(round(np.std(mean_gini_per_simulation), 3))
-        self.general_metrics['time_waited_avg_gini'] = str(
+        np.save(self.export_location + "/stat_time_waited_gini.npy",
+                mean_gini_per_simulation)
+        self.general_metrics['stat_time_waited_avg_gini'] = str(
             "Mean: " + mean_gini_text + " | SD: " + std_gini_text + " | Description: The average of the Gini coefficients of all intersections. Averaged over sims")
 
     def plot_average_time_waited_per_intersection_history(self, export_results=True):
@@ -1294,7 +1299,7 @@ class MasterKeeper:
                     '/average_percentage_broke_agents_history.png')
         plt.clf()
 
-    def calc_average_num_of_trips_completed(self): # DONE
+    def calc_average_num_of_trips_completed(self):  # DONE
         num_of_trips_per_simulation = []
         for sim in self.all_simulations_satisfaction_scores:
             num_of_trips_in_sim = 0  # That disregards the epoch
@@ -1302,7 +1307,7 @@ class MasterKeeper:
                 if sim[epoch] != None:
                     num_of_trips_in_sim += len(sim[epoch])
             num_of_trips_per_simulation.append(num_of_trips_in_sim)
-        
+
         # Export for statistical analysis
         np.save(self.export_location + "/stat_num_of_trips_per_simulation.npy",
                 num_of_trips_per_simulation)
