@@ -1214,6 +1214,8 @@ class MasterKeeper:
         if export_results == True:
             np.save(self.export_location + "/average_average_time_waited_per_intersection_history.npy",
                     average_average_time_waited_per_intersection)
+            np.save(self.export_location + "/std_average_time_waited_per_intersection_history.npy",
+                    standard_deviations)
 
     def plot_max_time_waited_per_intersection_history(self, export_results=True):
         plt.rcParams['figure.titlesize'] = 45  # Title font size
