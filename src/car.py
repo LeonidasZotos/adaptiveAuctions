@@ -5,6 +5,7 @@ so that no full copies are kept.
 import numpy as np
 import random
 from math import floor
+from datetime import datetime
 
 
 class Car:
@@ -229,7 +230,8 @@ class Car:
                 np.exp(-((options - mean) ** 2) / (2 * std_dev ** 2))
             probs /= probs.sum()
             # Now that the probability distribution is fixed, shuffled the options.
-            seed = round(epoch/hotspot_change_interval, 0)
+            system_time_second = datetime.now().second # Ensures that it differs from simulation to simulation; else the hotspots order is the same
+            seed = round((epoch+system_time_second)/hotspot_change_interval, 0)
             # Seed changes every hotspot_change_interval epochs.
             np.random.seed(int(seed))
             np.random.shuffle(options)

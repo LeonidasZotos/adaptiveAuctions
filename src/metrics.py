@@ -271,6 +271,9 @@ class MasterKeeper:
         # Satisfaction Metrics:
         self.calc_average_trip_satisfaction()
         self.calc_satisfaction_gini_metric()
+        
+        # Auction Metric:
+        self.calc_average_auction_reward_per_intersection()
 
         # Export the calculated metrics into a .txt file
         with open(self.args.results_folder + '/general_metrics.txt', 'w') as f:
@@ -667,20 +670,22 @@ class MasterKeeper:
         plt.savefig(self.args.results_folder +
                     '/average_satisfaction_score_by_bidding_type.png')
         plt.clf()
-        
-        # Also do a t-test since we are here[only works if we have both homogeneous and RL bidding]: 
+
+        # Also do a t-test since we are here[only works if we have both homogeneous and RL bidding]:
         if len(homogeneous_bidding_results) > 0 and len(RL_bidding_results) > 0:
             print("T-test between homogeneous and adaptive bidding: ")
-            result = ttest_ind(homogeneous_bidding_average_satisfaction_scores, RL_bidder_average_satisfaction_scores)
+            result = ttest_ind(
+                homogeneous_bidding_average_satisfaction_scores, RL_bidder_average_satisfaction_scores)
             print(result)
-            print("Homogeneous bidding mean: " + str(round(np.mean(homogeneous_bidding_average_satisfaction_scores),3)) + "(SD: " + str(round(np.std(homogeneous_bidding_average_satisfaction_scores),3)) + ")")
-            print("Adaptive bidding mean: " + str(round(np.mean(RL_bidder_average_satisfaction_scores),3)) + "(SD: " + str(round(np.std(RL_bidder_average_satisfaction_scores),3)) + ")")
+            print("Homogeneous bidding mean: " + str(round(np.mean(homogeneous_bidding_average_satisfaction_scores), 3)
+                                                     ) + "(SD: " + str(round(np.std(homogeneous_bidding_average_satisfaction_scores), 3)) + ")")
+            print("Adaptive bidding mean: " + str(round(np.mean(RL_bidder_average_satisfaction_scores), 3)
+                                                  ) + "(SD: " + str(round(np.std(RL_bidder_average_satisfaction_scores), 3)) + ")")
             if result[1] < 0.05:
                 print("The difference between the means is significant")
             else:
                 print("The difference between the means is not significant")
             print("----------------------------------")
-
 
     def plot_histogram_satisfaction_scores_by_bidding_type(self, filter_outliers=False):
         """Creates a histogram of all satisfaction scores, over all simulations, for each bidding type, represented by a different color.
@@ -1057,6 +1062,20 @@ class MasterKeeper:
         np.save(self.export_location + "/se_inact_rank_per_intersection.npy",
                 se_inact_rank_per_intersection)
         plt.clf()
+
+    def calc_average_auction_reward_per_intersection(self): 
+        average_auction_reward_per_simulation_per_intersection = []
+        for sim in self.reward_history_per_simulation_all_sims:
+            average_auction_reward_per_simulation_per_intersection.append(
+                np.mean(sim, axis=2))
+        mean_text = str(np.round(np.mean(
+            average_auction_reward_per_simulation_per_intersection, axis=0), 3))
+        std_text = str(np.round(np.std(
+            average_auction_reward_per_simulation_per_intersection, axis=0), 3))
+        np.save(self.export_location + "/stat_average_auction_reward_per_intersection.npy",
+                average_auction_reward_per_simulation_per_intersection)
+        self.general_metrics['intersection_average_auction_reward'] = str(
+            "Mean: \n" + mean_text + "\nSD:\n" + std_text + "\nDescription: Average average auction reward per intersection. Averaged over sims")
 
     ### Time Waited Metric ###
     def calc_time_waited_general_metrics(self):

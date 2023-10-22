@@ -12,8 +12,8 @@ from sklearn.svm import SVR
 # E-greedy_exp_decay: uninformed_score, initial_epsilon, epsilon_decay (multiplier)
 # UCB1: Does not have a hyperparameter. Go to the function to change the uninformed score
 # Reverse Sigmoid Decay: uninformed score, percent_of_exploration
-BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [1, 0.001],
-                                    'e_greedy_decay': [1, 0.01],
+BEST_PARAMETERS_ACTION_SELECTION = {'boltzmann': [1, 0.005],
+                                    'e_greedy_decay': [1, 0.005],
                                     'e_greedy_exp_decay': [0, 1, 0.95],
                                     'ucb1': [],
                                     'reverse_sigmoid_decay': [0, 0.05]}
