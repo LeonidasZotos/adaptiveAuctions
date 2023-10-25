@@ -3,7 +3,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=64
-#SBATCH --job-name=ucb1_sweep_1
+#SBATCH --job-name=ucb1_sweep_One
 #SBATCH --mem=32GB
 
 module purge
