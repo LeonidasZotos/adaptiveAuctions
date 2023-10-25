@@ -938,6 +938,7 @@ class MasterKeeper:
         plt.rcParams['xtick.labelsize'] = 25  # X-axis tick labels font size
         plt.rcParams['ytick.labelsize'] = 25  # Y-axis tick labels font size
         plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+        print("number of gridlocks: " + str(self.num_of_gridlocks))
         number_of_non_gridlocked_sims = self.args.num_of_simulations - self.num_of_gridlocks
         if NUM_OF_ADAPT_PARAMS == 1:
             # Divide by all the valuations for each parameter set by the number of simulations to calculate the average.
