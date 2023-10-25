@@ -218,8 +218,8 @@ class MasterKeeper:
             # If this is activated, don't produce any plots
             return
         if self.args.low_dpi:
-            plt.rcParams['figure.dpi'] = 10
-            plt.rcParams['savefig.dpi'] = 10
+            plt.rcParams['figure.dpi'] = 50
+            plt.rcParams['savefig.dpi'] = 50
         else:
             plt.rcParams['figure.dpi'] = 200
             plt.rcParams['savefig.dpi'] = 200
