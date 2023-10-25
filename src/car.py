@@ -223,14 +223,15 @@ class Car:
             # Here, we keep the same distribution, but we shuffle the choices. In this way, the hotspots change every 20 epochs.
             # Binomial Distribution parameters
             hotspot_change_interval = 50
-            mean = round(self.args.grid_size ** 2)
+            mean = int((self.args.grid_size ** 2)/2)
             std_dev = 1
             options = np.arange(0, self.args.grid_size ** 2)
             probs = (1 / (std_dev * np.sqrt(2 * np.pi))) * \
                 np.exp(-((options - mean) ** 2) / (2 * std_dev ** 2))
             probs /= probs.sum()
             # Now that the probability distribution is fixed, shuffled the options.
-            system_time_second = datetime.now().second # Ensures that it differs from simulation to simulation; else the hotspots order is the same
+            # Ensures that it differs from simulation to simulation; else the hotspots order is the same
+            system_time_second = datetime.now().second
             seed = round((epoch+system_time_second)/hotspot_change_interval, 0)
             # Seed changes every hotspot_change_interval epochs.
             np.random.seed(int(seed))

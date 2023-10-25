@@ -1,10 +1,10 @@
 #!/bin/bash
 # This script is most probably used to check if the hpc_script works locally, before sending it to the cluster.
-adaptive_auction_update_rule=("simple_bandit")
-adaptive_auction_action_selection=("e_greedy_exp_decay")
-action_selection_hyperparameters=("0 1 0.999" "0 1 0.998" "0 1 0.997" "0 1 0.996" "0 1 0.995" "0 1 0.99" "0 1 0.98" "0 1 0.97" "0 1 0.95" "0 1 0.90" "0 1 0.85")
+adaptive_auction_update_rule=("simple_bandit" "svr")
+adaptive_auction_action_selection=("ucb1")
+action_selection_hyperparameters=("0")
 epochs=10000
-num_of_simulations=100
+num_of_simulations=20
 
 for var1 in "${adaptive_auction_update_rule[@]}"
 do

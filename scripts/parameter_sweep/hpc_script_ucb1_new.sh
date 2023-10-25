@@ -15,7 +15,7 @@ adaptive_auction_update_rule=("simple_bandit" "svr")
 adaptive_auction_action_selection=("ucb1")
 action_selection_hyperparameters=("1")
 epochs=10000
-num_of_simulations=256
+num_of_simulations=20
 
 for var1 in "${adaptive_auction_update_rule[@]}"
 do
@@ -23,7 +23,7 @@ do
     do
         for var3 in "${action_selection_hyperparameters[@]}"
         do
-            command="python3 ../aatc.py run --sweep_mode --num_of_simulations $num_of_simulations --num_of_epochs $epochs --all_cars_bid --with_hotspots --adaptive_auction_update_rule $var1 --adaptive_auction_action_selection $var2 --action_selection_hyperparameters $var3 --adaptive_auction_discretization 23"
+            command="python3 ../aatc.py run --sweep_mode --num_of_simulations $num_of_simulations --num_of_epochs $epochs --all_cars_bid --with_hotspots --adaptive_auction_update_rule $var1 --adaptive_auction_action_selection $var2 --action_selection_hyperparameters $var3 --adaptive_auction_discretization 25"
             echo "Executing: $command"
             eval $command
         done
