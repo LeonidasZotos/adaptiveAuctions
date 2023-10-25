@@ -798,8 +798,7 @@ class MasterKeeper:
         plt.rcParams['axes.titlesize'] = 60  # Title font size
         plt.rcParams['xtick.labelsize'] = 35  # X-axis tick labels font size
         plt.rcParams['ytick.labelsize'] = 35  # Y-axis tick labels font size
-        plt.rcParams['figure.figsize'] = (30, 30)  # Figure size
-
+        plt.rcParams['figure.figsize'] = (30, 30)  # Figure size. 
         # Create heatmap of average congestion per intersection
         total_population_per_intersection = np.sum(
             self.total_population_per_intersection_all_sims, axis=0)
@@ -809,9 +808,8 @@ class MasterKeeper:
             average_congestion_per_intersection, self.args.num_of_epochs)
         average_congestion_per_intersection = np.divide(
             average_congestion_per_intersection, (self.args.queue_capacity * 4))
-        cbar_kws = {'label': 'Congestion Scale'}
         ax = sns.heatmap(average_congestion_per_intersection,
-                         annot=True, cbar_kws=cbar_kws)
+                         annot=True, cbar=False)
         ax.set(xlabel='X coordinate', ylabel='Y coordinate',
                title='Average Congestion per Intersection\n')
         plt.savefig(self.args.results_folder +
