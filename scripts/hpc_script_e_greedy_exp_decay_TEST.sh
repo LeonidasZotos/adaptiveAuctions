@@ -1,5 +1,16 @@
 #!/bin/bash
-# This script is most probably used to check if the hpc_script works locally, before sending it to the cluster.
+#SBATCH --time=1:00:00
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=64
+#SBATCH --job-name=double_check_test
+#SBATCH --mem=64GB
+
+module purge
+module load Python/3.9.6-GCCcore-11.2.0
+ 
+source $HOME/.envs/cars/bin/activate
+ 
 adaptive_auction_update_rule=("simple_bandit")
 adaptive_auction_action_selection=("e_greedy_exp_decay")
 action_selection_hyperparameters=("0 1 0.999" "0 1 0.998" "0 1 0.997" "0 1 0.996" "0 1 0.995" "0 1 0.99" "0 1 0.98" "0 1 0.97" "0 1 0.95" "0 1 0.90" "0 1 0.85")
@@ -18,3 +29,8 @@ do
         done
     done
 done
+
+deactivate
+
+
+
