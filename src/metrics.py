@@ -8,6 +8,7 @@ import src.utils as utils
 from scipy.stats import ttest_ind
 
 NUM_OF_ADAPT_PARAMS = 1
+NUM_OF_ADAPT_BIDDING_OPTIONS = 10
 WARMUP_EPOCHS = 0
 
 
@@ -132,6 +133,10 @@ class MasterKeeper:
         ####### Misc. #######
         self.all_sims_broke_agents_history = np.zeros(self.args.num_of_epochs)
 
+        self.all_sims_adaptive_bidding_parameters_space = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+        self.all_sims_adaptive_bidding_parameters_counts = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+        self.all_sims_adaptive_bidding_parameters_valuations = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+
     def store_simulation_results(self, sim_metrics_keeper):
         """Prepares the metrics keeper for a new simulation, by clearing the results of the current simulation
         Args:
@@ -200,8 +205,17 @@ class MasterKeeper:
                 if valid_indices[i, j]:
                     self.all_sims_winners_bid_ranks_means[i][j].append(
                         means[i, j])
+
         ### Misc. ###
         self.all_sims_broke_agents_history += sim_metrics_keeper.broke_history
+
+        self.all_sims_adaptive_bidding_parameters_space = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+        self.all_sims_adaptive_bidding_parameters_counts = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+        self.all_sims_adaptive_bidding_parameters_valuations = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+
+        self.all_sims_adaptive_bidding_parameters_space = sim_metrics_keeper.adaptive_bidding_parameters_space
+        self.all_sims_adaptive_bidding_parameters_counts += sim_metrics_keeper.adaptive_bidding_parameters_counts
+        self.all_sims_adaptive_bidding_parameters_valuations += sim_metrics_keeper.adaptive_bidding_parameters_valuations
 
     def produce_results(self):
         """Produces all the evaluation results of all simulations"""
@@ -256,6 +270,7 @@ class MasterKeeper:
 
         ### Misc. ###
         self.plot_broke_agents_percentage_history()
+        self.plot_adaptive_bidding_valuation_per_parameter()
 
     def produce_general_metrics(self):
         """Produces the general metrics of all simulations"""
@@ -271,7 +286,7 @@ class MasterKeeper:
         # Satisfaction Metrics:
         self.calc_average_trip_satisfaction()
         self.calc_satisfaction_gini_metric()
-        
+
         # Auction Metric:
         self.calc_average_auction_reward_per_intersection()
 
@@ -798,7 +813,7 @@ class MasterKeeper:
         plt.rcParams['axes.titlesize'] = 60  # Title font size
         plt.rcParams['xtick.labelsize'] = 35  # X-axis tick labels font size
         plt.rcParams['ytick.labelsize'] = 35  # Y-axis tick labels font size
-        plt.rcParams['figure.figsize'] = (30, 30)  # Figure size. 
+        plt.rcParams['figure.figsize'] = (30, 30)  # Figure size.
         # Create heatmap of average congestion per intersection
         total_population_per_intersection = np.sum(
             self.total_population_per_intersection_all_sims, axis=0)
@@ -1062,7 +1077,7 @@ class MasterKeeper:
                 se_inact_rank_per_intersection)
         plt.clf()
 
-    def calc_average_auction_reward_per_intersection(self): 
+    def calc_average_auction_reward_per_intersection(self):
         average_auction_reward_per_simulation_per_intersection = []
         for sim in self.reward_history_per_simulation_all_sims:
             average_auction_reward_per_simulation_per_intersection.append(
@@ -1352,6 +1367,36 @@ class MasterKeeper:
         self.general_metrics['num_of_trips_completed'] = str(
             "Mean: " + mean_text + " | SD: " + std_text + " | Description: The mean number of trips completed per simulation. Averaged over sims")
 
+    def plot_adaptive_bidding_valuation_per_parameter(self, export_results=True):
+        """Creates a plot with the valuation per parameter."""
+        plt.rcParams['figure.titlesize'] = 50  # Title font size
+        plt.rcParams['figure.labelsize'] = 50  # Axes labels font size
+        plt.rcParams['axes.titlesize'] = 50  # Title font size
+        plt.rcParams['axes.labelsize'] = 40  # Axes labels font size
+        plt.rcParams['xtick.labelsize'] = 30  # X-axis tick labels font size
+        plt.rcParams['ytick.labelsize'] = 30  # Y-axis tick labels font size
+        plt.rcParams['figure.figsize'] = (30, 20)  # Figure size
+        plt.rcParams['lines.markersize'] = 10  # Figure markersize        
+
+        plt.scatter(self.all_sims_adaptive_bidding_parameters_space, self.all_sims_adaptive_bidding_parameters_valuations,
+                    s=self.all_sims_adaptive_bidding_parameters_counts*20, marker="o")
+        
+        plt.title('Average Expected Trip Satisfaction per Bid Aggression\n')
+        plt.xlabel('\nBid Aggression')
+        plt.ylabel('Expected Trip Satisfaction\n')
+
+        plt.savefig(self.args.results_folder +
+                    '/average_satisfaction_per_aggression.png')
+        plt.clf()
+
+        if export_results == True:
+            np.save(self.export_location + "/all_sims_adaptive_bidding_parameters_space.npy",
+                    self.all_sims_adaptive_bidding_parameters_space)
+            np.save(self.export_location + "/all_sims_adaptive_bidding_parameters_valuations.npy",
+                    self.all_sims_adaptive_bidding_parameters_valuations)
+            np.save(self.export_location + "/all_sims_adaptive_bidding_parameters_counts.npy",
+                    self.all_sims_adaptive_bidding_parameters_counts)
+
 
 class SimulationMetrics:
     """
@@ -1435,6 +1480,10 @@ class SimulationMetrics:
         ### Misc. ###
         self.broke_history = []
 
+        self.adaptive_bidding_parameters_space = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+        self.adaptive_bidding_parameters_counts = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+        self.adaptive_bidding_parameters_valuations = np.zeros(NUM_OF_ADAPT_BIDDING_OPTIONS)
+
     def check_if_gridlocked(self):
         # If a queue has been inactive for more than half of the simulation, it is considered gridlocked
         if (np.nanmax(list(np.concatenate(self.max_time_waited_history_per_intersection).flat)) > self.args.num_of_epochs / 2):
@@ -1451,6 +1500,21 @@ class SimulationMetrics:
         """
         if satisfaction_scores:  # If it is not empty
             self.current_sim_satisfaction_scores[epoch] = satisfaction_scores
+
+    def accumulate_adaptive_parameter_valuations(self):
+        """Accumulates the parameters of the adaptive bidding parameters"""
+        count_of_RL_cars = 0
+        for car in self.grid.all_cars:
+            if car.bidding_type == "RL":
+                count_of_RL_cars += 1
+                dictionary = car.get_adaptive_bidder_params()
+                self.adaptive_bidding_parameters_space = dictionary["possible_aggressions"]
+                self.adaptive_bidding_parameters_counts += dictionary["counts"]
+                self.adaptive_bidding_parameters_valuations += dictionary["expected_rewards"]
+
+        # Divide each element by the number of cars:
+        self.adaptive_bidding_parameters_counts /= count_of_RL_cars
+        self.adaptive_bidding_parameters_valuations /= count_of_RL_cars
 
     def ready_for_new_epoch(self):
         """Prepares the metrics keeper for the next epoch"""
@@ -1498,3 +1562,5 @@ class SimulationMetrics:
 
         ### Misc. ###
         self.broke_history = self.grid.get_broke_history()
+
+        self.accumulate_adaptive_parameter_valuations()

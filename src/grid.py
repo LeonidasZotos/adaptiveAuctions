@@ -135,9 +135,6 @@ class Grid:
         total_spots = self.args.grid_size * \
             self.args.grid_size * 4 * self.args.queue_capacity
         number_of_spawns = int(total_spots * self.args.congestion_rate)
-        # Create a default BidGenerator object, which will be used if shared_bid_generator is True
-        # bid_generator = BidGenerator(self.args, )
-
         # As long as spots need to be filled in, spawn cars
         while number_of_spawns > 0:
             # Pick a random intersection and queue

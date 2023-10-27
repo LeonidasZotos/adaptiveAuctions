@@ -100,6 +100,10 @@ class BidGenerator:
         self.params_and_expected_rewards['expected_rewards'] = [uninformed_score] * len(
             self.params_and_expected_rewards['expected_rewards'])
 
+    def get_adaptive_bidder_params(self):
+        """Returns the dicrionary with the params of the adaptive bidder."""
+        return self.params_and_expected_rewards
+        
     ### Bidding Strategies ###
     def generate_homogeneous_bid(self, urgency):
         """Returns a homogeneous bid, which is the urgency

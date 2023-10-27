@@ -209,6 +209,10 @@ class Car:
         """Returns True if balance > 0, False otherwise"""
         return self.balance > 0
 
+    def get_adaptive_bidder_params(self):
+        """Returns the dicrionary with the params of the adaptive bidder."""
+        return self.bid_generator.get_adaptive_bidder_params()
+
     ### General state functions ###
     def reset_final_destination(self, epoch=0):
         """Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
