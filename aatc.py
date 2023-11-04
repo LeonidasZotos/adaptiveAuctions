@@ -58,7 +58,7 @@ if __name__ == '__main__':
         choices=range(1, 100001),
         metavar="[1-100000]",
         type=int,
-        help="Number of epochs to run. Defaults to 200. Must be an integer between 1 and 5000."
+        help="Number of epochs to run. Defaults to 10000. Must be an integer between 1 and 100000."
     )
 
     run_parser.add_argument(
@@ -67,7 +67,7 @@ if __name__ == '__main__':
         choices=range(1, 10001),
         metavar="[1-10000]",
         type=int,
-        help="Number of simulations to run. Defaults to 1. Must be an integer between 1 and 1000."
+        help="Number of simulations to run. Defaults to 50. Must be an integer between 1 and 10000."
     )
 
     run_parser.add_argument(
@@ -84,20 +84,20 @@ if __name__ == '__main__':
         choices=range(1, 101),
         metavar="[0-100]",
         type=int,
-        help="Capacity of each car queue. Defaults to 6. Must be an integer between 1 and 100."
+        help="Capacity of each car queue. Defaults to 10. Must be an integer between 1 and 100."
     )
 
     run_parser.add_argument(
         "--congestion_rate",
         default=0.07,
         type=float_range(0.01, 1),
-        help="Rate of congestion (Percentage of occupied spots, 0.01-1)."
+        help="Rate of congestion. Defaults to 0.07. Must be a float between 0.01 and 1."
     )
 
     run_parser.add_argument(
         '--with_hotspots',
         action=argparse.BooleanOptionalAction,
-        help="""If enabled, there are periodic hotspots to increase congestion in different places.""")
+        help="""If enabled, there are periodic hotspots to increase congestion in different intersections.""")
 
     run_parser.add_argument(
         "--wage_time",
@@ -105,7 +105,7 @@ if __name__ == '__main__':
         choices=range(1, 101),
         metavar="[1-100]",
         type=int,
-        help="Number of epochs between wage distributions. Defaults to 1. Must be an integer between 1 and 100."
+        help="Number of epochs between wage distributions. Defaults to 10. Must be an integer between 1 and 100."
     )
     run_parser.add_argument(
         "--credit_balance",
@@ -126,8 +126,8 @@ if __name__ == '__main__':
         choices=["boltzmann", "e_greedy_decay", "e_greedy_exp_decay",
                  "ucb1", "reverse_sigmoid_decay", "random", "zero"],
         type=str,
-        help="Type of auction modifier action selection. Defaults to 'e_greedy_decay'. Must be one of 'boltzmann',\
-        'e_greedy_decay', 'e_greedy_exp_decay', 'ucb1', 'reverse_sigmoid_decay', 'random' or 'zero'."
+        help="Type of auction modifier action selection. Defaults to 'e_greedy_exp_decay'. Must be one of 'boltzmann',\
+            'e_greedy_decay', 'e_greedy_exp_decay', 'ucb1', 'reverse_sigmoid_decay', 'random' or 'zero'."
     )
 
     run_parser.add_argument(
@@ -144,7 +144,7 @@ if __name__ == '__main__':
         default="simple_bandit",
         choices=["simple_bandit", "svr"],
         type=str,
-        help="This is the rule used to update the expected reward for each parameter combination. E.g. simple_bandit uses a simple average reward, while svr does a fit."
+        help="This is the rule used to update the expected reward for each parameter combination. E.g. simple_bandit uses a simple average reward, while svr does a fit. Defaults to simple_bandit. Must be one of 'simple_bandit' or 'svr'."
     )
 
     run_parser.add_argument(
@@ -153,7 +153,7 @@ if __name__ == '__main__':
         choices=range(1, 1001),
         metavar="[1-1000]",
         type=int,
-        help="Length of an episode for the adaptive auction. I.e. the number of epochs to run the auction with the same parameters. Defaults to 1. Must be an integer between 1 and 1000."
+        help="Length of an episode for the adaptive auction. I.e. the number of epochs to run the auction with the same parameters. Defaults to 10. Must be an integer between 1 and 1000."
     )
     run_parser.add_argument(
         '--action_selection_hyperparameters',
@@ -209,19 +209,13 @@ if __name__ == '__main__':
         help="""If enabled, all cars of a queue can bid, not only the first one.""")
 
     run_parser.add_argument(
-        '--shared_bid_generator',
-        action=argparse.BooleanOptionalAction,
-        help="""If enabled, all bidders will share the same bid generator, instead of agents learning to bid separately.""")
-
-    run_parser.add_argument(
         '--bidders_proportion',
         nargs=5,
         default=[1, 0, 0, 0, 1],
         type=int,
         help="""Proportion for the types of bidders to use, should be a list of integers.
             Order: [homogeneous, heterogeneous, random, free-riders & RL]
-            Does not have to add up to something. E.g. "2 1 1 0 0 " means 2/4 homogeneous, 1/4 heterogeneous, 1/4 random and 0 free-riders and RL bidders.
-            """)
+            Defaults to [1, 0, 0, 0, 1] (only homogeneous and RL).""")
 
     run_parser.add_argument(
         '--bidders_urgency_distribution',
@@ -235,7 +229,7 @@ if __name__ == '__main__':
         "--results_folder",
         default="results/" + datetime.now().strftime("%Y-%m-%d_%H-%M-%S"),
         type=str,
-        help="Path to the Results Folder. Defaults to 'results'."
+        help="Path to the Results Folder. Defaults to 'results/' + current date & time."
     )
 
     run_parser.add_argument(
@@ -246,15 +240,16 @@ if __name__ == '__main__':
     run_parser.add_argument(
         '--sweep_mode',
         action=argparse.BooleanOptionalAction,
-        help="""If present, no plots are generated to save time.""")
+        help="""If present, no plots are generated to reduce execution time.""")
+    
     run_parser.add_argument(
         '--low_dpi',
         action=argparse.BooleanOptionalAction,
-        help="""If enabled, all plots are created with low dpi for efficiency""")
+        help="""If enabled, all plots are created with low dpi to reduce execution time.""")
 
     # Clean command
     clean_parser = subparsers.add_parser(
-        'clean', help='Clean files from previous runs.')
+        'clean', help='Clean files and cache from previous runs.')
 
     # Run the appropriate sub-program with arguments
     args = parser.parse_args()

@@ -145,8 +145,6 @@ class Grid:
             if random_queue.has_capacity():
                 bidding_type = random.choices(
                     ['homogeneous', 'heterogeneous', 'random', 'free-rider', 'RL'], weights=self.args.bidders_proportion)[0]
-                # If shared_bid_generator is False, create a new BidGenerator object for each car
-                # if not self.args.shared_bid_generator:
                 bid_generator = BidGenerator(self.args, bidding_type)
                 # Create a new car, number_of_spawns is actually the ID.
                 car = Car(self.args, number_of_spawns,
