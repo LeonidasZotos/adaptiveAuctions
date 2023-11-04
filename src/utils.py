@@ -119,6 +119,13 @@ def remove_outliers(data, restriction=0.1):
 
 
 def smooth_data(lst, window_size=20):
+    """Smooths a list of data using a moving average
+    Args:
+        lst (list): A list of data
+        window_size (int, optional): The window size of the moving average. Defaults to 20.
+        Returns:
+        list: A list of data which has been smoothed
+    """
     import math
     smoothed_data = []
     for i in range(len(lst)):

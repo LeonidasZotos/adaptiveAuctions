@@ -16,7 +16,7 @@ class BidGenerator:
         generate_homogeneous_bid(urgency): Returns a homogeneous bid which is the urgency
         generate_random_bid(balance): Returns a random bid between 0 and the total balance of the car
         generate_free_rider_bid(): Returns a bid of 0 (free-riding)
-        generate_RL_bid(urgency): TODO: Returns a bid, based on the RL bidding strategy. For now, return homogeneous bid
+        generate_RL_bid(urgency): Returns a bid, based on the RL bidding strategy
         generate_bid(balance, urgency): Returns a bid, based on the bidding strategy
         ready_for_new_epoch(): Prepares the Bid Generator for the next epoch
     """
@@ -185,9 +185,10 @@ class BidGenerator:
         self.params_and_expected_rewards['counts'][param_index] += 1
 
     def generate_RL_bid(self, urgency, bidding_aggression):
-        """TODO: Returns a bid, based on the RL bidding strategy. For now, return homogeneous bid
+        """Returns a bid, based on the RL bidding strategy.
         Args:
             urgency (float): The urgency of the car.
+            bidding_aggression (float): The bid aggression of the car.
         """
 
         return urgency * bidding_aggression

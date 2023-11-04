@@ -2,7 +2,6 @@
 
 import argparse
 from datetime import datetime
-from math import inf
 
 from src import run_simulations, clean
 
