@@ -28,9 +28,33 @@ class AuctionModifier:
         args (argparse.Namespace): Arguments parsed from the command line
         intersection_id (str): The id of the intersection foFr which the modifier is used, or 'same'
             if the same auction parameters are used everywhere
-        TODO: add stuff
+        last_tried_param (tuple): The last tried auction parameters
+        params_and_expected_rewards (dict): A dictionary containing the possible parameter combinations, the counts for each combination and the expected rewards for each combination.
+        action_selection_boltzmann_params (dict): A dictionary containing the parameters for the boltzmann action selection
+        action_selection_e_greedy_decay_params (dict): A dictionary containing the parameters for the e_greedy_decay action selection
+        action_selection_e_greedy_exp_decay_params (dict): A dictionary containing the parameters for the e_greedy_exp_decay action selection
+        action_selection_ucb1_params (dict): A dictionary containing the parameters for the ucb1 action selection
+        action_selection_reverse_sigmoid_decay_params (dict): A dictionary containing the parameters for the reverse_sigmoid_decay action selection
+        reward_update_svr_params (dict): A dictionary containing the parameters for the reward update svr algorithm
     Functions:
-        TODO: add functions
+            get_parameters_and_valuations_and_counts: Returns the parameters, valuations and counts for the adaptive algorithm
+            init_params_and_expected_rewards_dict: Initializes the parameters and expected rewards dictionary, which contains the possible parameter combinations, the counts for each combination and the expected rewards for each combination.
+            init_action_selection_boltzmann_params_dict: Initializes the parameters for the boltzmann action selection
+            init_action_selection_e_greedy_decay_params_dict: Initializes the parameters for the e_greedy_decay action selection
+            init_action_selection_e_greedy_exp_decay_params_dict: Initializes the parameters for the e_greedy_exp_decay action selection
+            init_action_selection_ucb1_params_dict: Initializes the parameters for the ucb1 action selection
+            init_action_selection_reverse_sigmoid_decay_params_dict: Initializes the parameters for the reverse_sigmoid_decay action selection
+            init_reward_update_svr_params_dict: Initializes the parameters for the reward update svr algorithm
+            update_expected_rewards: Updates the bandit parameters for the adaptive algorithm, based on the reward received
+            update_expected_rewards_simple_bandit: Updates the bandit parameters for the simple bandit adaptive algorithm, based on the reward received
+            update_expected_rewards_svr: Updates the bandit parameters for the svr adaptive algorithm, based on the reward received
+            select_auction_params: Returns the auction parameters for the next auction, using the chosen action selection algorithm.
+            select_auction_params_boltzmann: Generates the auction parameters for the next auction, using the Boltzmann algorithm.
+            select_auction_params_e_greedy_decay: Generates the auction parameters for the next auction, using the e_greedy decay algorithm.
+            select_auction_params_e_greedy_exp_decay: Generates the auction parameters for the next auction, using the e_greedy exponential decay algorithm.
+            select_auction_params_ucb1: Generates the auction parameters for the next auction, using the ucb1 algorithm.
+            select_auction_params_reverse_sigmoid_decay: Generates the auction parameters for the next auction, using the reverse sigmoid decay algorithm.
+            ready_for_new_epoch: Prepares the Auction Modifier for the next epoch.
     """
 
     def __init__(self, args, intersection_id):
@@ -89,6 +113,7 @@ class AuctionModifier:
 
     ### Initialisation Functions ###
     def init_params_and_expected_rewards_dict(self):
+        """Initializes the parameters and expected rewards dictionary, which contains the possible parameter combinations, the counts for each combination and the expected rewards for each combination."""
         possible_queue_delay_boosts = []
         # Create all possible parameter combinations based on the level of discretization.
         queue_delay_min_limit, queue_delay_max_limit = MIN_MAX_DELAY_BOOSTS
@@ -199,7 +224,7 @@ class AuctionModifier:
             self.params_and_expected_rewards['expected_rewards'])
 
     def init_action_selection_ucb1_params_dict(self):
-        """Initializes the parameters for the ucb1 action selection
+        """Initializes the ucb1 action selection
         uninformed_score: The initial score for each parameter combination.
         """
         uninformed_score = 1
@@ -229,6 +254,7 @@ class AuctionModifier:
             self.params_and_expected_rewards['expected_rewards'])
 
     def init_reward_update_svr_params_dict(self):
+        """Initializes the parameters for the reward update svr algorithm"""
         self.reward_update_svr_params = {'svr_model': SVR(kernel='rbf'),
                                          'update_interval': 10,
                                          'encountered_data': np.array([], ndmin=2),
@@ -237,6 +263,7 @@ class AuctionModifier:
 
     ### Update Rule Functions ###
     def update_expected_rewards(self, last_tried_auction_params, reward):
+        """Updates the bandit parameters for the adaptive algorithm, based on the reward received"""
         self.last_tried_param = last_tried_auction_params
         if self.args.adaptive_auction_update_rule == 'simple_bandit':
             self.update_expected_rewards_simple_bandit(
@@ -259,6 +286,10 @@ class AuctionModifier:
         self.params_and_expected_rewards['counts'][params_index] += 1
 
     def update_expected_rewards_svr(self, last_tried_auction_params, reward):
+        """Updates the bandit parameters for the svr adaptive algorithm, based on the reward received
+        Args:
+            last_tried_auction_params (tuple): The parameters that were used for the last auction
+            reward (float): The reward received for the last auction"""
         # First, add the experience and reward to the encountered_data and received_rewards.
         self.reward_update_svr_params['encountered_data'] = np.append(
             self.reward_update_svr_params['encountered_data'], np.array(last_tried_auction_params)).reshape(-1, 1)
@@ -281,6 +312,8 @@ class AuctionModifier:
     ### Action Selection/Parameter Generation Functions ###
     def select_auction_params(self):
         """Returns the auction parameters for the next auction, using the chosen action selection algorithm.
+        Returns:
+            tuple: The auction parameter (delay boost) for the next auction.
         """
         self.params_and_expected_rewards['number_of_auctions'] += 1
         chosen_param = 0
@@ -315,7 +348,10 @@ class AuctionModifier:
         return chosen_param
 
     def select_auction_params_boltzmann(self):
-        """Generates the auction parameters for the next auction, using the Boltzmann algorithm."""
+        """Generates the auction parameters for the next auction, using the Boltzmann algorithm.
+            Returns:
+            tuple: The auction parameter (delay boost) for the next auction.
+        """
         # First, reduce the temperature based on the decay. Once the temperature is equal to 0, stop decreasing it.
         if (self.action_selection_boltzmann_params['current_temperature'] - self.action_selection_boltzmann_params['temperature_decay'] > 0):
             self.action_selection_boltzmann_params[
@@ -348,7 +384,10 @@ class AuctionModifier:
         return chosen_params[0][0]
 
     def select_auction_params_e_greedy_decay(self):
-        """Generates the auction parameters for the next auction, using the e_greedy decay algorithm."""
+        """Generates the auction parameters for the next auction, using the e_greedy decay algorithm.
+            Returns:
+            tuple: The auction parameter (delay boost) for the next auction.
+        """
         # First, reduce the temperature based on the decay. Once the temperature is equal to 0, stop decreasing it.
         if (self.action_selection_e_greedy_decay_params['current_epsilon'] - self.action_selection_e_greedy_decay_params['epsilon_decay'] > 0):
             self.action_selection_e_greedy_decay_params[
@@ -379,7 +418,10 @@ class AuctionModifier:
         return chosen_params[0][0]
 
     def select_auction_params_e_greedy_exp_decay(self):
-        """Generates the auction parameters for the next auction, using the e_greedy exponential decay algorithm."""
+        """Generates the auction parameters for the next auction, using the e_greedy exponential decay algorithm.
+            Returns:
+            tuple: The auction parameter (delay boost) for the next auction.
+        """
         # First, reduce the temperature based on the decay. Once the temperature is equal to 0, stop decreasing it.
         self.action_selection_e_greedy_exp_decay_params[
             'current_epsilon'] *= self.action_selection_e_greedy_exp_decay_params['epsilon_decay']
@@ -410,7 +452,10 @@ class AuctionModifier:
         return chosen_params[0][0]
 
     def select_auction_params_ucb1(self):
-        """Generates the auction parameters for the next auction, using the ucb1 algorithm."""
+        """Generates the auction parameters for the next auction, using the ucb1 algorithm.
+            Returns:
+            tuple: The auction parameter (delay boost) for the next auction.
+        """
         choices = self.params_and_expected_rewards['possible_param_combs']
         expected_rewards = np.array(
             self.params_and_expected_rewards['expected_rewards'])
@@ -427,8 +472,17 @@ class AuctionModifier:
     def select_auction_params_reverse_sigmoid_decay(self):
         """Generates the auction parameters for the next auction, using the reverse sigmoid decay function. 
         This is similar to e-greedy with exp decay, but the decay is not exponential. This leads to almost exclusive exploration at first and only exploitation later on.
+            Returns:
+            tuple: The auction parameter (delay boost) for the next auction.
         """
         def reverse_sigmoid(x, percent_of_exploration):
+            """The reverse sigmoid function used for the reverse sigmoid decay algorithm.
+            Args:
+                x (int): The number of auctions that have happened so far
+                percent_of_exploration (float): The percent of exploration that should happen
+                Returns:
+                float: the y-value for the given x-value
+            """
             x_offset = self.args.num_of_epochs * 2 * percent_of_exploration
             slope = 0.01  # Increase the slope value if there are fewer epochs, for a smoother curve
             # Use inf if this is larger than 700, to avoid overflow warnings.

@@ -289,7 +289,6 @@ def run_simulation(reserve):
 
     bidders = create_bidders(random.randint(2, 4), valuations_min_max)
     for auction_id in range(total_number_of_auctions):
-        # print("Auction ", auction_id)
         inactivity_boost = 0
         if reserve == 'adaptive':
             inactivity_boost = auction_modifier.generate_inactivity_boost()

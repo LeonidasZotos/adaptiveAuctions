@@ -14,37 +14,44 @@ class Car:
     Attributes:
         args (argparse.Namespace): Arguments parsed from the command line
         id (str): The ID of the car, e.g. 1
-        car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), North car queue).
+        car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
         parent_car_queue (CarQueue): The car queue that the car is currently in.
-        bidding_type (str): The type of bidding that the car uses, e.g. 'random' or 'homogeneous'.
-        bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
-        final_destination (str): The ID of the final destination intersection (e.g. 22, for intersection (2,2)).
-        next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), South car queue).
-            This is not the final destination, but the next queue the car is heading to.
+        bidding_type (str): The type of bidding that the car uses, e.g. 'random', 'homogeneous' or RL.
+        bid_generator (BidGenerator): The bidding generator that the car uses. This is used to generate a bid.
+        final_destination (str): The final destination of the car. This is the intersection that the car is heading to.
+        next_destination_queue (str): The ID of the queue the car is currently heading to (e.g. 22S, for intersection (2,2), south car queue).
         balance (float): The balance of the car. This is the amount of credit the car has left.
         urgency (float): The urgency of the car. This represents the driver's urgency.
+        bidding_aggression (float): The bidding aggression of the car. This is a value between 0 and 1, which determines how heterogeneous the car bids over its conservative amount.
         time_at_intersection (int): The number of epochs that the car has spent at the intersection.
         time_in_traffic_network (int): The number of epochs that the car has spent in the traffic network.
         distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.
         submitted_bid (float): The bid that the car submitted in the last auction.
 
     Functions:
-        get_short_description: Returns a short description of the car, containing the ID, final destination, balance and urgency.
-        is_at_destination: Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
-        get_time_at_intersection: Returns the time spent at the current intersection
-        get_urgency: Returns the urgency of the current car
+        get_short_description(): Returns a short description of the car, containing the ID, final destination, balance and urgency.
+        is_at_destination(): Checks whether the car is at its final destination. It doesn't matter in which car queue of the intersection it is.
+        get_time_at_intersection(): Returns the time spent at the current intersection
+        get_urgency(): Returns the urgency of the current car
+        set_urgency(): Sets the urgency of the car, depending on the bidding type
+        set_bidding_aggression(): Sets the bidding aggression of the car. This is a value between 0 and 1, which determines how heterogeneous the car bids over its conservative amount.
         set_balance(new_balance): Set the balance of the car to the given balance. E.g. Used for the wage distribution.
         set_car_queue_id(new_car_queue_id): Set the queue ID of the car to a new ID E.g. Used by Grid when the car is moved.
-        increase_distance_travelled_in_trip: Increase the distance spent in the current trip by 1
-        calc_satisfaction_score: Calculate the satisfaction score of the car after the completion of a trip
-        reset_final_destination(): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
-        update_next_destination_queue: Update the next destination queue of the car. E.g. When the car participates in an auction,
-            we need to know the queue where it is heading to. This function both updates the next destination queue and returns it.
-        reset_car(car_queue_id, epoch): Reset the car to a new state. E.g. Used when the car is (re)spawned.
-        submit_bid: Submit a bid to the auction.
+        get_parent_car_queue(): Get the parent car queue of the car. This is the car queue that the car is currently in.
+        increase_distance_travelled_in_trip(): Increase the distance spent in the current trip by 1
+        calc_satisfaction_score(): This function should only be called at the end of a trip. Returns the satisfaction score of the trip.
+        has_balance(): Checks whether the car has a positive balance.
+        get_adaptive_bidder_params(): Returns the dicrionary with the params of the adaptive bidder
+        reset_final_destination(epoch): Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
+           The new destination is randomly picked and canot be the same as the current intersection.
+        update_next_destination_queue(): Update the next destination queue of the car. E.g. When the car participates in an auction,
+              The next destination queue is picked randomly from the queues that are in the direction of the final destination.
+        reset_car(car_queue_id, epoch, satisfaction_score): Reset the car to a new state. E.g. Used when the car is (re)spawned. This function resets the car's final destination,
+              next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
+        submit_bid(): Submit a bid to the auction.
         pay_bid(price): Pay the given price. Used when the car wins an auction. The price should never be higher than the balance.
-            The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
-        ready_for_new_epoch: Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)
+              The price does not have to be the same as the submitted bid(e.g. Second-price auctions).
+        ready_for_new_epoch(): Prepare the car for the next epoch. This for example clears epoch-specific variables (e.g. bids submitted)
     """
     ### General Functions ###
 
@@ -202,21 +209,26 @@ class Car:
         score = self.urgency * speed
 
         # Return a small copy of the car (only necessary information), so that the original car is not changed.
-        # print("final balance", round(self.balance), 2)
         return SmallCar(self), score
 
     def has_balance(self):
-        """Returns True if balance > 0, False otherwise"""
+        """Checks whether the car has a positive balance.
+            Returns:
+                bool: True if balance > 0, False otherwise"""
         return self.balance > 0
 
     def get_adaptive_bidder_params(self):
-        """Returns the dicrionary with the params of the adaptive bidder."""
+        """Returns the dicrionary with the params of the adaptive bidder
+            Returns:
+                dict: A dictionary containing the parameters of the adaptive bidder."""
         return self.bid_generator.get_adaptive_bidder_params()
 
     ### General state functions ###
     def reset_final_destination(self, epoch=0):
         """Set the final destination of the car to a new destination. E.g. Used when the car is (re)spawned.
            The new destination is randomly picked and canot be the same as the current intersection.
+        Args:
+            epoch (int): The current epoch. Used to determine the seed for the hotspot distribution.
         """
         all_intersections = []
         for i in range(self.args.grid_size):
@@ -302,7 +314,8 @@ class Car:
            next destination queue, urgency, submitted bid, time at intersection & time in network/trip duration. The balance is not affected.
         Args:
             car_queue_id (str): The ID of the queue the car is currently in (e.g. 11N, for intersection (1,1), north car queue).
-            grid_size (int): The size of the grid (e.g. 3 for a 3x3 grid). This is used to pick a new valid final destination.
+            epoch (int): The current epoch. Used to determine the seed for the hotspot distribution.
+            satisfaction_score (tuple): A tuple containing a small copy of the car and the satisfaction score of the trip.
         """
         if self.bidding_type == 'RL':
             self.bid_generator.update_expected_rewards(
@@ -363,7 +376,7 @@ class Car:
                 self.id, self.balance, price, self.submitted_bid))
 
     def ready_for_new_epoch(self):
-        """Prepare the car for the next epoch. This mostly clears epoch-specific variables (e.g. bids submitted)"""
+        """Prepare the car for the next epoch. This for example clears epoch-specific variables (e.g. bids submitted)"""
         self.time_at_intersection += 1
         self.time_in_traffic_network += 1
         self.submitted_bid = 0
@@ -378,6 +391,7 @@ class SmallCar:
         bid_generator (BidGenerator): The bid generator that the car uses. This is used to generate a bid.
         balance (float): The balance of the car. This is the amount of credit the car has left.
         urgency (float): The urgency of the car. This represents the driver's urgency.
+        bidding_aggression (float): The bidding aggression of the car. This is a value between 0 and 1, which determines how heterogeneous the car bids over its conservative amount.
         time_at_intersection (int): The number of epochs that the car has spent at the intersection.
         time_in_traffic_network (int): The number of epochs that the car has spent in the traffic network.
         distance_travelled_in_trip (int): The distance travelled in the current trip. Same as the number of auctions won.

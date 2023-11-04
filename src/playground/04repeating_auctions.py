@@ -30,7 +30,7 @@ def plot_average_revenue_per_reserve(results_folder_name, results, counts):
     plt.close()
 
 
-def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x = 20):
+def plot_metric_over_time(results_folder_name, revenues_adaptive, revenues_random, variable_name, exclude_first_x=20):
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -313,4 +313,4 @@ if __name__ == '__main__':
     pool.join()
 
     plot_metric_over_time(results_folder_name,
-                           revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")
+                          revenues_over_time_all_sims_adaptive, revenues_over_time_all_sims_random, "Revenue")
