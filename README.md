@@ -19,6 +19,8 @@ To run the simulation with the default parameters, simply run:
 python aatc.py run
 ```
 A number of parameters can be changed, as described in the table below:
+<details>
+  <summary>Optional Parameters</summary>
 
 | Argument Name                         | Default Value | Choices         | Type                 | Help Description                                                                                                                            |
 |--------------------------------------|---------------|-----------------|----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
@@ -49,6 +51,9 @@ A number of parameters can be changed, as described in the table below:
 | --print_grid                          |               |                 | Boolean              | If present, the grid will be printed after each epoch.                        |
 | --sweep_mode                         |               |                 | Boolean              | If present, no plots are generated to reduce execution time.                    |
 | --low_dpi                            |               |                 | Boolean              | If enabled, all plots are created with low dpi to reduce execution time.         |
+
+</details>
+
 
 ### Cleaning Previous Results
 To clean the results of previous simulations (including cache), simply run:
