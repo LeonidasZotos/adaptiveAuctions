@@ -3,7 +3,8 @@ import random
 from math import floor
 
 MIN_MAX_LEARNED_BID_AGGRESSION = [0.5, 5.0]
-BEST_PARAMETERS_ACTION_SELECTION = {'e_greedy_exp_decay': [0, 1, 0.995]}
+BEST_PARAMETERS_ACTION_SELECTION = {
+    'e_greedy_exp_decay': [0, 1, 0.995]}
 BID_AGGRESSION_DISCRETIZATION = 10
 
 
@@ -103,7 +104,7 @@ class BidGenerator:
     def get_adaptive_bidder_params(self):
         """Returns the dicrionary with the params of the adaptive bidder."""
         return self.params_and_expected_rewards
-        
+
     ### Bidding Strategies ###
     def generate_homogeneous_bid(self, urgency):
         """Returns a homogeneous bid, which is the urgency

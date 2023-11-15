@@ -26,7 +26,7 @@ class AuctionModifier:
     This is the AuctionModifier class. The role of the modifier is to give auction parameters for the next auction.
     Attributes:
         args (argparse.Namespace): Arguments parsed from the command line
-        intersection_id (str): The id of the intersection foFr which the modifier is used, or 'same'
+        intersection_id (str): The id of the intersection for which the modifier is used, or 'same'
             if the same auction parameters are used everywhere
         last_tried_param (tuple): The last tried auction parameters
         params_and_expected_rewards (dict): A dictionary containing the possible parameter combinations, the counts for each combination and the expected rewards for each combination.

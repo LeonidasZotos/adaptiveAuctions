@@ -82,7 +82,7 @@ class Grid:
 
     def get_percentage_of_broke_agents(self):
         """Returns the percentage of agents that have a balance of 0"""
-        type_to_check = "RL"  # "both" or the type of bidder, e.g. "homogeneous"
+        type_to_check = "both"  # "both" or the type of bidder, e.g. "homogeneous"/"RL"
         percentage = 0
         if type_to_check == "both":
             percentage = len(
